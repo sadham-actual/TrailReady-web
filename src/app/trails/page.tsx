@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { trailService } from '@/services/mockTrailService';
+import { trailService } from '@/services/trailService';
 import { Trail, STATUS_LABELS } from '@/types';
 
 export default function TrailsPage() {

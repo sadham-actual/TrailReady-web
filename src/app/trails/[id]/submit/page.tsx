@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { trailService } from '@/services/mockTrailService';
+import { trailService } from '@/services/trailService';
 import { Trail, Status, Confidence, VehicleType, STATUS_LABELS, CONFIDENCE_LABELS, VEHICLE_TYPE_LABELS } from '@/types';
 
 export default function SubmitReportPage() {

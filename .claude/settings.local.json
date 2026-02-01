@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(where npm)",
+      "Bash(where:*)",
+      "Bash(test:*)",
+      "Bash(powershell.exe -Command \"npm install prisma @prisma/client zod; npm install -D prisma\")",
+      "Bash(powershell.exe -Command \"Get-Command node -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Bash(powershell.exe -Command:*)"
+    ]
+  }
+}
