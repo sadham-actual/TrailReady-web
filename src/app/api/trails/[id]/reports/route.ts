@@ -5,10 +5,10 @@ import { ConditionReport } from '@/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id: trailId } = params;
+    const { id: trailId } = await params;
 
     // Verify trail exists
     const trail = await prisma.trail.findUnique({
