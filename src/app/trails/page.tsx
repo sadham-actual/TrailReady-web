@@ -3,7 +3,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { trailService } from '@/services/trailService';
-import { Trail, STATUS_LABELS } from '@/types';
+import { Trail, STATUS_LABELS, Status } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Search, MapPin, Clock, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 
 export default function TrailsPage() {
   const [trails, setTrails] = useState<Trail[]>([]);
@@ -38,98 +44,129 @@ export default function TrailsPage() {
     }
   }
 
-  function getStatusColor(status?: string) {
+  function getStatusBadge(status?: string) {
+    const baseClasses = "px-3 py-1 text-sm font-medium gap-1.5";
     switch (status) {
       case 'clear':
-        return 'bg-green-100 text-green-800';
+        return (
+          <Badge className={`${baseClasses} bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/30`}>
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            {STATUS_LABELS[status as Status]}
+          </Badge>
+        );
       case 'rough':
-        return 'bg-yellow-100 text-yellow-800';
+        return (
+          <Badge className={`${baseClasses} bg-yellow-100 text-yellow-800 hover:bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900/30`}>
+            <AlertTriangle className="h-3.5 w-3.5" />
+            {STATUS_LABELS[status as Status]}
+          </Badge>
+        );
       case 'impassable':
-        return 'bg-red-100 text-red-800';
+        return (
+          <Badge className={`${baseClasses} bg-red-100 text-red-800 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/30`}>
+            <XCircle className="h-3.5 w-3.5" />
+            {STATUS_LABELS[status as Status]}
+          </Badge>
+        );
       default:
-        return 'bg-gray-100 text-gray-800';
+        return <Badge variant="secondary" className={baseClasses}>No reports</Badge>;
     }
   }
 
+  function formatDate(dateString?: string) {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+
+    if (diffHours < 1) return 'Just now';
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffHours < 48) return 'Yesterday';
+    return date.toLocaleDateString();
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">TrailReady</h1>
-          <p className="text-gray-600 mt-1">Know before you go.</p>
-        </div>
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight mb-2">Browse Trails</h1>
+        <p className="text-muted-foreground">
+          Find trails and check their current conditions
+        </p>
       </div>
 
       {/* Search Bar */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex gap-2">
-          <input
+      <div className="flex gap-2 mb-8">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
             type="text"
             placeholder="Search trails by name or region..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="pl-9 h-11"
           />
-          <button
-            onClick={handleSearch}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            Search
-          </button>
         </div>
+        <Button onClick={handleSearch} className="h-11 px-6">
+          Search
+        </Button>
       </div>
 
       {/* Trail List */}
-      <div className="max-w-7xl mx-auto px-4 pb-12">
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Loading trails...</p>
-          </div>
-        ) : trails.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600">No trails found.</p>
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {trails.map((trail) => (
-              <Link
-                key={trail.id}
-                href={`/trails/${trail.id}`}
-                className="block bg-white rounded-lg shadow hover:shadow-md transition p-6"
-              >
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  {trail.name}
-                </h2>
-                <p className="text-gray-600 mb-4">{trail.region}</p>
-                
-                {trail.latestStatus && (
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                        trail.latestStatus
-                      )}`}
-                    >
-                      {STATUS_LABELS[trail.latestStatus]}
-                    </span>
+      {isLoading ? (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i}>
+              <CardHeader className="pb-3">
+                <Skeleton className="h-7 w-3/4" />
+                <Skeleton className="h-5 w-1/2" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-7 w-28" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : trails.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-muted-foreground text-lg">No trails found.</p>
+          {searchQuery && (
+            <Button variant="link" onClick={() => { setSearchQuery(''); loadTrails(); }} className="mt-2">
+              Clear search
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {trails.map((trail) => (
+            <Link key={trail.id} href={`/trails/${trail.id}`}>
+              <Card className="h-full transition-all hover:shadow-lg hover:border-primary/20 cursor-pointer group">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-xl group-hover:text-primary transition-colors">
+                    {trail.name}
+                  </CardTitle>
+                  <CardDescription className="flex items-center gap-1.5 text-sm">
+                    <MapPin className="h-4 w-4" />
+                    {trail.region}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    {getStatusBadge(trail.latestStatus)}
                     {trail.lastReportAt && (
-                      <span className="text-xs text-gray-500">
-                        {new Date(trail.lastReportAt).toLocaleDateString()}
+                      <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                        <Clock className="h-4 w-4" />
+                        {formatDate(trail.lastReportAt)}
                       </span>
                     )}
                   </div>
-                )}
-                
-                {!trail.latestStatus && (
-                  <span className="text-sm text-gray-500">No recent reports</span>
-                )}
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
