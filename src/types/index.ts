@@ -46,9 +46,9 @@ export function getReportAgeHours(timestamp: string): number {
 
 // Display helpers
 export const STATUS_LABELS: Record<Status, string> = {
-  clear: 'Clear',
-  rough: 'Rough',
-  impassable: 'Impassable',
+  clear: 'Passable',
+  rough: 'Caution',
+  impassable: 'Not Passable',
 };
 
 export const CONFIDENCE_LABELS: Record<Confidence, string> = {

@@ -92,9 +92,9 @@ export default function SubmitReportPage() {
   }
 
   const statusOptions = [
-    { value: 'clear' as Status, label: STATUS_LABELS.clear, icon: CheckCircle2, color: 'text-green-600' },
-    { value: 'rough' as Status, label: STATUS_LABELS.rough, icon: AlertTriangle, color: 'text-yellow-600' },
-    { value: 'impassable' as Status, label: STATUS_LABELS.impassable, icon: XCircle, color: 'text-red-600' },
+    { value: 'clear' as Status, label: STATUS_LABELS.clear, icon: CheckCircle2, color: 'text-status-passable' },
+    { value: 'rough' as Status, label: STATUS_LABELS.rough, icon: AlertTriangle, color: 'text-status-caution' },
+    { value: 'impassable' as Status, label: STATUS_LABELS.impassable, icon: XCircle, color: 'text-status-not-passable' },
   ];
 
   if (isLoadingAuth) {
@@ -118,18 +118,18 @@ export default function SubmitReportPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       {/* Back Link */}
-      <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2">
+      <Button variant="ghost" size="sm" asChild className="mb-6 -ml-2 text-muted-foreground">
         <Link href={`/trails/${trailId}`}>
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Trail
+          Back
         </Link>
       </Button>
 
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Submit Condition Report</h1>
+        <h1 className="text-[22px] font-semibold mb-2">Submit Report</h1>
         {trail && (
-          <p className="text-muted-foreground">{trail.name} - {trail.region}</p>
+          <p className="text-[14px] text-secondary-foreground">{trail.name} - {trail.region}</p>
         )}
       </div>
 

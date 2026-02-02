@@ -43,97 +43,102 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  /* Status colors */
+  --color-status-passable: var(--status-passable);
+  --color-status-caution: var(--status-caution);
+  --color-status-not-passable: var(--status-not-passable);
+  --color-status-info: var(--status-info);
 }
 
-/* Earth Tone Light Mode - Warm creams, forest greens, rust browns */
+/* TrailReady Dark Theme - Field Tool Aesthetic */
 :root {
-  --radius: 0.625rem;
-  /* Warm off-white/cream background */
-  --background: oklch(0.98 0.005 85);
-  --foreground: oklch(0.25 0.02 60);
-  /* Slightly warmer white for cards */
-  --card: oklch(0.995 0.003 85);
-  --card-foreground: oklch(0.25 0.02 60);
-  --popover: oklch(0.995 0.003 85);
-  --popover-foreground: oklch(0.25 0.02 60);
-  /* Deep forest green primary */
-  --primary: oklch(0.35 0.1 145);
-  --primary-foreground: oklch(0.98 0.005 85);
-  /* Warm tan/sage secondary */
-  --secondary: oklch(0.92 0.02 85);
-  --secondary-foreground: oklch(0.30 0.03 60);
-  /* Muted sage tones */
-  --muted: oklch(0.94 0.015 100);
-  --muted-foreground: oklch(0.45 0.02 60);
-  /* Warm brown/rust accent */
-  --accent: oklch(0.90 0.03 60);
-  --accent-foreground: oklch(0.30 0.03 60);
-  /* Keep destructive red but warmer */
-  --destructive: oklch(0.55 0.22 25);
-  /* Warm gray borders */
-  --border: oklch(0.88 0.01 85);
-  --input: oklch(0.88 0.01 85);
-  --ring: oklch(0.35 0.1 145);
-  /* Chart colors - earth tones */
-  --chart-1: oklch(0.35 0.1 145);
-  --chart-2: oklch(0.55 0.12 55);
-  --chart-3: oklch(0.50 0.08 180);
-  --chart-4: oklch(0.65 0.15 80);
-  --chart-5: oklch(0.60 0.10 30);
+  --radius: 0.375rem;
+  /* Background - Deep dark green-black */
+  --background: #0E1411;
+  --foreground: #E8ECE9;
+  /* Card/Surface */
+  --card: #151D18;
+  --card-foreground: #E8ECE9;
+  /* Elevated surfaces (popovers, modals) */
+  --popover: #1B2620;
+  --popover-foreground: #E8ECE9;
+  /* Primary - Passable green */
+  --primary: #5FA777;
+  --primary-foreground: #0E1411;
+  /* Secondary */
+  --secondary: #1B2620;
+  --secondary-foreground: #A7B2AB;
+  /* Muted */
+  --muted: #1B2620;
+  --muted-foreground: #7F8A83;
+  /* Accent */
+  --accent: #1B2620;
+  --accent-foreground: #A7B2AB;
+  /* Destructive - Not passable red */
+  --destructive: #B65A4A;
+  /* Borders */
+  --border: #27332D;
+  --input: #27332D;
+  --ring: #5FA777;
+  /* Status colors */
+  --status-passable: #5FA777;
+  --status-caution: #C4A35A;
+  --status-not-passable: #B65A4A;
+  --status-info: #6C8FB8;
+  /* Chart colors */
+  --chart-1: #5FA777;
+  --chart-2: #C4A35A;
+  --chart-3: #6C8FB8;
+  --chart-4: #B65A4A;
+  --chart-5: #7F8A83;
   /* Sidebar */
-  --sidebar: oklch(0.96 0.008 85);
-  --sidebar-foreground: oklch(0.25 0.02 60);
-  --sidebar-primary: oklch(0.35 0.1 145);
-  --sidebar-primary-foreground: oklch(0.98 0.005 85);
-  --sidebar-accent: oklch(0.92 0.02 85);
-  --sidebar-accent-foreground: oklch(0.30 0.03 60);
-  --sidebar-border: oklch(0.88 0.01 85);
-  --sidebar-ring: oklch(0.35 0.1 145);
+  --sidebar: #151D18;
+  --sidebar-foreground: #E8ECE9;
+  --sidebar-primary: #5FA777;
+  --sidebar-primary-foreground: #0E1411;
+  --sidebar-accent: #1B2620;
+  --sidebar-accent-foreground: #A7B2AB;
+  --sidebar-border: #27332D;
+  --sidebar-ring: #5FA777;
 }
 
-/* Earth Tone Dark Mode - Deep charcoal with green undertones */
+/* Keep .dark class for compatibility */
 .dark {
-  /* Deep charcoal with slight green undertone */
-  --background: oklch(0.15 0.015 160);
-  --foreground: oklch(0.92 0.01 85);
-  /* Darker card with green-black tones */
-  --card: oklch(0.20 0.02 160);
-  --card-foreground: oklch(0.92 0.01 85);
-  --popover: oklch(0.20 0.02 160);
-  --popover-foreground: oklch(0.92 0.01 85);
-  /* Lighter forest green for dark mode */
-  --primary: oklch(0.55 0.12 145);
-  --primary-foreground: oklch(0.15 0.015 160);
-  /* Dark muted brown/sage */
-  --secondary: oklch(0.28 0.025 80);
-  --secondary-foreground: oklch(0.90 0.01 85);
-  /* Deep muted tones */
-  --muted: oklch(0.25 0.02 120);
-  --muted-foreground: oklch(0.65 0.02 85);
-  /* Warm rust accent in dark */
-  --accent: oklch(0.30 0.03 60);
-  --accent-foreground: oklch(0.90 0.01 85);
-  /* Warmer destructive */
-  --destructive: oklch(0.60 0.20 25);
-  /* Subtle borders */
-  --border: oklch(0.30 0.02 160);
-  --input: oklch(0.30 0.02 160);
-  --ring: oklch(0.55 0.12 145);
-  /* Chart colors - lighter earth tones for dark */
-  --chart-1: oklch(0.55 0.12 145);
-  --chart-2: oklch(0.60 0.10 55);
-  --chart-3: oklch(0.55 0.08 180);
-  --chart-4: oklch(0.70 0.12 80);
-  --chart-5: oklch(0.65 0.10 30);
-  /* Sidebar dark */
-  --sidebar: oklch(0.18 0.018 160);
-  --sidebar-foreground: oklch(0.92 0.01 85);
-  --sidebar-primary: oklch(0.55 0.12 145);
-  --sidebar-primary-foreground: oklch(0.15 0.015 160);
-  --sidebar-accent: oklch(0.28 0.025 80);
-  --sidebar-accent-foreground: oklch(0.90 0.01 85);
-  --sidebar-border: oklch(0.30 0.02 160);
-  --sidebar-ring: oklch(0.55 0.12 145);
+  --background: #0E1411;
+  --foreground: #E8ECE9;
+  --card: #151D18;
+  --card-foreground: #E8ECE9;
+  --popover: #1B2620;
+  --popover-foreground: #E8ECE9;
+  --primary: #5FA777;
+  --primary-foreground: #0E1411;
+  --secondary: #1B2620;
+  --secondary-foreground: #A7B2AB;
+  --muted: #1B2620;
+  --muted-foreground: #7F8A83;
+  --accent: #1B2620;
+  --accent-foreground: #A7B2AB;
+  --destructive: #B65A4A;
+  --border: #27332D;
+  --input: #27332D;
+  --ring: #5FA777;
+  --status-passable: #5FA777;
+  --status-caution: #C4A35A;
+  --status-not-passable: #B65A4A;
+  --status-info: #6C8FB8;
+  --chart-1: #5FA777;
+  --chart-2: #C4A35A;
+  --chart-3: #6C8FB8;
+  --chart-4: #B65A4A;
+  --chart-5: #7F8A83;
+  --sidebar: #151D18;
+  --sidebar-foreground: #E8ECE9;
+  --sidebar-primary: #5FA777;
+  --sidebar-primary-foreground: #0E1411;
+  --sidebar-accent: #1B2620;
+  --sidebar-accent-foreground: #A7B2AB;
+  --sidebar-border: #27332D;
+  --sidebar-ring: #5FA777;
 }
 
 @layer base {

@@ -6,10 +6,10 @@ import Link from 'next/link';
 import { trailService } from '@/services/trailService';
 import { Trail, ConditionReport, STATUS_LABELS, CONFIDENCE_LABELS, VEHICLE_TYPE_LABELS, getReportAgeHours, Status, Confidence } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, MapPin, Navigation, Clock, Car, CheckCircle2, AlertTriangle, XCircle, Plus } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Car, Plus } from 'lucide-react';
 
 export default function TrailDetailPage() {
   const params = useParams();
@@ -47,26 +47,22 @@ export default function TrailDetailPage() {
   }
 
   function getStatusBadge(status: Status) {
-    const baseClasses = "px-3 py-1 text-sm font-medium gap-1.5";
     switch (status) {
       case 'clear':
         return (
-          <Badge className={`${baseClasses} bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400`}>
-            <CheckCircle2 className="h-3.5 w-3.5" />
+          <Badge className="bg-status-passable text-white">
             {STATUS_LABELS[status]}
           </Badge>
         );
       case 'rough':
         return (
-          <Badge className={`${baseClasses} bg-yellow-100 text-yellow-800 hover:bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400`}>
-            <AlertTriangle className="h-3.5 w-3.5" />
+          <Badge className="bg-status-caution text-white">
             {STATUS_LABELS[status]}
           </Badge>
         );
       case 'impassable':
         return (
-          <Badge className={`${baseClasses} bg-red-100 text-red-800 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400`}>
-            <XCircle className="h-3.5 w-3.5" />
+          <Badge className="bg-status-not-passable text-white">
             {STATUS_LABELS[status]}
           </Badge>
         );
@@ -74,15 +70,16 @@ export default function TrailDetailPage() {
   }
 
   function getConfidenceBadge(confidence: Confidence) {
-    const baseClasses = "px-2.5 py-0.5 text-xs font-medium";
-    switch (confidence) {
-      case 'high':
-        return <Badge variant="outline" className={`${baseClasses} text-green-700 border-green-300 dark:text-green-400 dark:border-green-700`}>{CONFIDENCE_LABELS[confidence]}</Badge>;
-      case 'medium':
-        return <Badge variant="outline" className={`${baseClasses} text-yellow-700 border-yellow-300 dark:text-yellow-400 dark:border-yellow-700`}>{CONFIDENCE_LABELS[confidence]}</Badge>;
-      case 'low':
-        return <Badge variant="outline" className={`${baseClasses} text-red-700 border-red-300 dark:text-red-400 dark:border-red-700`}>{CONFIDENCE_LABELS[confidence]}</Badge>;
-    }
+    const colorMap = {
+      high: 'border-status-passable text-status-passable',
+      medium: 'border-status-caution text-status-caution',
+      low: 'border-status-not-passable text-status-not-passable',
+    };
+    return (
+      <Badge variant="outline" className={colorMap[confidence]}>
+        {CONFIDENCE_LABELS[confidence]} Confidence
+      </Badge>
+    );
   }
 
   function formatReportAge(timestamp: string) {
@@ -91,22 +88,23 @@ export default function TrailDetailPage() {
     if (hours < 24) return `${hours}h ago`;
     if (hours < 48) return 'Yesterday';
     const days = Math.floor(hours / 24);
-    return `${days} days ago`;
+    if (days < 7) return `${days} days ago`;
+    return new Date(timestamp).toLocaleDateString();
   }
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <Skeleton className="h-8 w-32 mb-4" />
-        <Skeleton className="h-10 w-64 mb-2" />
-        <Skeleton className="h-6 w-40 mb-8" />
-        <Card className="mb-6">
-          <CardHeader>
-            <Skeleton className="h-6 w-48" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <Skeleton className="h-6 w-24 mb-6" />
+        <Skeleton className="h-8 w-64 mb-3" />
+        <div className="flex gap-3 mb-8">
+          <Skeleton className="h-7 w-24" />
+          <Skeleton className="h-5 w-20" />
+        </div>
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
           </CardContent>
         </Card>
       </div>
@@ -117,116 +115,108 @@ export default function TrailDetailPage() {
     return null;
   }
 
+  const latestReport = reports[0];
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 py-8 max-w-2xl">
       {/* Back Link */}
-      <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2">
+      <Button variant="ghost" size="sm" asChild className="mb-6 -ml-2 text-muted-foreground">
         <Link href="/trails">
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Trails
+          Back
         </Link>
       </Button>
 
-      {/* Trail Header */}
+      {/* Trail Header with Status */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">{trail.name}</h1>
-        <p className="text-muted-foreground flex items-center gap-1.5">
+        <h1 className="text-[22px] font-semibold mb-3">{trail.name}</h1>
+        <div className="flex items-center gap-3 flex-wrap">
+          {latestReport ? (
+            <>
+              {getStatusBadge(latestReport.status)}
+              <span className="text-[13px] text-muted-foreground flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                {formatReportAge(latestReport.timestamp)}
+              </span>
+            </>
+          ) : (
+            <Badge variant="secondary" className="bg-muted text-muted-foreground">
+              No Reports
+            </Badge>
+          )}
+        </div>
+        <p className="text-[14px] text-secondary-foreground mt-3 flex items-center gap-1.5">
           <MapPin className="h-4 w-4" />
           {trail.region}
         </p>
       </div>
 
-      {/* Trail Info Card */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-lg">Trail Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid sm:grid-cols-2 gap-6">
-            <div className="flex items-start gap-3">
-              <div className="rounded-full bg-primary/10 p-2.5">
-                <MapPin className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Location</p>
-                <p className="font-medium">{trail.region}</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="rounded-full bg-primary/10 p-2.5">
-                <Navigation className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Coordinates</p>
-                <p className="font-medium">{trail.latitude.toFixed(4)}, {trail.longitude.toFixed(4)}</p>
-              </div>
-            </div>
-          </div>
-          {trail.description && (
-            <div className="mt-6 pt-6 border-t">
-              <p className="text-sm text-muted-foreground mb-2">Description</p>
-              <p className="leading-relaxed">{trail.description}</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Description if exists */}
+      {trail.description && (
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <p className="text-[14px] text-secondary-foreground leading-relaxed">
+              {trail.description}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Condition Reports Card */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle className="text-lg">Condition Reports</CardTitle>
-          <Button asChild>
-            <Link href={`/trails/${trailId}/submit`}>
-              <Plus className="h-4 w-4 mr-1.5" />
-              Submit Report
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {reports.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="rounded-full bg-muted p-4 w-fit mx-auto mb-4">
-                <MapPin className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <p className="text-muted-foreground">No condition reports yet.</p>
-              <p className="text-sm text-muted-foreground mt-1">Be the first to report on this trail!</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {reports.map((report, index) => (
-                <div
-                  key={report.id}
-                  className={`rounded-lg p-4 ${index === 0 ? 'bg-primary/5 border-2 border-primary/20' : 'border'}`}
-                >
-                  {index === 0 && (
-                    <p className="text-xs font-medium text-primary mb-2">Latest Report</p>
-                  )}
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    {getStatusBadge(report.status)}
-                    {getConfidenceBadge(report.confidence)}
-                    <Badge variant="secondary" className="gap-1.5 px-2.5">
-                      <Car className="h-3.5 w-3.5" />
-                      {VEHICLE_TYPE_LABELS[report.vehicleType]}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground ml-auto flex items-center gap-1.5">
-                      <Clock className="h-4 w-4" />
-                      {formatReportAge(report.timestamp)}
-                    </span>
-                  </div>
+      {/* Condition Reports */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-[16px] font-semibold">Condition Reports</h2>
+        <Button size="sm" asChild>
+          <Link href={`/trails/${trailId}/submit`}>
+            <Plus className="h-4 w-4 mr-1" />
+            Submit Report
+          </Link>
+        </Button>
+      </div>
 
-                  {report.notes && (
-                    <p className="text-sm mt-3 leading-relaxed">{report.notes}</p>
-                  )}
-
-                  <p className="text-xs text-muted-foreground mt-3">
-                    {new Date(report.timestamp).toLocaleString()}
-                  </p>
+      {reports.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <p className="text-muted-foreground">No condition reports yet.</p>
+            <p className="text-[13px] text-muted-foreground mt-1">
+              Be the first to report on this trail.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {reports.map((report) => (
+            <Card key={report.id}>
+              <CardContent className="p-4">
+                {/* Status and Meta Row */}
+                <div className="flex items-center gap-3 flex-wrap mb-3">
+                  {getStatusBadge(report.status)}
+                  <Badge variant="secondary" className="bg-secondary text-secondary-foreground gap-1">
+                    <Car className="h-3 w-3" />
+                    {VEHICLE_TYPE_LABELS[report.vehicleType]}
+                  </Badge>
+                  {getConfidenceBadge(report.confidence)}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+                {/* Notes */}
+                {report.notes && (
+                  <p className="text-[14px] text-foreground leading-relaxed mb-3">
+                    {report.notes}
+                  </p>
+                )}
+
+                {/* Timestamp */}
+                <p className="text-[13px] text-muted-foreground flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
+                  {formatReportAge(report.timestamp)}
+                  <span className="text-muted-foreground/60 ml-1">
+                    ({new Date(report.timestamp).toLocaleDateString()})
+                  </span>
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -17,21 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                const stored = localStorage.getItem('theme');
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                const isDark = stored === 'dark' || (stored !== 'light' && prefersDark);
-                if (isDark) document.documentElement.classList.add('dark');
-              })();
-            `,
-          }}
-        />
-      </head>
+    <html lang="en" className="dark">
+      <head />
       <body className={`${inter.className} min-h-screen bg-background antialiased`}>
         <ThemeProvider>
           <Header />
