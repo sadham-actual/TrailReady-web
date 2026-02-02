@@ -36,32 +36,32 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/50 -z-10" />
 
         <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
-          <div className="bg-black/40 backdrop-blur-sm rounded-2xl px-8 py-10 md:px-12 md:py-12 space-y-6">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl text-white">
+          <div className="bg-black/40 backdrop-blur-sm rounded-2xl px-8 py-10 md:px-12 md:py-14 space-y-6">
+            <h1 className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl text-white">
               Know before you go
             </h1>
 
-            <p className="text-lg text-white/90 max-w-[500px] leading-relaxed">
+            <p className="text-xl text-white/90 max-w-[500px] leading-relaxed">
               Real-time trail conditions from the off-road community. Check current status before you head out.
             </p>
 
             {/* Search Bar */}
             <form onSubmit={handleSearch} className="w-full max-w-md mx-auto mt-2">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
                 <Input
                   type="text"
                   placeholder="Search by trail name or region..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-14 bg-card/95 backdrop-blur border-border text-base rounded-lg shadow-lg"
+                  className="pl-12 h-14 bg-white/90 backdrop-blur border-white/20 text-gray-900 placeholder:text-gray-500 text-base rounded-lg shadow-lg"
                 />
               </div>
             </form>
 
             <Link
               href="/trails"
-              className="inline-block text-white/80 hover:text-white text-[15px] font-medium transition-colors"
+              className="inline-block text-white/80 hover:text-white text-[17px] font-medium transition-colors"
             >
               Explore all trails →
             </Link>
