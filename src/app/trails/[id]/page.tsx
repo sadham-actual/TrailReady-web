@@ -4,17 +4,41 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { trailService } from '@/services/trailService';
-import { Trail, ConditionReport, STATUS_LABELS, CONFIDENCE_LABELS, VEHICLE_TYPE_LABELS, getReportAgeHours, Status, Confidence } from '@/types';
+import { Trail, ConditionReport, STATUS_LABELS, CONFIDENCE_LABELS, VEHICLE_TYPE_LABELS, getReportAgeHours, Status, Confidence, VehicleType } from '@/types';
+import { getVehicleOutcome, getTrailOutcomeSummary, OutcomeStatus } from '@/lib/trailOutcome';
+import { useVehicle } from '@/contexts/VehicleContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, MapPin, Clock, Car, Plus } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Car, Plus, AlertTriangle, CheckCircle2, XCircle, HelpCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+/**
+ * Vehicle selector component for choosing vehicle type
+ */
+function VehicleSelector({ onSelect }: { onSelect: (vehicle: VehicleType) => void }) {
+  return (
+    <Select onValueChange={(value) => onSelect(value as VehicleType)}>
+      <SelectTrigger className="w-[220px]">
+        <SelectValue placeholder="Select vehicle" />
+      </SelectTrigger>
+      <SelectContent>
+        {(Object.entries(VEHICLE_TYPE_LABELS) as [VehicleType, string][]).map(([value, label]) => (
+          <SelectItem key={value} value={value}>
+            {label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
 
 export default function TrailDetailPage() {
   const params = useParams();
   const router = useRouter();
   const trailId = params.id as string;
+  const { selectedVehicle, setSelectedVehicle } = useVehicle();
 
   const [trail, setTrail] = useState<Trail | null>(null);
   const [reports, setReports] = useState<ConditionReport[]>([]);
@@ -92,6 +116,52 @@ export default function TrailDetailPage() {
     return new Date(timestamp).toLocaleDateString();
   }
 
+  function getOutcomeIcon(status: OutcomeStatus) {
+    switch (status) {
+      case 'passable':
+        return <CheckCircle2 className="h-4 w-4" />;
+      case 'high-risk':
+        return <AlertTriangle className="h-4 w-4" />;
+      case 'impassable':
+        return <XCircle className="h-4 w-4" />;
+      case 'unknown':
+        return <HelpCircle className="h-4 w-4" />;
+    }
+  }
+
+  function getOutcomeBadge(status: OutcomeStatus) {
+    switch (status) {
+      case 'passable':
+        return (
+          <Badge className="bg-status-passable text-white gap-1.5">
+            {getOutcomeIcon(status)}
+            Passable
+          </Badge>
+        );
+      case 'high-risk':
+        return (
+          <Badge className="bg-status-caution text-white gap-1.5">
+            {getOutcomeIcon(status)}
+            High Risk
+          </Badge>
+        );
+      case 'impassable':
+        return (
+          <Badge className="bg-status-not-passable text-white gap-1.5">
+            {getOutcomeIcon(status)}
+            Not Passable
+          </Badge>
+        );
+      case 'unknown':
+        return (
+          <Badge variant="secondary" className="bg-muted text-muted-foreground gap-1.5">
+            {getOutcomeIcon(status)}
+            Unknown
+          </Badge>
+        );
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl">
@@ -158,6 +228,134 @@ export default function TrailDetailPage() {
             <p className="text-[14px] text-secondary-foreground leading-relaxed">
               {trail.description}
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Trail Outcome Section */}
+      {reports.length > 0 && (
+        <Card className="mb-6">
+          <CardContent className="p-5">
+            {selectedVehicle ? (
+              // Vehicle-specific outcome
+              <>
+                <div className="flex items-start justify-between gap-4 mb-4">
+                  <div className="flex-1">
+                    <h2 className="text-[16px] font-semibold mb-2">Trail Outcome for Your Vehicle</h2>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="secondary" className="bg-secondary text-secondary-foreground gap-1">
+                        <Car className="h-3 w-3" />
+                        {VEHICLE_TYPE_LABELS[selectedVehicle]}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedVehicle(null)}
+                        className="h-auto py-1 px-2 text-[13px] text-muted-foreground"
+                      >
+                        Change
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {(() => {
+                  const outcome = getVehicleOutcome(reports, selectedVehicle);
+                  return (
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            {getOutcomeBadge(outcome.status)}
+                            {getConfidenceBadge(outcome.confidence)}
+                          </div>
+                          <p className="text-[14px] text-secondary-foreground">
+                            {outcome.explanation}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Other vehicle types summary */}
+                      <div className="border-t pt-4">
+                        <p className="text-[13px] font-medium text-muted-foreground mb-3">
+                          Outcomes for Other Vehicles
+                        </p>
+                        <div className="grid grid-cols-1 gap-2">
+                          {(Object.keys(VEHICLE_TYPE_LABELS) as VehicleType[])
+                            .filter(vt => vt !== selectedVehicle)
+                            .map(vehicleType => {
+                              const otherOutcome = getVehicleOutcome(reports, vehicleType);
+                              return (
+                                <div
+                                  key={vehicleType}
+                                  className="flex items-center justify-between text-[13px] py-2 px-3 bg-background rounded border"
+                                >
+                                  <span className="text-secondary-foreground">
+                                    {VEHICLE_TYPE_LABELS[vehicleType]}
+                                  </span>
+                                  {getOutcomeBadge(otherOutcome.status)}
+                                </div>
+                              );
+                            })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            ) : (
+              // No vehicle selected - show summary
+              <>
+                <h2 className="text-[16px] font-semibold mb-3">Trail Outcomes</h2>
+                {(() => {
+                  const summary = getTrailOutcomeSummary(reports);
+                  return (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex items-center gap-2 text-[14px]">
+                          <CheckCircle2 className="h-4 w-4 text-status-passable" />
+                          <span className="text-secondary-foreground">
+                            {summary.passable} Passable
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[14px]">
+                          <AlertTriangle className="h-4 w-4 text-status-caution" />
+                          <span className="text-secondary-foreground">
+                            {summary.highRisk} High Risk
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[14px]">
+                          <XCircle className="h-4 w-4 text-status-not-passable" />
+                          <span className="text-secondary-foreground">
+                            {summary.impassable} Not Passable
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[14px]">
+                          <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-secondary-foreground">
+                            {summary.unknown} Unknown
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t">
+                        <div className="flex items-center justify-between gap-4 p-4 bg-muted/50 rounded-lg">
+                          <div className="flex-1">
+                            <p className="text-[14px] font-medium text-foreground mb-1">
+                              Select your vehicle to see what applies to you
+                            </p>
+                            <p className="text-[13px] text-muted-foreground">
+                              Trail conditions vary by vehicle type
+                            </p>
+                          </div>
+                          <VehicleSelector onSelect={setSelectedVehicle} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
           </CardContent>
         </Card>
       )}

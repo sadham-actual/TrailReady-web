@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { VehicleProvider } from "@/contexts/VehicleContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,8 +19,10 @@ export default function RootLayout({
       <head />
       <body className="min-h-screen bg-background antialiased">
         <ThemeProvider>
-          <Header />
-          <main>{children}</main>
+          <VehicleProvider>
+            <Header />
+            <main>{children}</main>
+          </VehicleProvider>
         </ThemeProvider>
       </body>
     </html>
