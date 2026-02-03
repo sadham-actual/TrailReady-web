@@ -266,3 +266,79 @@
   background-size: cover;
   background-position: center;
 }
+
+/* Leaflet map customizations */
+.custom-trail-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Ensure Leaflet controls match outdoor theme */
+.leaflet-control-zoom {
+  border: 2px solid #DDD6CA !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.leaflet-control-zoom a {
+  background-color: #FAF6F1 !important;
+  color: #2D5A3D !important;
+  font-weight: 600 !important;
+  font-size: 20px !important;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: #5FA777 !important;
+  color: white !important;
+}
+
+.leaflet-control-zoom-in {
+  border-bottom: 1px solid #DDD6CA !important;
+}
+
+/* Popup styling to match brand */
+.leaflet-popup-content-wrapper {
+  background-color: #FAF6F1 !important;
+  border-radius: 12px !important;
+  border: 2px solid #DDD6CA !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.leaflet-popup-tip {
+  background-color: #FAF6F1 !important;
+  border-color: #DDD6CA !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: #5C4B3A !important;
+  font-size: 24px !important;
+  padding: 4px 8px !important;
+  font-weight: 600 !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover {
+  color: #2D5A3D !important;
+}
+
+/* Dark mode adjustments for Leaflet */
+.dark .leaflet-control-zoom a {
+  background-color: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+.dark .leaflet-control-zoom a:hover {
+  background-color: #5FA777 !important;
+  color: white !important;
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+.dark .leaflet-popup-tip {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
