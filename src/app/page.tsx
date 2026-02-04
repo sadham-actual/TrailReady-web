@@ -32,23 +32,23 @@ export default function Home() {
         />
 
         {/* Hero Content */}
-        <div className="relative z-10 w-full max-w-md mx-auto text-center px-2">
+        <div className="relative z-10 w-full max-w-sm mx-auto text-center px-8">
           {/* Heading */}
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-3">
             TrailReady
           </h1>
 
           {/* Tagline */}
-          <p className="text-lg md:text-xl text-white/90 mb-10">
+          <p className="text-lg md:text-xl text-white/90 mb-12">
             Know before you go
           </p>
 
           {/* Three Action Buttons */}
-          <div className="flex flex-col gap-6 w-full">
+          <div className="flex flex-col gap-8 w-full">
             {/* Browse Trails */}
             <Link
               href="/trails/browse"
-              className="group flex items-center justify-center gap-3 w-full h-20 px-6 md:px-8 bg-forest hover:bg-forest-dark text-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
+              className="group flex items-center justify-center gap-3 w-full min-h-[84px] px-8 bg-forest hover:bg-forest-dark text-white rounded-2xl shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] hover:-translate-y-1 transition-all duration-200"
             >
               <Map className="h-6 w-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
               <span className="text-lg font-semibold">Browse Trails</span>
@@ -57,7 +57,7 @@ export default function Home() {
             {/* Search Trails */}
             <Link
               href="/trails/search"
-              className="group flex items-center justify-center gap-3 w-full h-20 px-6 md:px-8 bg-earth hover:bg-earth-dark text-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
+              className="group flex items-center justify-center gap-3 w-full min-h-[84px] px-8 bg-earth hover:bg-earth-dark text-white rounded-2xl shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] hover:-translate-y-1 transition-all duration-200"
             >
               <Search className="h-6 w-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
               <span className="text-lg font-semibold">Search Trails</span>
@@ -66,7 +66,7 @@ export default function Home() {
             {/* Select Vehicle */}
             <button
               onClick={() => setVehicleModalOpen(true)}
-              className="group flex items-center justify-center gap-3 w-full h-20 px-6 md:px-8 bg-stone hover:bg-stone-dark text-white rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
+              className="group flex items-center justify-center gap-3 w-full min-h-[84px] px-8 bg-stone hover:bg-stone-dark text-white rounded-2xl shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] hover:-translate-y-1 transition-all duration-200"
             >
               <Car className="h-6 w-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
               <span className="text-lg font-semibold">
