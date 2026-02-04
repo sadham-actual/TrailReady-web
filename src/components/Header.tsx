@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Mountain, Menu, X, Car, Settings2 } from 'lucide-react';
+import { Menu, X, Car, ChevronDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
@@ -11,7 +11,6 @@ import { VEHICLE_TYPE_LABELS } from '@/types';
 
 export function Header() {
   const pathname = usePathname();
-  const isHome = pathname === '/';
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { selectedVehicle, setSelectedVehicle } = useVehicle();
@@ -19,200 +18,159 @@ export function Header() {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const isActivePath = (path: string) => {
+    if (path === '/trails/browse') return pathname.startsWith('/trails/browse');
+    if (path === '/trails/search') return pathname.startsWith('/trails/search');
+    return pathname === path;
+  };
+
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-        isScrolled || !isHome
-          ? 'bg-[#FAF6F1]/95 backdrop-blur-md border-b border-[#DDD6CA] shadow-sm'
-          : 'bg-transparent'
+      className={`sticky top-0 z-50 w-full transition-all duration-200 ${
+        isScrolled
+          ? 'bg-background/95 backdrop-blur-sm border-b shadow-sm'
+          : 'bg-background border-b'
       }`}
     >
-      <div className="container flex h-16 items-center justify-between px-4">
-        {/* Logo */}
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 max-w-7xl">
+        {/* Logo/Brand */}
         <Link
           href="/"
-          className={`flex items-center gap-2.5 transition-colors ${
-            isScrolled || !isHome ? 'text-[#2D5A3D]' : 'text-white'
-          }`}
+          className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
         >
-          <div
-            className={`p-1.5 rounded-lg transition-colors ${
-              isScrolled || !isHome ? 'bg-[#2D5A3D]' : 'bg-white/20 backdrop-blur-sm'
-            }`}
-          >
-            <Mountain
-              className={`h-5 w-5 ${isScrolled || !isHome ? 'text-white' : 'text-white'}`}
-            />
-          </div>
-          <span
-            className="font-semibold text-lg tracking-tight"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
+          <span className="text-xl font-semibold tracking-tight">
             TrailReady
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1">
-          {!isHome && (
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className={`rounded-lg transition-colors ${
-                isScrolled || !isHome
-                  ? 'text-[#5C4B3A] hover:text-[#2D5A3D] hover:bg-[#EDE6DC]'
-                  : 'text-white/90 hover:text-white hover:bg-white/10'
-              }`}
-              style={{ fontFamily: 'var(--font-display)' }}
-            >
-              <Link href="/">Home</Link>
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            asChild
-            className={`rounded-lg transition-colors ${
-              isScrolled || !isHome
-                ? 'text-[#5C4B3A] hover:text-[#2D5A3D] hover:bg-[#EDE6DC]'
-                : 'text-white/90 hover:text-white hover:bg-white/10'
+        <nav className="hidden md:flex items-center gap-8">
+          <Link
+            href="/trails/browse"
+            className={`text-sm font-medium transition-colors ${
+              isActivePath('/trails/browse')
+                ? 'text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
-            style={{ fontFamily: 'var(--font-display)' }}
           >
-            <Link href="/trails">Browse Trails</Link>
-          </Button>
+            Browse
+          </Link>
+          <Link
+            href="/trails/search"
+            className={`text-sm font-medium transition-colors ${
+              isActivePath('/trails/search')
+                ? 'text-primary'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            Search
+          </Link>
+        </nav>
 
-          {/* Vehicle indicator */}
+        {/* Vehicle Selector - Desktop */}
+        <div className="hidden md:flex items-center">
           {selectedVehicle ? (
             <button
               onClick={() => setVehicleModalOpen(true)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${
-                isScrolled || !isHome
-                  ? 'bg-[#5FA777]/10 hover:bg-[#5FA777]/20 text-[#2D5A3D]'
-                  : 'bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm'
-              }`}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-light/10 hover:bg-stone-light/20 text-sm font-medium transition-all"
             >
-              <Car className="h-4 w-4" />
-              <span className="text-sm font-medium" style={{ fontFamily: 'var(--font-display)' }}>
-                {VEHICLE_TYPE_LABELS[selectedVehicle].replace(' - ', ' ')}
+              <Car className="h-4 w-4 text-forest" />
+              <span className="text-foreground">
+                {VEHICLE_TYPE_LABELS[selectedVehicle].split(' - ')[0]}
               </span>
-              <Settings2 className="h-3 w-3 opacity-60" />
+              <ChevronDown className="h-3 w-3 text-muted-foreground" />
             </button>
           ) : (
             <button
               onClick={() => setVehicleModalOpen(true)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${
-                isScrolled || !isHome
-                  ? 'border-[#DDD6CA] hover:border-[#5FA777] text-[#5C4B3A] hover:text-[#2D5A3D]'
-                  : 'border-white/30 hover:border-white/50 text-white/90 hover:text-white'
-              }`}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full border hover:border-forest/50 text-sm font-medium transition-all"
             >
               <Car className="h-4 w-4" />
-              <span className="text-sm" style={{ fontFamily: 'var(--font-display)' }}>Select Vehicle</span>
+              <span>Select Vehicle</span>
             </button>
           )}
+        </div>
 
-          <Button
-            size="sm"
-            asChild
-            className={`ml-2 rounded-lg shadow-sm transition-all hover:shadow-md ${
-              isScrolled || !isHome
-                ? 'bg-[#2D5A3D] hover:bg-[#3D6B4D] text-white'
-                : 'bg-white text-[#2D5A3D] hover:bg-white/90'
-            }`}
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            <Link href="/trails">Submit Report</Link>
-          </Button>
-        </nav>
-
-        {/* Mobile actions */}
+        {/* Mobile Actions */}
         <div className="md:hidden flex items-center gap-2">
-          {/* Mobile vehicle button - icon only */}
+          {/* Mobile Vehicle Button - Icon Only */}
           <button
             onClick={() => setVehicleModalOpen(true)}
-            className={`p-2 rounded-full transition-colors ${
-              isScrolled || !isHome
-                ? 'text-[#2D5A3D] hover:bg-[#EDE6DC]'
-                : 'text-white hover:bg-white/10'
-            }`}
+            className="p-2 rounded-lg hover:bg-secondary transition-colors"
+            aria-label="Select vehicle"
           >
-            <Car className={`h-5 w-5 ${selectedVehicle ? 'fill-current opacity-100' : 'opacity-70'}`} />
+            <Car className={`h-5 w-5 ${selectedVehicle ? 'text-forest' : 'text-muted-foreground'}`} />
           </button>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className={`p-2 rounded-lg transition-colors ${
-              isScrolled || !isHome
-                ? 'text-[#2D5A3D] hover:bg-[#EDE6DC]'
-                : 'text-white hover:bg-white/10'
-            }`}
+            className="p-2 rounded-lg hover:bg-secondary transition-colors"
+            aria-label="Toggle menu"
           >
-            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-[#FAF6F1] border-t border-[#DDD6CA] px-4 py-4 space-y-2">
-          {!isHome && (
+        <div className="md:hidden bg-background border-t">
+          <nav className="container mx-auto px-4 py-4 space-y-1">
             <Link
-              href="/"
+              href="/trails/browse"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block px-4 py-2 text-[#5C4B3A] hover:text-[#2D5A3D] hover:bg-[#EDE6DC] rounded-lg transition-colors"
-              style={{ fontFamily: 'var(--font-display)' }}
+              className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                isActivePath('/trails/browse')
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-foreground hover:bg-secondary'
+              }`}
             >
-              Home
+              Browse Trails
             </Link>
-          )}
-          <Link
-            href="/trails"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="block px-4 py-2 text-[#5C4B3A] hover:text-[#2D5A3D] hover:bg-[#EDE6DC] rounded-lg transition-colors"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            Browse Trails
-          </Link>
-
-          {/* Vehicle selection in mobile menu */}
-          {selectedVehicle && (
-            <button
-              onClick={() => {
-                setVehicleModalOpen(true);
-                setIsMobileMenuOpen(false);
-              }}
-              className="w-full flex items-center justify-between px-4 py-2 text-[#5C4B3A] hover:text-[#2D5A3D] hover:bg-[#EDE6DC] rounded-lg transition-colors"
-              style={{ fontFamily: 'var(--font-display)' }}
+            <Link
+              href="/trails/search"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                isActivePath('/trails/search')
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-foreground hover:bg-secondary'
+              }`}
             >
-              <span className="flex items-center gap-2">
-                <Car className="h-4 w-4" />
-                {VEHICLE_TYPE_LABELS[selectedVehicle]}
-              </span>
-              <Settings2 className="h-4 w-4 opacity-50" />
-            </button>
-          )}
+              Search Trails
+            </Link>
 
-          <Link
-            href="/trails"
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="block px-4 py-3 text-center bg-[#2D5A3D] text-white rounded-lg hover:bg-[#3D6B4D] transition-colors"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            Submit Report
-          </Link>
+            {/* Vehicle Selection in Mobile Menu */}
+            {selectedVehicle && (
+              <button
+                onClick={() => {
+                  setVehicleModalOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium hover:bg-secondary transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <Car className="h-4 w-4 text-forest" />
+                  <span>{VEHICLE_TYPE_LABELS[selectedVehicle]}</span>
+                </span>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </button>
+            )}
+          </nav>
         </div>
       )}
 
-      {/* Vehicle selection modal */}
+      {/* Vehicle Selection Modal */}
       <VehicleSelectionModal
         open={vehicleModalOpen}
         onOpenChange={setVehicleModalOpen}

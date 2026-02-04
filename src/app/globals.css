@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @custom-variant dark (&:is(.dark *));
 
@@ -7,13 +7,43 @@
 @tailwind utilities;
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+  /* Radius scale */
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+
+  /* TrailReady Design System - Colors */
+  --color-forest-dark: #2D5F3F;
+  --color-forest: #5FA777;
+  --color-forest-light: #7BC497;
+
+  --color-earth-dark: #A8653F;
+  --color-earth: #C67B4E;
+  --color-earth-light: #D4956A;
+
+  --color-stone-dark: #4A5568;
+  --color-stone: #718096;
+  --color-stone-light: #A0AEC0;
+
+  --color-alert-dark: #C93A3A;
+  --color-alert: #D84545;
+  --color-alert-light: #EF5555;
+
+  /* Status colors */
+  --color-status-passable: var(--color-forest);
+  --color-status-caution: var(--color-earth);
+  --color-status-not-passable: var(--color-alert);
+  --color-status-unknown: var(--color-stone);
+
+  /* Background system */
+  --color-background-light: #FAFAF9;
+  --color-background-cream: #F5F5F4;
+  --color-background-dark: #1A1F1C;
+  --color-background-slate: #2D3330;
+
+  /* Semantic aliases for Tailwind */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -32,53 +62,40 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-  /* Status colors */
-  --color-status-passable: var(--status-passable);
-  --color-status-caution: var(--status-caution);
-  --color-status-not-passable: var(--status-not-passable);
-  --color-status-info: var(--status-info);
-  /* Custom earthy colors */
-  --color-forest: var(--forest);
-  --color-moss: var(--moss);
-  --color-terracotta: var(--terracotta);
-  --color-sandstone: var(--sandstone);
-  --color-bark: var(--bark);
-  --color-cream: var(--cream);
+
   /* Font families */
-  --font-display: 'Outfit', system-ui, sans-serif;
-  --font-body: 'Source Serif 4', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Typography scale - mobile first */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+
+  /* Line heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow: 0 2px 4px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 8px rgba(0,0,0,0.12);
+  --shadow-lg: 0 8px 16px rgba(0,0,0,0.16);
 }
 
-/* TrailReady Theme - AllTrails-Inspired Earthy Outdoor Aesthetic */
+/* Light mode theme */
 :root {
-  --radius: 0.5rem;
-
-  /* Earthy color palette */
-  --forest: #2D5A3D;
-  --moss: #4A7C59;
-  --terracotta: #C67B4E;
-  --sandstone: #D4B896;
-  --bark: #3D2E24;
-  --cream: #FAF6F1;
-
-  /* Background - Warm cream with subtle texture feel */
-  --background: #FAF6F1;
+  /* Background - Warm white */
+  --background: #FAFAF9;
   --foreground: #2C2418;
 
-  /* Card/Surface - Soft white with warmth */
+  /* Card/Surface - Clean white */
   --card: #FFFFFF;
   --card-foreground: #2C2418;
 
@@ -86,98 +103,59 @@
   --popover: #FFFFFF;
   --popover-foreground: #2C2418;
 
-  /* Primary - Forest green (AllTrails signature) */
-  --primary: #2D5A3D;
+  /* Primary - Forest green */
+  --primary: #5FA777;
   --primary-foreground: #FFFFFF;
 
-  /* Secondary - Warm sandstone */
-  --secondary: #EDE6DC;
-  --secondary-foreground: #5C4B3A;
+  /* Secondary - Warm cream */
+  --secondary: #F5F5F4;
+  --secondary-foreground: #4A5568;
 
-  /* Muted - Soft sage */
-  --muted: #E8E4DB;
-  --muted-foreground: #7A6E5D;
+  /* Muted - Soft neutral */
+  --muted: #F5F5F4;
+  --muted-foreground: #718096;
 
-  /* Accent - Terracotta warmth */
+  /* Accent - Earth warmth */
   --accent: #FDF8F3;
   --accent-foreground: #C67B4E;
 
   /* Destructive */
-  --destructive: #B8443B;
+  --destructive: #D84545;
 
-  /* Borders - Soft earth tones */
-  --border: #DDD6CA;
-  --input: #E5DFD4;
-  --ring: #4A7C59;
-
-  /* Status colors - Nature inspired */
-  --status-passable: #4A7C59;
-  --status-caution: #D4A24C;
-  --status-not-passable: #B8443B;
-  --status-info: #5A7FA8;
-
-  /* Chart colors */
-  --chart-1: #2D5A3D;
-  --chart-2: #C67B4E;
-  --chart-3: #5A7FA8;
-  --chart-4: #D4A24C;
-  --chart-5: #8B7355;
-
-  /* Sidebar */
-  --sidebar: #2D5A3D;
-  --sidebar-foreground: #FAF6F1;
-  --sidebar-primary: #FAF6F1;
-  --sidebar-primary-foreground: #2D5A3D;
-  --sidebar-accent: #3D6B4D;
-  --sidebar-accent-foreground: #FAF6F1;
-  --sidebar-border: #3D6B4D;
-  --sidebar-ring: #4A7C59;
+  /* Borders - Soft gray */
+  --border: #E5E5E5;
+  --input: #E5E5E5;
+  --ring: #5FA777;
 }
 
 /* Dark mode - Deep forest night */
 .dark {
   --background: #1A1F1C;
   --foreground: #E8E4DB;
+
   --card: #232A26;
   --card-foreground: #E8E4DB;
+
   --popover: #2A322D;
   --popover-foreground: #E8E4DB;
-  --primary: #5FA777;
+
+  --primary: #7BC497;
   --primary-foreground: #1A1F1C;
+
   --secondary: #2A322D;
-  --secondary-foreground: #B8AFA2;
+  --secondary-foreground: #A0AEC0;
+
   --muted: #2A322D;
-  --muted-foreground: #8A8278;
+  --muted-foreground: #718096;
+
   --accent: #2A322D;
   --accent-foreground: #D4956A;
-  --destructive: #C65A52;
+
+  --destructive: #EF5555;
+
   --border: #3A4540;
   --input: #3A4540;
-  --ring: #5FA777;
-  --status-passable: #5FA777;
-  --status-caution: #D4A24C;
-  --status-not-passable: #C65A52;
-  --status-info: #6B8FBA;
-  --chart-1: #5FA777;
-  --chart-2: #D4956A;
-  --chart-3: #6B8FBA;
-  --chart-4: #D4A24C;
-  --chart-5: #9A8B76;
-  --sidebar: #232A26;
-  --sidebar-foreground: #E8E4DB;
-  --sidebar-primary: #5FA777;
-  --sidebar-primary-foreground: #1A1F1C;
-  --sidebar-accent: #2A322D;
-  --sidebar-accent-foreground: #B8AFA2;
-  --sidebar-border: #3A4540;
-  --sidebar-ring: #5FA777;
-
-  --forest: #5FA777;
-  --moss: #7ABF8F;
-  --terracotta: #D4956A;
-  --sandstone: #B8AFA2;
-  --bark: #4A4038;
-  --cream: #E8E4DB;
+  --ring: #7BC497;
 }
 
 @layer base {
@@ -186,11 +164,21 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-body);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
   }
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-display);
+    font-family: var(--font-sans);
+    font-weight: 600;
+    line-height: var(--line-height-tight);
   }
+  h1 { font-size: var(--font-size-4xl); }
+  h2 { font-size: var(--font-size-3xl); }
+  h3 { font-size: var(--font-size-2xl); }
+  h4 { font-size: var(--font-size-xl); }
+  h5 { font-size: var(--font-size-lg); }
+  h6 { font-size: var(--font-size-base); }
 }
 
 /* Custom animations */
@@ -221,17 +209,6 @@
   }
 }
 
-@keyframes slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
 .animate-float-slow {
   animation: float-slow 6s ease-in-out infinite;
 }
@@ -244,28 +221,11 @@
   animation: scale-in 0.5s ease-out forwards;
 }
 
-.animate-slide-in-right {
-  animation: slide-in-right 0.5s ease-out forwards;
-}
-
 /* Staggered animation delays */
 .delay-100 { animation-delay: 100ms; }
 .delay-200 { animation-delay: 200ms; }
 .delay-300 { animation-delay: 300ms; }
 .delay-400 { animation-delay: 400ms; }
-.delay-500 { animation-delay: 500ms; }
-
-/* Topographic pattern overlay */
-.topo-pattern {
-  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 10c22 0 40 18 40 40s-18 40-40 40S10 72 10 50 28 10 50 10zm0 10c-16.5 0-30 13.5-30 30s13.5 30 30 30 30-13.5 30-30-13.5-30-30-30zm0 10c11 0 20 9 20 20s-9 20-20 20-20-9-20-20 9-20 20-20z' fill='none' stroke='%232D5A3D' stroke-opacity='0.05' stroke-width='0.5'/%3E%3C/svg%3E");
-}
-
-/* Mountain silhouette divider */
-.mountain-divider {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 1200 120' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'%3E%3Cpath d='M0 120L200 80L350 100L500 40L650 90L800 50L950 85L1100 30L1200 70V120H0Z' fill='%232D5A3D'/%3E%3C/svg%3E");
-  background-size: cover;
-  background-position: center;
-}
 
 /* Leaflet map customizations */
 .custom-trail-marker {
@@ -273,72 +233,49 @@
   border: none !important;
 }
 
-/* Ensure Leaflet controls match outdoor theme */
 .leaflet-control-zoom {
-  border: 2px solid #DDD6CA !important;
-  border-radius: 12px !important;
+  border: 2px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: var(--shadow-md) !important;
 }
 
 .leaflet-control-zoom a {
-  background-color: #FAF6F1 !important;
-  color: #2D5A3D !important;
+  background-color: var(--card) !important;
+  color: var(--foreground) !important;
   font-weight: 600 !important;
   font-size: 20px !important;
   transition: background-color 0.2s, color 0.2s;
 }
 
 .leaflet-control-zoom a:hover {
-  background-color: #5FA777 !important;
+  background-color: var(--color-forest) !important;
   color: white !important;
 }
 
 .leaflet-control-zoom-in {
-  border-bottom: 1px solid #DDD6CA !important;
+  border-bottom: 1px solid var(--border) !important;
 }
 
-/* Popup styling to match brand */
 .leaflet-popup-content-wrapper {
-  background-color: #FAF6F1 !important;
-  border-radius: 12px !important;
-  border: 2px solid #DDD6CA !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  background-color: var(--card) !important;
+  border-radius: var(--radius-lg) !important;
+  border: 2px solid var(--border) !important;
+  box-shadow: var(--shadow-lg) !important;
 }
 
 .leaflet-popup-tip {
-  background-color: #FAF6F1 !important;
-  border-color: #DDD6CA !important;
+  background-color: var(--card) !important;
+  border-color: var(--border) !important;
 }
 
 .leaflet-container a.leaflet-popup-close-button {
-  color: #5C4B3A !important;
+  color: var(--muted-foreground) !important;
   font-size: 24px !important;
   padding: 4px 8px !important;
   font-weight: 600 !important;
 }
 
 .leaflet-container a.leaflet-popup-close-button:hover {
-  color: #2D5A3D !important;
-}
-
-/* Dark mode adjustments for Leaflet */
-.dark .leaflet-control-zoom a {
-  background-color: #1f2937 !important;
-  color: #f9fafb !important;
-}
-
-.dark .leaflet-control-zoom a:hover {
-  background-color: #5FA777 !important;
-  color: white !important;
-}
-
-.dark .leaflet-popup-content-wrapper {
-  background-color: #1f2937 !important;
-  border-color: #374151 !important;
-}
-
-.dark .leaflet-popup-tip {
-  background-color: #1f2937 !important;
-  border-color: #374151 !important;
+  color: var(--foreground) !important;
 }
