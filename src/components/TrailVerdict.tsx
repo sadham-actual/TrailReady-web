@@ -70,7 +70,6 @@ export function TrailVerdict({ reports, trailName }: TrailVerdictProps) {
                     <h2
                       className="text-3xl md:text-5xl font-black mb-3 tracking-tight leading-tight"
                       style={{
-                        fontFamily: 'var(--font-display)',
                         color: getRecommendationColor(verdict.riskLevel),
                         textShadow: '0 2px 4px rgba(0,0,0,0.1)'
                       }}
@@ -79,20 +78,14 @@ export function TrailVerdict({ reports, trailName }: TrailVerdictProps) {
                     </h2>
 
                     {selectedVehicle ? (
-                      <div className="flex items-center gap-2.5 bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full inline-flex border border-[#DDD6CA]">
-                        <Car className="h-5 w-5 text-[#2D5A3D]" />
-                        <p
-                          className="text-[#2D5A3D] font-bold text-sm"
-                          style={{ fontFamily: 'var(--font-display)' }}
-                        >
+                      <div className="flex items-center gap-2.5 bg-white/50 backdrop-blur-sm px-4 py-2 rounded-full inline-flex border">
+                        <Car className="h-5 w-5 text-forest-dark" />
+                        <p className="text-forest-dark font-bold text-sm">
                           For {VEHICLE_TYPE_LABELS[selectedVehicle]}
                         </p>
                       </div>
                     ) : (
-                      <p
-                        className="text-[#3D2E24] text-base font-semibold"
-                        style={{ fontFamily: 'var(--font-body)' }}
-                      >
+                      <p className="text-foreground text-base font-semibold">
                         Select your vehicle type for personalized assessment
                       </p>
                     )}
@@ -100,10 +93,9 @@ export function TrailVerdict({ reports, trailName }: TrailVerdictProps) {
 
                   {/* Risk badge */}
                   <Badge
-                    className={`text-lg px-5 py-2.5 font-black whitespace-nowrap shadow-lg ${getRiskBadgeClass(
+                    className={`text-lg px-5 py-2.5 font-black whitespace-nowrap shadow-lg tracking-wide ${getRiskBadgeClass(
                       verdict.riskLevel
                     )}`}
-                    style={{ fontFamily: 'var(--font-display)', letterSpacing: '0.05em' }}
                   >
                     {verdict.riskLevel} RISK
                   </Badge>
@@ -113,61 +105,43 @@ export function TrailVerdict({ reports, trailName }: TrailVerdictProps) {
 
             {/* Quick stats */}
             {selectedVehicle && verdict.vehicleSuccessRate.total > 0 && (
-              <div className="grid grid-cols-3 gap-4 mb-6 p-6 bg-white/70 backdrop-blur-sm rounded-2xl border-2 border-[#DDD6CA] shadow-sm relative z-10">
+              <div className="grid grid-cols-3 gap-4 mb-6 p-6 bg-white/70 backdrop-blur-sm rounded-2xl border-2 shadow-sm relative z-10">
                 <div className="text-center group hover:scale-105 transition-transform">
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    <div className="p-2 bg-[#5FA777]/10 rounded-xl">
-                      <CheckCircle2 className="h-6 w-6 text-[#5FA777]" />
+                    <div className="p-2 bg-forest/10 rounded-xl">
+                      <CheckCircle2 className="h-6 w-6 text-forest" />
                     </div>
                   </div>
-                  <div
-                    className="text-4xl font-black text-[#5FA777] mb-1"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
+                  <div className="text-4xl font-black text-forest mb-1">
                     {verdict.vehicleSuccessRate.successful}
                   </div>
-                  <div
-                    className="text-sm text-[#3D2E24] font-bold uppercase tracking-wide"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
+                  <div className="text-sm text-foreground font-bold uppercase tracking-wide">
                     Successful
                   </div>
                 </div>
                 <div className="text-center group hover:scale-105 transition-transform">
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    <div className="p-2 bg-[#D64545]/10 rounded-xl">
-                      <XCircle className="h-6 w-6 text-[#D64545]" />
+                    <div className="p-2 bg-alert/10 rounded-xl">
+                      <XCircle className="h-6 w-6 text-alert" />
                     </div>
                   </div>
-                  <div
-                    className="text-4xl font-black text-[#D64545] mb-1"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
+                  <div className="text-4xl font-black text-alert mb-1">
                     {verdict.vehicleSuccessRate.failed}
                   </div>
-                  <div
-                    className="text-sm text-[#3D2E24] font-bold uppercase tracking-wide"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
+                  <div className="text-sm text-foreground font-bold uppercase tracking-wide">
                     Failed
                   </div>
                 </div>
                 <div className="text-center group hover:scale-105 transition-transform">
                   <div className="flex items-center justify-center gap-2 mb-2">
-                    <div className="p-2 bg-[#2D5A3D]/10 rounded-xl">
-                      <Shield className="h-6 w-6 text-[#2D5A3D]" />
+                    <div className="p-2 bg-forest-dark/10 rounded-xl">
+                      <Shield className="h-6 w-6 text-forest-dark" />
                     </div>
                   </div>
-                  <div
-                    className="text-4xl font-black text-[#2D5A3D] mb-1"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
+                  <div className="text-4xl font-black text-forest-dark mb-1">
                     {verdict.vehicleSuccessRate.total}
                   </div>
-                  <div
-                    className="text-sm text-[#3D2E24] font-bold uppercase tracking-wide"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
+                  <div className="text-sm text-foreground font-bold uppercase tracking-wide">
                     Total
                   </div>
                 </div>
@@ -178,14 +152,11 @@ export function TrailVerdict({ reports, trailName }: TrailVerdictProps) {
             {verdict.reasoning.length > 0 && (
               <div className="space-y-3 relative z-10">
                 {verdict.reasoning.slice(0, 3).map((reason, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-3 bg-white/50 rounded-xl border border-[#DDD6CA] hover:border-[#5FA777] transition-colors">
-                    <div className="p-2 bg-[#5FA777]/10 rounded-lg flex-shrink-0">
-                      <Info className="h-5 w-5 text-[#5FA777]" />
+                  <div key={idx} className="flex items-start gap-3 p-3 bg-white/50 rounded-xl border hover:border-forest transition-colors">
+                    <div className="p-2 bg-forest/10 rounded-lg flex-shrink-0">
+                      <Info className="h-5 w-5 text-forest" />
                     </div>
-                    <span
-                      className="text-base text-[#2D5A3D] font-medium leading-relaxed pt-1"
-                      style={{ fontFamily: 'var(--font-body)' }}
-                    >
+                    <span className="text-base text-foreground font-medium leading-relaxed pt-1">
                       {reason}
                     </span>
                   </div>
@@ -196,12 +167,9 @@ export function TrailVerdict({ reports, trailName }: TrailVerdictProps) {
 
           {/* Recent reports preview */}
           {verdict.recentReports.length > 0 && (
-            <div className="border-t-4 border-[#DDD6CA] bg-white/60 backdrop-blur-sm p-6">
-              <h3
-                className="text-lg font-black mb-4 flex items-center gap-3 text-[#2D5A3D] uppercase tracking-wide"
-                style={{ fontFamily: 'var(--font-display)' }}
-              >
-                <div className="p-2 bg-[#2D5A3D]/10 rounded-xl">
+            <div className="border-t-4 bg-white/60 backdrop-blur-sm p-6">
+              <h3 className="text-lg font-black mb-4 flex items-center gap-3 text-foreground uppercase tracking-wide">
+                <div className="p-2 bg-forest-dark/10 rounded-xl">
                   <Calendar className="h-5 w-5" />
                 </div>
                 Most Recent Reports
@@ -210,41 +178,34 @@ export function TrailVerdict({ reports, trailName }: TrailVerdictProps) {
                 {verdict.recentReports.slice(0, 3).map((report) => (
                   <div
                     key={report.id}
-                    className="flex items-center justify-between p-4 bg-white rounded-xl border-2 border-[#DDD6CA] hover:border-[#5FA777] hover:shadow-md transition-all"
+                    className="flex items-center justify-between p-4 bg-white rounded-xl border-2 hover:border-forest hover:shadow-md transition-all"
                   >
                     <div className="flex items-center gap-4">
                       {report.status === 'clear' ? (
-                        <div className="p-2.5 bg-[#5FA777]/10 rounded-xl border-2 border-[#5FA777]/30">
-                          <CheckCircle2 className="h-6 w-6 text-[#5FA777]" strokeWidth={2.5} />
+                        <div className="p-2.5 bg-forest/10 rounded-xl border-2 border-forest/30">
+                          <CheckCircle2 className="h-6 w-6 text-forest" strokeWidth={2.5} />
                         </div>
                       ) : report.status === 'rough' ? (
-                        <div className="p-2.5 bg-[#C67B4E]/10 rounded-xl border-2 border-[#C67B4E]/30">
-                          <AlertTriangle className="h-6 w-6 text-[#C67B4E]" strokeWidth={2.5} />
+                        <div className="p-2.5 bg-earth/10 rounded-xl border-2 border-earth/30">
+                          <AlertTriangle className="h-6 w-6 text-earth" strokeWidth={2.5} />
                         </div>
                       ) : (
-                        <div className="p-2.5 bg-[#D64545]/10 rounded-xl border-2 border-[#D64545]/30">
-                          <XCircle className="h-6 w-6 text-[#D64545]" strokeWidth={2.5} />
+                        <div className="p-2.5 bg-alert/10 rounded-xl border-2 border-alert/30">
+                          <XCircle className="h-6 w-6 text-alert" strokeWidth={2.5} />
                         </div>
                       )}
                       <div>
-                        <div
-                          className="font-black text-base text-[#2D5A3D] mb-1"
-                          style={{ fontFamily: 'var(--font-display)' }}
-                        >
+                        <div className="font-black text-base text-foreground mb-1">
                           {STATUS_LABELS[report.status as Status]}
                         </div>
-                        <div
-                          className="text-sm text-[#5C4B3A] font-medium"
-                          style={{ fontFamily: 'var(--font-body)' }}
-                        >
+                        <div className="text-sm text-muted-foreground font-medium">
                           {VEHICLE_TYPE_LABELS[report.vehicleType]} · {formatRelativeTime(report.timestamp)}
                         </div>
                       </div>
                     </div>
                     <Badge
                       variant="outline"
-                      className="text-xs border-2 border-[#DDD6CA] text-[#3D2E24] font-bold px-3 py-1"
-                      style={{ fontFamily: 'var(--font-display)' }}
+                      className="text-xs border-2 text-foreground font-bold px-3 py-1"
                     >
                       {report.confidence}
                     </Badge>
@@ -256,28 +217,21 @@ export function TrailVerdict({ reports, trailName }: TrailVerdictProps) {
 
           {/* No vehicle selected CTA */}
           {verdict.needsVehicleSelection && (
-            <div className="border-t border-[#DDD6CA] bg-gradient-to-br from-[#E8F5EC] to-[#D4E8DC] p-4">
-              <div className="flex items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-[#5FA777]/30">
-                <Car className="h-5 w-5 text-[#5FA777] flex-shrink-0" />
+            <div className="border-t bg-forest/5 p-4">
+              <div className="flex items-center gap-3 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-forest/30">
+                <Car className="h-5 w-5 text-forest flex-shrink-0" />
                 <div className="flex-1">
-                  <p
-                    className="text-sm font-bold text-[#2D5A3D]"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
+                  <p className="text-sm font-bold text-foreground">
                     Get a personalized risk assessment
                   </p>
-                  <p
-                    className="text-xs text-[#5C4B3A] mt-0.5"
-                    style={{ fontFamily: 'var(--font-body)' }}
-                  >
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Select your vehicle type to see how this trail matches your capabilities
                   </p>
                 </div>
                 <Button
                   size="sm"
                   onClick={() => setVehicleModalOpen(true)}
-                  className="bg-[#5FA777] hover:bg-[#4A8A5F] text-white shadow-sm"
-                  style={{ fontFamily: 'var(--font-display)' }}
+                  className="bg-forest hover:bg-forest-dark text-white"
                 >
                   Select Vehicle
                 </Button>
@@ -286,24 +240,19 @@ export function TrailVerdict({ reports, trailName }: TrailVerdictProps) {
           )}
 
           {/* Confidence indicator */}
-          <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-white/40 to-white/60 border-t-4 border-[#DDD6CA]">
+          <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-white/40 to-white/60 border-t-4">
             <div className="flex items-center gap-3">
               <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm uppercase tracking-wide ${getConfidenceColor(verdict.confidence)} ${getConfidenceBackground(verdict.confidence)}`}>
                 {verdict.confidence === 'HIGH' && <TrendingUp className="h-5 w-5" strokeWidth={3} />}
                 {verdict.confidence === 'MEDIUM' && <Minus className="h-5 w-5" strokeWidth={3} />}
                 {verdict.confidence === 'LOW' && <TrendingDown className="h-5 w-5" strokeWidth={3} />}
-                <span
-                  style={{ fontFamily: 'var(--font-display)' }}
-                >
+                <span>
                   {verdict.confidence} Confidence
                 </span>
               </div>
             </div>
             {verdict.recentReports.length > 0 && (
-              <span
-                className="text-[#3D2E24] font-semibold text-sm"
-                style={{ fontFamily: 'var(--font-body)' }}
-              >
+              <span className="text-foreground font-semibold text-sm">
                 Based on {verdict.recentReports.length} recent report{verdict.recentReports.length !== 1 ? 's' : ''}
               </span>
             )}
@@ -518,91 +467,91 @@ function isSimilarVehicle(vehicleA: VehicleType, vehicleB: VehicleType): boolean
 function getBorderColor(riskLevel: string): string {
   switch (riskLevel) {
     case 'LOW':
-      return 'border-[#5FA777] hover:border-[#4A8A5F]';
+      return 'border-forest hover:border-forest-dark';
     case 'MODERATE':
-      return 'border-[#C67B4E] hover:border-[#A8653F]';
+      return 'border-earth hover:border-earth-dark';
     case 'HIGH':
-      return 'border-[#D64545] hover:border-[#B83838]';
+      return 'border-alert hover:border-alert-dark';
     default:
-      return 'border-[#8B7E6A] hover:border-[#6D6153]';
+      return 'border-stone hover:border-stone-dark';
   }
 }
 
 function getRecommendationColor(riskLevel: string): string {
   switch (riskLevel) {
     case 'LOW':
-      return '#2D5A3D';
+      return '#2D5F3F';
     case 'MODERATE':
-      return '#6B3E28';
+      return '#A8653F';
     case 'HIGH':
-      return '#8B2424';
+      return '#C93A3A';
     default:
-      return '#3D2E24';
+      return '#4A5568';
   }
 }
 
 function getBackgroundAccent(riskLevel: string): string {
   switch (riskLevel) {
     case 'LOW':
-      return 'bg-[#5FA777]';
+      return 'bg-forest';
     case 'MODERATE':
-      return 'bg-[#C67B4E]';
+      return 'bg-earth';
     case 'HIGH':
-      return 'bg-[#D64545]';
+      return 'bg-alert';
     default:
-      return 'bg-[#8B7E6A]';
+      return 'bg-stone';
   }
 }
 
 function getBackgroundGradient(riskLevel: string): string {
   switch (riskLevel) {
     case 'LOW':
-      return 'bg-gradient-to-br from-[#E8F5EC] to-[#F0F9F3]';
+      return 'bg-gradient-to-br from-forest/5 to-forest/10';
     case 'MODERATE':
-      return 'bg-gradient-to-br from-[#F5E8DC] to-[#F9F3ED]';
+      return 'bg-gradient-to-br from-earth/5 to-earth/10';
     case 'HIGH':
-      return 'bg-gradient-to-br from-[#FCE8E8] to-[#FDF3F3]';
+      return 'bg-gradient-to-br from-alert/5 to-alert/10';
     default:
-      return 'bg-gradient-to-br from-[#FAF6F1] to-[#F5F0E6]';
+      return 'bg-gradient-to-br from-stone/5 to-stone/10';
   }
 }
 
 function getRiskBadgeClass(riskLevel: string): string {
   switch (riskLevel) {
     case 'LOW':
-      return 'bg-[#5FA777] hover:bg-[#5FA777] text-white border-0';
+      return 'bg-forest hover:bg-forest text-white border-0';
     case 'MODERATE':
-      return 'bg-[#C67B4E] hover:bg-[#C67B4E] text-white border-0';
+      return 'bg-earth hover:bg-earth text-white border-0';
     case 'HIGH':
-      return 'bg-[#D64545] hover:bg-[#D64545] text-white border-0';
+      return 'bg-alert hover:bg-alert text-white border-0';
     default:
-      return 'bg-[#8B7E6A] hover:bg-[#8B7E6A] text-white border-0';
+      return 'bg-stone hover:bg-stone text-white border-0';
   }
 }
 
 function getConfidenceColor(confidence: string): string {
   switch (confidence) {
     case 'HIGH':
-      return 'text-[#2D5A3D]';
+      return 'text-forest-dark';
     case 'MEDIUM':
-      return 'text-[#6B3E28]';
+      return 'text-earth-dark';
     case 'LOW':
-      return 'text-[#5C4B3A]';
+      return 'text-stone-dark';
     default:
-      return 'text-[#3D2E24]';
+      return 'text-foreground';
   }
 }
 
 function getConfidenceBackground(confidence: string): string {
   switch (confidence) {
     case 'HIGH':
-      return 'bg-[#5FA777]/20 border-2 border-[#5FA777]';
+      return 'bg-forest/20 border-2 border-forest';
     case 'MEDIUM':
-      return 'bg-[#C67B4E]/20 border-2 border-[#C67B4E]';
+      return 'bg-earth/20 border-2 border-earth';
     case 'LOW':
-      return 'bg-[#8B7E6A]/20 border-2 border-[#8B7E6A]';
+      return 'bg-stone/20 border-2 border-stone';
     default:
-      return 'bg-[#DDD6CA]/30 border-2 border-[#DDD6CA]';
+      return 'bg-muted border-2';
   }
 }
 
@@ -610,28 +559,28 @@ function getVerdictIcon(riskLevel: string) {
   switch (riskLevel) {
     case 'LOW':
       return (
-        <div className="p-5 bg-[#5FA777] rounded-3xl shadow-2xl border-4 border-white/40 relative group-hover:scale-110 transition-transform">
+        <div className="p-5 bg-forest rounded-3xl shadow-2xl border-4 border-white/40 relative group-hover:scale-110 transition-transform">
           <div className="absolute inset-0 bg-white/20 rounded-3xl blur-xl animate-pulse" />
           <CheckCircle2 className="h-12 w-12 text-white relative z-10" strokeWidth={3} />
         </div>
       );
     case 'MODERATE':
       return (
-        <div className="p-5 bg-[#C67B4E] rounded-3xl shadow-2xl border-4 border-white/40 relative group-hover:scale-110 transition-transform">
+        <div className="p-5 bg-earth rounded-3xl shadow-2xl border-4 border-white/40 relative group-hover:scale-110 transition-transform">
           <div className="absolute inset-0 bg-white/20 rounded-3xl blur-xl animate-pulse" />
           <AlertTriangle className="h-12 w-12 text-white relative z-10" strokeWidth={3} />
         </div>
       );
     case 'HIGH':
       return (
-        <div className="p-5 bg-[#D64545] rounded-3xl shadow-2xl border-4 border-white/40 relative group-hover:scale-110 transition-transform">
+        <div className="p-5 bg-alert rounded-3xl shadow-2xl border-4 border-white/40 relative group-hover:scale-110 transition-transform">
           <div className="absolute inset-0 bg-white/20 rounded-3xl blur-xl animate-pulse" />
           <XCircle className="h-12 w-12 text-white relative z-10" strokeWidth={3} />
         </div>
       );
     default:
       return (
-        <div className="p-5 bg-[#8B7E6A] rounded-3xl shadow-2xl border-4 border-white/40 relative group-hover:scale-110 transition-transform">
+        <div className="p-5 bg-stone rounded-3xl shadow-2xl border-4 border-white/40 relative group-hover:scale-110 transition-transform">
           <div className="absolute inset-0 bg-white/20 rounded-3xl blur-xl animate-pulse" />
           <Info className="h-12 w-12 text-white relative z-10" strokeWidth={3} />
         </div>

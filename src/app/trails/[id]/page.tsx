@@ -177,12 +177,12 @@ export default function TrailDetailPage() {
 
       {/* Trail Header with Status */}
       <div className="mb-8">
-        <h1 className="text-[22px] font-semibold mb-3">{trail.name}</h1>
+        <h1 className="text-2xl font-semibold mb-3">{trail.name}</h1>
         <div className="flex items-center gap-3 flex-wrap">
           {latestReport ? (
             <>
               {getStatusBadge(latestReport.status)}
-              <span className="text-[13px] text-muted-foreground flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <Clock className="h-3.5 w-3.5" />
                 {formatReportAge(latestReport.timestamp)}
               </span>
@@ -193,7 +193,7 @@ export default function TrailDetailPage() {
             </Badge>
           )}
         </div>
-        <p className="text-[14px] text-secondary-foreground mt-3 flex items-center gap-1.5">
+        <p className="text-sm text-muted-foreground mt-3 flex items-center gap-1.5">
           <MapPin className="h-4 w-4" />
           {trail.region}
         </p>
@@ -203,7 +203,7 @@ export default function TrailDetailPage() {
       {trail.description && (
         <Card className="mb-6">
           <CardContent className="p-4">
-            <p className="text-[14px] text-secondary-foreground leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               {trail.description}
             </p>
           </CardContent>
@@ -217,7 +217,7 @@ export default function TrailDetailPage() {
 
       {/* Condition Reports */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-[16px] font-semibold">Condition Reports</h2>
+        <h2 className="text-lg font-semibold">Condition Reports</h2>
         <Button size="sm" asChild>
           <Link href={`/trails/${trailId}/submit`}>
             <Plus className="h-4 w-4 mr-1" />
@@ -230,7 +230,7 @@ export default function TrailDetailPage() {
         <Card>
           <CardContent className="p-8 text-center">
             <p className="text-muted-foreground">No condition reports yet.</p>
-            <p className="text-[13px] text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Be the first to report on this trail.
             </p>
           </CardContent>
@@ -252,13 +252,13 @@ export default function TrailDetailPage() {
 
                 {/* Notes */}
                 {report.notes && (
-                  <p className="text-[14px] text-foreground leading-relaxed mb-3">
+                  <p className="text-sm text-foreground leading-relaxed mb-3">
                     {report.notes}
                   </p>
                 )}
 
                 {/* Timestamp */}
-                <p className="text-[13px] text-muted-foreground flex items-center gap-1.5">
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" />
                   {formatReportAge(report.timestamp)}
                   <span className="text-muted-foreground/60 ml-1">

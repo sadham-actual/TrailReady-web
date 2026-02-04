@@ -127,9 +127,9 @@ export default function SubmitReportPage() {
 
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-[22px] font-semibold mb-2">Submit Report</h1>
+        <h1 className="text-2xl font-semibold mb-2">Submit Report</h1>
         {trail && (
-          <p className="text-[14px] text-secondary-foreground">{trail.name} - {trail.region}</p>
+          <p className="text-sm text-muted-foreground">{trail.name} - {trail.region}</p>
         )}
       </div>
 
