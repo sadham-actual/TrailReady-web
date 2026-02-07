@@ -31,7 +31,22 @@
       "WebFetch(domain:trailready.sadham.org)",
       "Bash(npx tsc:*)",
       "WebFetch(domain:www.alltrails.com)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(pkill:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "mcp__claude_ai_Vercel__deploy_to_vercel",
+      "Bash(vercel deploy:*)",
+      "mcp__claude_ai_Vercel__list_teams",
+      "mcp__claude_ai_Vercel__list_projects",
+      "mcp__claude_ai_Vercel__list_deployments",
+      "mcp__claude_ai_Vercel__get_deployment",
+      "Bash(grep:*)",
+      "Bash(for file in accordion.tsx alert-dialog.tsx alert.tsx aspect-ratio.tsx avatar.tsx breadcrumb.tsx calendar.tsx carousel.tsx chart.tsx checkbox.tsx collapsible.tsx command.tsx context-menu.tsx drawer.tsx dropdown-menu.tsx form.tsx hover-card.tsx input-otp.tsx menubar.tsx navigation-menu.tsx pagination.tsx popover.tsx progress.tsx radio-group.tsx resizable.tsx scroll-area.tsx separator.tsx sheet.tsx sidebar.tsx slider.tsx sonner.tsx switch.tsx table.tsx tabs.tsx toaster.tsx toast.tsx toggle-group.tsx toggle.tsx tooltip.tsx use-toast.ts)",
+      "Bash(do cp \"$file\" /home/jacob/trailready-web/src/components/ui/)",
+      "Bash(done)",
+      "Bash(for file in card.tsx dialog.tsx input.tsx label.tsx select.tsx skeleton.tsx textarea.tsx badge.tsx)",
+      "Bash(node -e:*)"
     ]
   }
 }

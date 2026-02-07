@@ -6,15 +6,13 @@
 @tailwind components;
 @tailwind utilities;
 
-@theme inline {
-  /* Radius scale */
-  --radius-sm: 0.25rem;
-  --radius: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+/* TrailReady Design System
+   Earthy, modern outdoor aesthetic with HSL-based theming
+   Apple utility + Linear minimalism
+*/
 
-  /* TrailReady Design System - Colors */
+@theme inline {
+  /* TrailReady Brand Colors (Hex for reference) */
   --color-forest-dark: #2D5F3F;
   --color-forest: #5FA777;
   --color-forest-light: #7BC497;
@@ -31,163 +29,222 @@
   --color-alert: #D84545;
   --color-alert-light: #EF5555;
 
-  /* Status colors */
+  /* Status color aliases */
   --color-status-passable: var(--color-forest);
   --color-status-caution: var(--color-earth);
   --color-status-not-passable: var(--color-alert);
   --color-status-unknown: var(--color-stone);
-
-  /* Background system */
-  --color-background-light: #FAFAF9;
-  --color-background-cream: #F5F5F4;
-  --color-background-dark: #1A1F1C;
-  --color-background-slate: #2D3330;
-
-  /* Semantic aliases for Tailwind */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-
-  /* Font families */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-
-  /* Typography scale - mobile first */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  --font-size-3xl: 1.875rem;
-  --font-size-4xl: 2.25rem;
-
-  /* Line heights */
-  --line-height-tight: 1.25;
-  --line-height-normal: 1.5;
-  --line-height-relaxed: 1.625;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow: 0 2px 4px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 8px rgba(0,0,0,0.12);
-  --shadow-lg: 0 8px 16px rgba(0,0,0,0.16);
 }
 
-/* Light mode theme */
-:root {
-  /* Background - Warm white */
-  --background: #FAFAF9;
-  --foreground: #2C2418;
+@layer base {
+  :root {
+    /* Core backgrounds */
+    --background: 40 20% 98%;
+    --foreground: 200 15% 15%;
 
-  /* Card/Surface - Clean white */
-  --card: #FFFFFF;
-  --card-foreground: #2C2418;
+    /* Cards and surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 200 15% 15%;
 
-  /* Elevated surfaces */
-  --popover: #FFFFFF;
-  --popover-foreground: #2C2418;
+    --popover: 0 0% 100%;
+    --popover-foreground: 200 15% 15%;
 
-  /* Primary - Forest green */
-  --primary: #5FA777;
-  --primary-foreground: #FFFFFF;
+    /* Primary - Forest Green (converted to HSL) */
+    --primary: 152 35% 54%;
+    --primary-foreground: 0 0% 100%;
 
-  /* Secondary - Warm cream */
-  --secondary: #F5F5F4;
-  --secondary-foreground: #4A5568;
+    /* Secondary - Warm cream */
+    --secondary: 40 10% 96%;
+    --secondary-foreground: 200 15% 25%;
 
-  /* Muted - Soft neutral */
-  --muted: #F5F5F4;
-  --muted-foreground: #718096;
+    /* Muted - Soft neutrals */
+    --muted: 40 10% 96%;
+    --muted-foreground: 200 10% 45%;
 
-  /* Accent - Earth warmth */
-  --accent: #FDF8F3;
-  --accent-foreground: #C67B4E;
+    /* Accent - Warm Sand */
+    --accent: 35 40% 97%;
+    --accent-foreground: 21 42% 46%;
 
-  /* Destructive */
-  --destructive: #D84545;
+    /* Status colors */
+    --destructive: 0 68% 53%;
+    --destructive-foreground: 0 0% 100%;
 
-  /* Borders - Soft gray */
-  --border: #E5E5E5;
-  --input: #E5E5E5;
-  --ring: #5FA777;
-}
+    --success: 152 35% 54%;
+    --success-foreground: 0 0% 100%;
 
-/* Dark mode - Deep forest night */
-.dark {
-  --background: #1A1F1C;
-  --foreground: #E8E4DB;
+    --warning: 21 85% 56%;
+    --warning-foreground: 21 85% 15%;
 
-  --card: #232A26;
-  --card-foreground: #E8E4DB;
+    /* Borders and inputs */
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 152 35% 54%;
 
-  --popover: #2A322D;
-  --popover-foreground: #E8E4DB;
+    --radius: 0.75rem;
 
-  --primary: #7BC497;
-  --primary-foreground: #1A1F1C;
+    /* Custom design tokens */
+    --glass-bg: 0 0% 100% / 0.8;
+    --glass-border: 0 0% 100% / 0.3;
+    --shadow-soft: 0 4px 20px -4px hsl(200 15% 15% / 0.08);
+    --shadow-medium: 0 8px 30px -8px hsl(200 15% 15% / 0.12);
+    --shadow-large: 0 20px 50px -15px hsl(200 15% 15% / 0.15);
 
-  --secondary: #2A322D;
-  --secondary-foreground: #A0AEC0;
+    /* Gradient overlays */
+    --gradient-hero: linear-gradient(to bottom, hsl(200 15% 10% / 0.3) 0%, hsl(200 15% 10% / 0.7) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(40 20% 98%) 0%, hsl(40 15% 95%) 100%);
 
-  --muted: #2A322D;
-  --muted-foreground: #718096;
+    /* Sidebar - earthy tones */
+    --sidebar-background: 40 15% 96%;
+    --sidebar-foreground: 200 15% 25%;
+    --sidebar-primary: 152 35% 54%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 40 20% 92%;
+    --sidebar-accent-foreground: 200 15% 20%;
+    --sidebar-border: 40 15% 88%;
+    --sidebar-ring: 152 35% 54%;
+  }
 
-  --accent: #2A322D;
-  --accent-foreground: #D4956A;
+  .dark {
+    /* Dark mode - deep forest night with earthy accents */
+    --background: 140 15% 10%;
+    --foreground: 40 15% 92%;
 
-  --destructive: #EF5555;
+    --card: 140 12% 14%;
+    --card-foreground: 40 15% 92%;
 
-  --border: #3A4540;
-  --input: #3A4540;
-  --ring: #7BC497;
+    --popover: 140 12% 14%;
+    --popover-foreground: 40 15% 92%;
+
+    /* Primary - Brighter forest green for dark */
+    --primary: 152 45% 61%;
+    --primary-foreground: 140 15% 10%;
+
+    /* Secondary */
+    --secondary: 140 10% 17%;
+    --secondary-foreground: 40 15% 85%;
+
+    /* Muted */
+    --muted: 140 10% 17%;
+    --muted-foreground: 200 10% 55%;
+
+    /* Accent - Warm earth for dark */
+    --accent: 140 10% 17%;
+    --accent-foreground: 21 52% 61%;
+
+    --destructive: 0 72% 59%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 152 45% 61%;
+    --success-foreground: 140 15% 10%;
+
+    --warning: 21 85% 56%;
+    --warning-foreground: 21 85% 10%;
+
+    --border: 140 10% 22%;
+    --input: 140 10% 22%;
+    --ring: 152 45% 61%;
+
+    /* Glass effects for dark */
+    --glass-bg: 140 15% 12% / 0.85;
+    --glass-border: 140 10% 25% / 0.4;
+    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
+    --shadow-medium: 0 8px 30px -8px hsl(0 0% 0% / 0.4);
+    --shadow-large: 0 20px 50px -15px hsl(0 0% 0% / 0.5);
+
+    --gradient-hero: linear-gradient(to bottom, hsl(140 15% 5% / 0.4) 0%, hsl(140 15% 5% / 0.85) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(140 12% 14%) 0%, hsl(140 15% 12%) 100%);
+
+    --sidebar-background: 140 12% 12%;
+    --sidebar-foreground: 40 15% 85%;
+    --sidebar-primary: 152 45% 61%;
+    --sidebar-primary-foreground: 140 15% 10%;
+    --sidebar-accent: 140 10% 17%;
+    --sidebar-accent-foreground: 40 15% 90%;
+    --sidebar-border: 140 10% 22%;
+    --sidebar-ring: 152 45% 61%;
+  }
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: hsl(var(--border));
   }
+
   body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-sans);
-    font-size: var(--font-size-base);
-    line-height: var(--line-height-normal);
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Inter', system-ui, sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-sans);
-    font-weight: 600;
-    line-height: var(--line-height-tight);
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
   }
-  h1 { font-size: var(--font-size-4xl); }
-  h2 { font-size: var(--font-size-3xl); }
-  h3 { font-size: var(--font-size-2xl); }
-  h4 { font-size: var(--font-size-xl); }
-  h5 { font-size: var(--font-size-lg); }
-  h6 { font-size: var(--font-size-base); }
+}
+
+@layer utilities {
+  /* Glass morphism utility */
+  .glass {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--glass-border));
+  }
+
+  .glass-strong {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(var(--glass-border));
+  }
+
+  /* Shadow utilities */
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-medium {
+    box-shadow: var(--shadow-medium);
+  }
+
+  .shadow-large {
+    box-shadow: var(--shadow-large);
+  }
+
+  /* Hero gradient overlay */
+  .hero-overlay {
+    background: var(--gradient-hero);
+  }
+
+  /* Card gradient */
+  .card-gradient {
+    background: var(--gradient-card);
+  }
+
+  /* Safe area padding for mobile */
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
 }
 
 /* Custom animations */
-@keyframes float-slow {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-@keyframes fade-up {
+@keyframes slideUp {
   from {
     opacity: 0;
     transform: translateY(20px);
@@ -198,7 +255,7 @@
   }
 }
 
-@keyframes scale-in {
+@keyframes scaleIn {
   from {
     opacity: 0;
     transform: scale(0.95);
@@ -209,16 +266,25 @@
   }
 }
 
-.animate-float-slow {
-  animation: float-slow 6s ease-in-out infinite;
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
 }
 
-.animate-fade-up {
-  animation: fade-up 0.6s ease-out forwards;
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out;
 }
 
 .animate-scale-in {
-  animation: scale-in 0.5s ease-out forwards;
+  animation: scaleIn 0.3s ease-out;
+}
+
+.animate-float-slow {
+  animation: float-slow 6s ease-in-out infinite;
 }
 
 /* Staggered animation delays */
@@ -234,15 +300,15 @@
 }
 
 .leaflet-control-zoom {
-  border: 2px solid var(--border) !important;
-  border-radius: var(--radius-lg) !important;
+  border: 2px solid hsl(var(--border)) !important;
+  border-radius: var(--radius) !important;
   overflow: hidden;
-  box-shadow: var(--shadow-md) !important;
+  box-shadow: var(--shadow-medium) !important;
 }
 
 .leaflet-control-zoom a {
-  background-color: var(--card) !important;
-  color: var(--foreground) !important;
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--foreground)) !important;
   font-weight: 600 !important;
   font-size: 20px !important;
   transition: background-color 0.2s, color 0.2s;
@@ -254,28 +320,28 @@
 }
 
 .leaflet-control-zoom-in {
-  border-bottom: 1px solid var(--border) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background-color: var(--card) !important;
-  border-radius: var(--radius-lg) !important;
-  border: 2px solid var(--border) !important;
-  box-shadow: var(--shadow-lg) !important;
+  background-color: hsl(var(--card)) !important;
+  border-radius: var(--radius) !important;
+  border: 2px solid hsl(var(--border)) !important;
+  box-shadow: var(--shadow-large) !important;
 }
 
 .leaflet-popup-tip {
-  background-color: var(--card) !important;
-  border-color: var(--border) !important;
+  background-color: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
 }
 
 .leaflet-container a.leaflet-popup-close-button {
-  color: var(--muted-foreground) !important;
+  color: hsl(var(--muted-foreground)) !important;
   font-size: 24px !important;
   padding: 4px 8px !important;
   font-weight: 600 !important;
 }
 
 .leaflet-container a.leaflet-popup-close-button:hover {
-  color: var(--foreground) !important;
+  color: hsl(var(--foreground)) !important;
 }
