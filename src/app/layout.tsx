@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
+import { BottomNav } from "@/components/BottomNav";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { VehicleProvider } from "@/contexts/VehicleContext";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,13 +17,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head />
       <body className="min-h-screen bg-background antialiased">
         <ThemeProvider>
           <VehicleProvider>
             <Header />
-            <main>{children}</main>
+            <main className="pb-20 md:pb-0">{children}</main>
+            <BottomNav />
+            <Toaster />
           </VehicleProvider>
         </ThemeProvider>
       </body>

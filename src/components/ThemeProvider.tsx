@@ -13,7 +13,8 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system');
+  // Default to 'light' - the Lovable design is a light theme
+  const [theme, setThemeState] = useState<Theme>('light');
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
   const [mounted, setMounted] = useState(false);
 
@@ -23,6 +24,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (stored) {
       setThemeState(stored);
     }
+    // Note: If no stored preference, we keep the default 'light' theme
   }, []);
 
   useEffect(() => {
@@ -58,6 +60,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Prevent flash of incorrect theme
+  // Default to light theme - only apply dark if explicitly stored as 'dark'
   if (!mounted) {
     return (
       <script
@@ -65,9 +68,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           __html: `
             (function() {
               const stored = localStorage.getItem('theme');
-              const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-              const isDark = stored === 'dark' || (stored !== 'light' && prefersDark);
-              if (isDark) document.documentElement.classList.add('dark');
+              // Only apply dark mode if explicitly set to 'dark'
+              // Default is light theme (Lovable design)
+              if (stored === 'dark') {
+                document.documentElement.classList.add('dark');
+              }
             })();
           `,
         }}

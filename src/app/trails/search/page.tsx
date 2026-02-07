@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { trailService } from '@/services/trailService';
-import { Trail, STATUS_LABELS, Status } from '@/types';
+import { Trail } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Search, Clock, ChevronRight, Map, Compass } from 'lucide-react';
+import { Search, Map, Compass } from 'lucide-react';
+import { TrailCard } from '@/components/TrailCard';
 
 export default function SearchTrailsPage() {
   const router = useRouter();
@@ -49,58 +49,6 @@ export default function SearchTrailsPage() {
       router.push('/trails/search');
       loadTrails();
     }
-  }
-
-  function getStatusBadge(status?: string) {
-    if (!status) {
-      return (
-        <Badge className="bg-stone/20 hover:bg-stone/30 text-stone-dark text-xs">
-          No Reports
-        </Badge>
-      );
-    }
-
-    switch (status) {
-      case 'clear':
-        return (
-          <Badge className="bg-forest hover:bg-forest text-white text-xs">
-            {STATUS_LABELS[status as Status]}
-          </Badge>
-        );
-      case 'rough':
-        return (
-          <Badge className="bg-earth hover:bg-earth text-white text-xs">
-            {STATUS_LABELS[status as Status]}
-          </Badge>
-        );
-      case 'impassable':
-        return (
-          <Badge className="bg-alert hover:bg-alert text-white text-xs">
-            {STATUS_LABELS[status as Status]}
-          </Badge>
-        );
-      default:
-        return (
-          <Badge className="bg-stone/20 hover:bg-stone/30 text-stone-dark text-xs">
-            Unknown
-          </Badge>
-        );
-    }
-  }
-
-  function formatDate(dateString?: string) {
-    if (!dateString) return null;
-
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffHours < 1) return 'Just now';
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
   }
 
   return (
@@ -229,36 +177,14 @@ export default function SearchTrailsPage() {
               </div>
             </Card>
           ) : (
-            trails.map((trail) => (
-              <Card
+            trails.map((trail, index) => (
+              <div
                 key={trail.id}
-                className="p-6 hover:shadow-lg hover:bg-secondary transition-all duration-200 cursor-pointer group"
-                onClick={() => router.push(`/trails/${trail.id}`)}
+                className="animate-slide-up"
+                style={{ animationDelay: `${index * 0.05}s`, animationFillMode: 'backwards' }}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-xl font-semibold mb-1 text-foreground transition-colors">
-                      {trail.name}
-                    </h2>
-                    <p className="text-muted-foreground mb-4">
-                      {trail.region}
-                    </p>
-
-                    <div className="flex flex-wrap items-center gap-3">
-                      {getStatusBadge(trail.latestStatus)}
-
-                      {trail.lastReportAt && (
-                        <div className="flex items-center text-sm text-muted-foreground/70">
-                          <Clock className="h-3.5 w-3.5 mr-1" />
-                          Last report {formatDate(trail.lastReportAt)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <ChevronRight className="h-5 w-5 text-muted-foreground/50 group-hover:text-forest group-hover:translate-x-1 transition-all flex-shrink-0 mt-1" />
-                </div>
-              </Card>
+                <TrailCard trail={trail} />
+              </div>
             ))
           )}
         </div>

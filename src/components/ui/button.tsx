@@ -17,8 +17,8 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         // Hero button - Large, prominent for landing pages
         hero: "bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] rounded-2xl shadow-medium hover:shadow-large font-semibold tracking-tight",
-        // Hero secondary - Glass effect for landing pages
-        heroSecondary: "glass text-foreground hover:bg-accent/50 active:scale-[0.98] rounded-2xl font-semibold tracking-tight",
+        // Hero secondary - Glass effect for landing pages (white text for dark backgrounds)
+        heroSecondary: "glass text-white hover:bg-white/20 active:scale-[0.98] rounded-2xl font-semibold tracking-tight",
         // Map control buttons - Compact glass style
         mapControl: "glass text-foreground hover:bg-accent/60 active:scale-[0.97] rounded-xl",
         // Success variant

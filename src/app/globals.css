@@ -12,7 +12,48 @@
 */
 
 @theme inline {
-  /* TrailReady Brand Colors (Hex for reference) */
+  /*
+   * Tailwind v4 + shadcn/ui Bridge
+   * These connect Tailwind's --color-* system to shadcn's HSL variables
+   * This enables bg-primary, text-primary, etc. to work properly
+   */
+
+  /* Core theme colors - bridge to HSL variables from :root */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  /* TrailReady Brand Colors */
   --color-forest-dark: #2D5F3F;
   --color-forest: #5FA777;
   --color-forest-light: #7BC497;
@@ -34,6 +75,29 @@
   --color-status-caution: var(--color-earth);
   --color-status-not-passable: var(--color-alert);
   --color-status-unknown: var(--color-stone);
+
+  /* Border radius - bridge --radius from :root */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  /* Custom spacing */
+  --spacing-18: 4.5rem;
+  --spacing-22: 5.5rem;
+  --spacing-88: 22rem;
+  --spacing-128: 32rem;
+
+  /* Animation timing */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fade-in: fade-in 0.4s ease-out;
+  --animate-slide-up: slide-up 0.5s ease-out;
+  --animate-slide-down: slide-down 0.5s ease-out;
+  --animate-scale-in: scale-in 0.3s ease-out;
+  --animate-shimmer: shimmer 2s infinite linear;
+  --animate-float-slow: float-slow 6s ease-in-out infinite;
 }
 
 @layer base {
@@ -49,36 +113,36 @@
     --popover: 0 0% 100%;
     --popover-foreground: 200 15% 15%;
 
-    /* Primary - Forest Green (converted to HSL) */
-    --primary: 152 35% 54%;
-    --primary-foreground: 0 0% 100%;
+    /* Primary - Forest Green (Lovable design) */
+    --primary: 152 45% 28%;
+    --primary-foreground: 40 20% 98%;
 
-    /* Secondary - Warm cream */
-    --secondary: 40 10% 96%;
+    /* Secondary - Slate */
+    --secondary: 210 12% 92%;
     --secondary-foreground: 200 15% 25%;
 
     /* Muted - Soft neutrals */
-    --muted: 40 10% 96%;
+    --muted: 40 10% 94%;
     --muted-foreground: 200 10% 45%;
 
     /* Accent - Warm Sand */
-    --accent: 35 40% 97%;
-    --accent-foreground: 21 42% 46%;
+    --accent: 35 40% 88%;
+    --accent-foreground: 35 50% 25%;
 
     /* Status colors */
-    --destructive: 0 68% 53%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 35% 54%;
+    --success: 152 60% 40%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 21 85% 56%;
-    --warning-foreground: 21 85% 15%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 15%;
 
     /* Borders and inputs */
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 152 35% 54%;
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 152 45% 28%;
 
     --radius: 0.75rem;
 
@@ -96,72 +160,72 @@
     /* Sidebar - earthy tones */
     --sidebar-background: 40 15% 96%;
     --sidebar-foreground: 200 15% 25%;
-    --sidebar-primary: 152 35% 54%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 152 45% 28%;
+    --sidebar-primary-foreground: 40 20% 98%;
     --sidebar-accent: 40 20% 92%;
     --sidebar-accent-foreground: 200 15% 20%;
     --sidebar-border: 40 15% 88%;
-    --sidebar-ring: 152 35% 54%;
+    --sidebar-ring: 152 45% 28%;
   }
 
   .dark {
-    /* Dark mode - deep forest night with earthy accents */
-    --background: 140 15% 10%;
+    /* Dark mode - deep slate with earthy accents (Lovable design) */
+    --background: 220 20% 8%;
     --foreground: 40 15% 92%;
 
-    --card: 140 12% 14%;
+    --card: 220 18% 12%;
     --card-foreground: 40 15% 92%;
 
-    --popover: 140 12% 14%;
+    --popover: 220 18% 12%;
     --popover-foreground: 40 15% 92%;
 
     /* Primary - Brighter forest green for dark */
-    --primary: 152 45% 61%;
-    --primary-foreground: 140 15% 10%;
+    --primary: 152 50% 45%;
+    --primary-foreground: 220 20% 8%;
 
     /* Secondary */
-    --secondary: 140 10% 17%;
+    --secondary: 220 15% 18%;
     --secondary-foreground: 40 15% 85%;
 
     /* Muted */
-    --muted: 140 10% 17%;
+    --muted: 220 15% 16%;
     --muted-foreground: 200 10% 55%;
 
-    /* Accent - Warm earth for dark */
-    --accent: 140 10% 17%;
-    --accent-foreground: 21 52% 61%;
+    /* Accent - Warm sand for dark */
+    --accent: 35 30% 25%;
+    --accent-foreground: 35 40% 85%;
 
-    --destructive: 0 72% 59%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 45% 61%;
-    --success-foreground: 140 15% 10%;
+    --success: 152 55% 45%;
+    --success-foreground: 220 20% 8%;
 
-    --warning: 21 85% 56%;
-    --warning-foreground: 21 85% 10%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 10%;
 
-    --border: 140 10% 22%;
-    --input: 140 10% 22%;
-    --ring: 152 45% 61%;
+    --border: 220 15% 18%;
+    --input: 220 15% 18%;
+    --ring: 152 50% 45%;
 
     /* Glass effects for dark */
-    --glass-bg: 140 15% 12% / 0.85;
-    --glass-border: 140 10% 25% / 0.4;
+    --glass-bg: 220 20% 12% / 0.85;
+    --glass-border: 220 15% 25% / 0.4;
     --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
     --shadow-medium: 0 8px 30px -8px hsl(0 0% 0% / 0.4);
     --shadow-large: 0 20px 50px -15px hsl(0 0% 0% / 0.5);
 
-    --gradient-hero: linear-gradient(to bottom, hsl(140 15% 5% / 0.4) 0%, hsl(140 15% 5% / 0.85) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(140 12% 14%) 0%, hsl(140 15% 12%) 100%);
+    --gradient-hero: linear-gradient(to bottom, hsl(220 20% 5% / 0.4) 0%, hsl(220 20% 5% / 0.85) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(220 18% 12%) 0%, hsl(220 20% 10%) 100%);
 
-    --sidebar-background: 140 12% 12%;
+    --sidebar-background: 220 18% 10%;
     --sidebar-foreground: 40 15% 85%;
-    --sidebar-primary: 152 45% 61%;
-    --sidebar-primary-foreground: 140 15% 10%;
-    --sidebar-accent: 140 10% 17%;
+    --sidebar-primary: 152 50% 45%;
+    --sidebar-primary-foreground: 220 20% 8%;
+    --sidebar-accent: 220 15% 16%;
     --sidebar-accent-foreground: 40 15% 90%;
-    --sidebar-border: 140 10% 22%;
-    --sidebar-ring: 152 45% 61%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 152 50% 45%;
   }
 }
 
@@ -244,10 +308,41 @@
   }
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
     transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
   }
   to {
     opacity: 1;
@@ -266,32 +361,89 @@
   }
 }
 
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes float-slow {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
 }
 
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
 .animate-fade-in {
-  animation: fadeIn 0.4s ease-out;
+  animation: fade-in 0.4s ease-out both;
 }
 
 .animate-slide-up {
-  animation: slideUp 0.5s ease-out;
+  animation: slide-up 0.5s ease-out both;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.5s ease-out both;
 }
 
 .animate-scale-in {
-  animation: scaleIn 0.3s ease-out;
+  animation: scale-in 0.3s ease-out both;
 }
 
 .animate-float-slow {
   animation: float-slow 6s ease-in-out infinite;
 }
 
+.animate-accordion-down {
+  animation: accordion-down 0.2s ease-out both;
+}
+
+.animate-accordion-up {
+  animation: accordion-up 0.2s ease-out both;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
 /* Staggered animation delays */
+.delay-75 { animation-delay: 75ms; }
 .delay-100 { animation-delay: 100ms; }
+.delay-150 { animation-delay: 150ms; }
 .delay-200 { animation-delay: 200ms; }
 .delay-300 { animation-delay: 300ms; }
 .delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
 
 /* Leaflet map customizations */
 .custom-trail-marker {

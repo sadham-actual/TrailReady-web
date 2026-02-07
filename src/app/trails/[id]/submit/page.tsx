@@ -126,7 +126,7 @@ export default function SubmitReportPage() {
       </Button>
 
       {/* Page Header */}
-      <div className="mb-8">
+      <div className="mb-8 animate-fade-in">
         <h1 className="text-2xl font-semibold mb-2">Submit Report</h1>
         {trail && (
           <p className="text-sm text-muted-foreground">{trail.name} - {trail.region}</p>
@@ -134,7 +134,7 @@ export default function SubmitReportPage() {
       </div>
 
       {/* Form Card */}
-      <Card>
+      <Card className="rounded-2xl shadow-soft animate-slide-up">
         <CardContent className="pt-6">
           {error && (
             <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3">
@@ -156,9 +156,9 @@ export default function SubmitReportPage() {
                   return (
                     <label
                       key={option.value}
-                      className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition-all ${
+                      className={`flex items-center gap-3 p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] ${
                         isSelected
-                          ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                          ? 'border-primary bg-primary/5 shadow-soft'
                           : 'border-border hover:border-primary/50 hover:bg-muted/50'
                       }`}
                     >
@@ -243,10 +243,12 @@ export default function SubmitReportPage() {
       </Card>
 
       {/* Info Box */}
-      <div className="mt-6 p-4 bg-muted rounded-lg flex items-start gap-3">
-        <Info className="h-5 w-5 text-muted-foreground mt-0.5" />
-        <p className="text-sm text-muted-foreground">
-          <strong>Note:</strong> Your report helps other off-roaders make informed decisions.
+      <div className="mt-6 p-5 bg-success/10 border border-success/20 rounded-2xl flex items-start gap-3 animate-slide-up delay-100">
+        <div className="p-1.5 bg-success rounded-lg mt-0.5">
+          <Info className="h-4 w-4 text-success-foreground" />
+        </div>
+        <p className="text-sm text-foreground/80">
+          <strong className="text-primary">Note:</strong> Your report helps other off-roaders make informed decisions.
           Please be accurate and honest about trail conditions.
         </p>
       </div>

@@ -3,88 +3,111 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, Map, Car } from 'lucide-react';
+import { Compass, Search, Car, MapPin } from 'lucide-react';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
+import { Button } from '@/components/ui/button';
 
 export default function Home() {
   const { selectedVehicle, setSelectedVehicle } = useVehicle();
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
 
   return (
-    <div className="relative min-h-screen">
-      {/* Hero Section - Full Viewport */}
-      <section className="relative min-h-screen flex items-center justify-center px-6 md:px-4">
-        {/* Background Image */}
+    <div className="relative min-h-screen flex flex-col">
+      {/* Hero Background */}
+      <div className="absolute inset-0">
         <Image
           src="/hero-bg.JPG"
-          alt=""
+          alt="Offroad trail in canyon landscape"
           fill
           className="object-cover"
           priority
-          style={{ zIndex: -2 }}
         />
+        <div className="absolute inset-0 hero-overlay" />
+      </div>
 
-        {/* Dark Overlay */}
-        <div
-          className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"
-          style={{ zIndex: -1 }}
-        />
-
-        {/* Hero Content */}
-        <div className="relative z-10 w-full max-w-md mx-auto px-6">
-          {/* Heading */}
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 text-center">
-            TrailReady
-          </h1>
+      {/* Content */}
+      <div className="relative z-10 flex-1 flex flex-col justify-end p-6 pb-12 md:p-12 md:pb-20">
+        <div className="max-w-lg mx-auto w-full text-center md:text-left md:mx-0">
+          {/* Logo/Brand */}
+          <div
+            className="flex items-center justify-center md:justify-start gap-2 mb-4 animate-fade-in"
+          >
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+              <MapPin className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="text-2xl font-bold text-primary-foreground tracking-tight">
+              TrailReady
+            </span>
+          </div>
 
           {/* Tagline */}
-          <p className="text-lg md:text-xl text-white/90 mb-8 text-center">
-            Know before you go
+          <h1
+            className="text-4xl md:text-5xl font-bold text-primary-foreground mb-3 animate-slide-up"
+            style={{ animationDelay: '0.1s' }}
+          >
+            Find offroad trails.
+          </h1>
+          <p
+            className="text-xl md:text-2xl text-primary-foreground/80 mb-8 animate-slide-up"
+            style={{ animationDelay: '0.2s' }}
+          >
+            Know before you go.
           </p>
 
-          {/* Action Buttons Container */}
-          <div className="bg-black/20 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
-            <div className="flex flex-col gap-6">
-              {/* Browse Trails */}
-              <Link
-                href="/trails/browse"
-                className="group flex items-center justify-center gap-3 w-full min-h-[84px] px-8 bg-forest hover:bg-forest-dark text-white rounded-2xl shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] hover:-translate-y-1 transition-all duration-200"
-              >
-                <Map className="h-6 w-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
-                <span className="text-lg font-semibold">Browse Trails</span>
+          {/* Action Buttons */}
+          <div
+            className="flex flex-col gap-3 max-w-xs mx-auto md:mx-0 animate-slide-up"
+            style={{ animationDelay: '0.3s' }}
+          >
+            <Button
+              variant="hero"
+              size="hero"
+              asChild
+              className="w-full justify-center gap-3"
+            >
+              <Link href="/trails/browse">
+                <Compass className="h-5 w-5" />
+                Explore Trails
               </Link>
+            </Button>
 
-              {/* Search Trails */}
-              <Link
-                href="/trails/search"
-                className="group flex items-center justify-center gap-3 w-full min-h-[84px] px-8 bg-earth hover:bg-earth-dark text-white rounded-2xl shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] hover:-translate-y-1 transition-all duration-200"
-              >
-                <Search className="h-6 w-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
-                <span className="text-lg font-semibold">Search Trails</span>
+            <Button
+              variant="heroSecondary"
+              size="hero"
+              asChild
+              className="w-full justify-center gap-3"
+            >
+              <Link href="/trails/search">
+                <Search className="h-5 w-5" />
+                Search Trails
               </Link>
+            </Button>
 
-              {/* Select Vehicle */}
-              <button
-                onClick={() => setVehicleModalOpen(true)}
-                className="group flex items-center justify-center gap-3 w-full min-h-[84px] px-8 bg-stone hover:bg-stone-dark text-white rounded-2xl shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] hover:-translate-y-1 transition-all duration-200"
-              >
-                <Car className="h-6 w-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
-                <span className="text-lg font-semibold">
-                  {selectedVehicle ? 'Change Vehicle' : 'Select Vehicle'}
-                </span>
-              </button>
-            </div>
-
-            {/* Optional: Show selected vehicle */}
-            {selectedVehicle && (
-              <div className="mt-6 text-sm text-white/70 text-center">
-                Currently: <span className="font-medium text-white">{selectedVehicle.replace(/_/g, ' ')}</span>
-              </div>
-            )}
+            <Button
+              variant="heroSecondary"
+              size="hero"
+              onClick={() => setVehicleModalOpen(true)}
+              className="w-full justify-center gap-3"
+            >
+              <Car className="h-5 w-5" />
+              {selectedVehicle ? 'Change Vehicle' : 'Select Vehicle'}
+            </Button>
           </div>
+
+          {/* Show selected vehicle */}
+          {selectedVehicle && (
+            <div
+              className="mt-4 text-sm text-primary-foreground/70 text-center md:text-left animate-fade-in max-w-xs mx-auto md:mx-0"
+            >
+              Your vehicle: <span className="font-medium text-primary-foreground">{selectedVehicle.replace(/_/g, ' ')}</span>
+            </div>
+          )}
         </div>
-      </section>
+      </div>
+
+      {/* Bottom gradient fade for extra depth */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background/20 to-transparent pointer-events-none" />
 
       {/* Vehicle Selection Modal */}
       <VehicleSelectionModal

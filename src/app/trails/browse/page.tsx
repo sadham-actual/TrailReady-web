@@ -6,10 +6,10 @@ import Link from 'next/link';
 import { trailService } from '@/services/trailService';
 import { Trail, Status, STATUS_LABELS } from '@/types';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MapPin, List, ChevronRight, Loader2, Compass } from 'lucide-react';
+import { MapPin, List, Loader2, Compass } from 'lucide-react';
+import { TrailCardCompact } from '@/components/TrailCard';
 import type { LatLngBounds } from 'leaflet';
 
 // Dynamic import to avoid SSR issues with Leaflet
@@ -59,19 +59,6 @@ export default function BrowseTrailsPage() {
       return mapBounds.contains([trail.latitude, trail.longitude]);
     });
   }, [trails, mapBounds]);
-
-  function getStatusBadgeClass(status?: string) {
-    switch (status) {
-      case 'clear':
-        return 'bg-forest hover:bg-forest text-white';
-      case 'rough':
-        return 'bg-earth hover:bg-earth text-white';
-      case 'impassable':
-        return 'bg-alert hover:bg-alert text-white';
-      default:
-        return 'bg-stone/20 hover:bg-stone/30 text-stone-dark';
-    }
-  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
@@ -162,51 +149,19 @@ export default function BrowseTrailsPage() {
                 </p>
               </div>
             ) : (
-              visibleTrails.map((trail) => (
-                <Card
+              visibleTrails.map((trail, index) => (
+                <div
                   key={trail.id}
-                  className={`p-4 hover:bg-secondary cursor-pointer transition-all duration-200 hover:shadow-md ${
+                  className={`animate-slide-up ${
                     selectedTrailId === trail.id
-                      ? 'ring-2 ring-primary shadow-lg bg-secondary'
+                      ? 'ring-2 ring-primary rounded-xl'
                       : ''
                   }`}
+                  style={{ animationDelay: `${index * 0.03}s`, animationFillMode: 'backwards' }}
                   onClick={() => setSelectedTrailId(trail.id)}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-base truncate text-foreground mb-1">
-                        {trail.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {trail.region}
-                      </p>
-
-                      {trail.latestStatus ? (
-                        <Badge className={`text-xs ${getStatusBadgeClass(trail.latestStatus)}`}>
-                          {STATUS_LABELS[trail.latestStatus as Status]}
-                        </Badge>
-                      ) : (
-                        <Badge className={`text-xs ${getStatusBadgeClass()}`}>
-                          No Reports
-                        </Badge>
-                      )}
-                    </div>
-
-                    <Link
-                      href={`/trails/${trail.id}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex-shrink-0"
-                    >
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0 hover:bg-forest/10"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </Card>
+                  <TrailCardCompact trail={trail} />
+                </div>
               ))
             )}
           </div>

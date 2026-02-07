@@ -201,8 +201,9 @@ export default function TrailDetailPage() {
 
       {/* Description if exists */}
       {trail.description && (
-        <Card className="mb-6">
-          <CardContent className="p-4">
+        <Card className="mb-6 rounded-2xl shadow-soft animate-slide-up">
+          <CardContent className="p-5">
+            <h2 className="font-semibold mb-2">About This Trail</h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {trail.description}
             </p>
@@ -211,14 +212,14 @@ export default function TrailDetailPage() {
       )}
 
       {/* Trail Verdict Section */}
-      <div className="mb-8">
+      <div className="mb-8 animate-scale-in delay-100">
         <TrailVerdict reports={reports} trailName={trail.name} />
       </div>
 
       {/* Condition Reports */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 animate-slide-up delay-200">
         <h2 className="text-lg font-semibold">Condition Reports</h2>
-        <Button size="sm" asChild>
+        <Button size="sm" asChild className="shadow-soft">
           <Link href={`/trails/${trailId}/submit`}>
             <Plus className="h-4 w-4 mr-1" />
             Submit Report
@@ -227,7 +228,7 @@ export default function TrailDetailPage() {
       </div>
 
       {reports.length === 0 ? (
-        <Card>
+        <Card className="rounded-2xl shadow-soft animate-slide-up delay-300">
           <CardContent className="p-8 text-center">
             <p className="text-muted-foreground">No condition reports yet.</p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -237,8 +238,12 @@ export default function TrailDetailPage() {
         </Card>
       ) : (
         <div className="flex flex-col gap-3">
-          {reports.map((report) => (
-            <Card key={report.id}>
+          {reports.map((report, index) => (
+            <Card
+              key={report.id}
+              className="rounded-2xl shadow-soft animate-slide-up"
+              style={{ animationDelay: `${(index + 3) * 0.05}s`, animationFillMode: 'backwards' }}
+            >
               <CardContent className="p-4">
                 {/* Status and Meta Row */}
                 <div className="flex items-center gap-3 flex-wrap mb-3">
