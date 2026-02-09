@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Search, Map, Car } from 'lucide-react';
+import { Compass, Map, Car } from 'lucide-react';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
 
@@ -12,79 +11,89 @@ export default function Home() {
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
 
   return (
-    <div className="relative min-h-screen">
-      {/* Hero Section - Full Viewport */}
-      <section className="relative min-h-screen flex items-center justify-center px-6 md:px-4">
-        {/* Background Image */}
-        <Image
-          src="/hero-bg.JPG"
-          alt=""
-          fill
-          className="object-cover"
-          priority
-          style={{ zIndex: -2 }}
-        />
+    <div className="relative min-h-screen w-full overflow-hidden">
+      {/* Background image */}
+      <img
+        src="/hero-bg.JPG"
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+      />
 
-        {/* Dark Overlay */}
-        <div
-          className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"
-          style={{ zIndex: -1 }}
-        />
+      {/* Subtle gradient overlay for text legibility */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/30" />
 
-        {/* Hero Content */}
-        <div className="relative z-10 w-full max-w-md mx-auto px-6">
-          {/* Heading */}
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 text-center">
-            TrailReady
-          </h1>
+      {/* Content centered in viewport */}
+      <div className="relative z-20 min-h-screen flex flex-col items-center justify-center px-6 py-16">
+        {/* Max-width container for cards */}
+        <div className="w-full max-w-lg flex flex-col items-center gap-8">
+          {/* Hero heading - extra large, top-center */}
+          <div className="text-center space-y-2">
+            <h1 className="text-5xl sm:text-6xl font-bold text-white tracking-tight drop-shadow-lg">
+              TrailReady
+            </h1>
+            <p className="text-xl text-white/80 font-medium drop-shadow-md">
+              Know before you go.
+            </p>
+          </div>
 
-          {/* Tagline */}
-          <p className="text-lg md:text-xl text-white/90 mb-8 text-center">
-            Know before you go
-          </p>
-
-          {/* Action Buttons Container */}
-          <div className="bg-black/20 backdrop-blur-sm rounded-3xl p-6 border border-white/10">
-            <div className="flex flex-col gap-6">
-              {/* Browse Trails */}
-              <Link
-                href="/trails/browse"
-                className="group flex items-center justify-center gap-3 w-full min-h-[84px] px-8 bg-forest hover:bg-forest-dark text-white rounded-2xl shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] hover:-translate-y-1 transition-all duration-200"
-              >
-                <Map className="h-6 w-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
-                <span className="text-lg font-semibold">Browse Trails</span>
-              </Link>
-
-              {/* Search Trails */}
-              <Link
-                href="/trails/search"
-                className="group flex items-center justify-center gap-3 w-full min-h-[84px] px-8 bg-earth hover:bg-earth-dark text-white rounded-2xl shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] hover:-translate-y-1 transition-all duration-200"
-              >
-                <Search className="h-6 w-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
-                <span className="text-lg font-semibold">Search Trails</span>
-              </Link>
-
-              {/* Select Vehicle */}
-              <button
-                onClick={() => setVehicleModalOpen(true)}
-                className="group flex items-center justify-center gap-3 w-full min-h-[84px] px-8 bg-stone hover:bg-stone-dark text-white rounded-2xl shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] hover:-translate-y-1 transition-all duration-200"
-              >
-                <Car className="h-6 w-6 group-hover:scale-110 transition-transform" strokeWidth={2} />
-                <span className="text-lg font-semibold">
-                  {selectedVehicle ? 'Change Vehicle' : 'Select Vehicle'}
-                </span>
-              </button>
-            </div>
-
-            {/* Optional: Show selected vehicle */}
-            {selectedVehicle && (
-              <div className="mt-6 text-sm text-white/70 text-center">
-                Currently: <span className="font-medium text-white">{selectedVehicle.replace(/_/g, ' ')}</span>
+          {/* Action cards container */}
+          <div className="w-full flex flex-col items-center gap-4">
+            {/* Explore Trails Card */}
+            <Link
+              href="/trails/search"
+              className="group w-full max-w-sm glass-strong rounded-2xl p-6 shadow-large transition-all duration-200 hover:scale-[1.02] hover:shadow-xl cursor-pointer"
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[var(--color-forest)] flex items-center justify-center shadow-soft">
+                  <Compass className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg font-semibold text-white">Explore Trails</h2>
+                  <p className="text-sm text-white/70">Search and discover new routes</p>
+                </div>
               </div>
-            )}
+            </Link>
+
+            {/* Browse Map Card */}
+            <Link
+              href="/trails/browse"
+              className="group w-full max-w-sm glass-strong rounded-2xl p-6 shadow-large transition-all duration-200 hover:scale-[1.02] hover:shadow-xl cursor-pointer"
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[var(--color-stone)] flex items-center justify-center shadow-soft">
+                  <Map className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg font-semibold text-white">Browse Map</h2>
+                  <p className="text-sm text-white/70">View trails on an interactive map</p>
+                </div>
+              </div>
+            </Link>
+
+            {/* Select Vehicle Card */}
+            <button
+              onClick={() => setVehicleModalOpen(true)}
+              className="group w-full max-w-sm glass-strong rounded-2xl p-6 shadow-large transition-all duration-200 hover:scale-[1.02] hover:shadow-xl cursor-pointer text-left"
+            >
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-[var(--color-earth)] flex items-center justify-center shadow-soft">
+                  <Car className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg font-semibold text-white">
+                    {selectedVehicle ? 'Change Vehicle' : 'Select Vehicle'}
+                  </h2>
+                  <p className="text-sm text-white/70">
+                    {selectedVehicle
+                      ? selectedVehicle.replace(/_/g, ' ')
+                      : 'Set your vehicle for trail matching'}
+                  </p>
+                </div>
+              </div>
+            </button>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* Vehicle Selection Modal */}
       <VehicleSelectionModal
