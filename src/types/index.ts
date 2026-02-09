@@ -58,12 +58,68 @@ export const CONFIDENCE_LABELS: Record<Confidence, string> = {
 };
 
 export const VEHICLE_TYPE_LABELS: Record<VehicleType, string> = {
-  stockSUV_solidAxle: 'Stock SUV - Solid Axle',
-  stockSUV_IFS: 'Stock SUV - IFS',
+  stockSUV_solidAxle: 'Stock AWD - Crossover / SUV',
+  stockSUV_IFS: 'High Clearance 4x4 - Stock Truck',
   stockSUV_IFRS: 'Stock SUV - IFRS',
-  lifted4x4_solidAxle: 'Lifted 4x4 - Solid Axle',
-  lifted4x4_IFS: 'Lifted 4x4 - IFS',
+  lifted4x4_solidAxle: 'Modified 4x4 - 33"+ Tires',
+  lifted4x4_IFS: 'Extreme Build - Long Travel',
   lifted4x4_IFRS: 'Lifted 4x4 - IFRS',
   sideBySide: 'Side-by-side',
   dirtBike: 'Dirt Bike',
 };
+
+// Simplified vehicle categories for the Garage UI
+export type SimpleVehicleCategory =
+  | 'stockAWD'
+  | 'highClearance4x4'
+  | 'modified4x4'
+  | 'extremeBuild';
+
+export interface VehicleCategoryInfo {
+  id: SimpleVehicleCategory;
+  mappedType: VehicleType;
+  name: string;
+  shortName: string;
+  description: string;
+  icon: 'crossover' | 'truck' | 'lifted' | 'crawler';
+  capabilityLevel: 1 | 2 | 3 | 4;
+}
+
+export const VEHICLE_CATEGORIES: VehicleCategoryInfo[] = [
+  {
+    id: 'stockAWD',
+    mappedType: 'stockSUV_solidAxle',
+    name: 'Stock AWD',
+    shortName: 'Stock AWD',
+    description: 'Crossovers & stock SUVs with standard clearance',
+    icon: 'crossover',
+    capabilityLevel: 1,
+  },
+  {
+    id: 'highClearance4x4',
+    mappedType: 'stockSUV_IFS',
+    name: 'High Clearance 4x4',
+    shortName: 'HC 4x4',
+    description: 'Factory 4x4 trucks & SUVs with good clearance',
+    icon: 'truck',
+    capabilityLevel: 2,
+  },
+  {
+    id: 'modified4x4',
+    mappedType: 'lifted4x4_solidAxle',
+    name: 'Modified 4x4',
+    shortName: 'Modified',
+    description: 'Lifted with 33"+ tires, lockers, skid plates',
+    icon: 'lifted',
+    capabilityLevel: 3,
+  },
+  {
+    id: 'extremeBuild',
+    mappedType: 'lifted4x4_IFS',
+    name: 'Extreme Build',
+    shortName: 'Extreme',
+    description: 'Long travel, rock crawlers, competition rigs',
+    icon: 'crawler',
+    capabilityLevel: 4,
+  },
+];

@@ -1,8 +1,9 @@
 'use client';
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { VehicleType, VEHICLE_TYPE_LABELS } from '@/types';
-import { Car, Info, CheckCircle2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Drawer } from 'vaul';
+import { VehicleType, VEHICLE_CATEGORIES, VehicleCategoryInfo } from '@/types';
+import { Check, Car, Truck, Cog, Mountain } from 'lucide-react';
 
 interface VehicleSelectionModalProps {
   open: boolean;
@@ -11,133 +12,154 @@ interface VehicleSelectionModalProps {
   onSelectVehicle: (vehicle: VehicleType | null) => void;
 }
 
+// Custom vehicle icons matching the category aesthetic
+function VehicleIcon({ icon, className }: { icon: VehicleCategoryInfo['icon']; className?: string }) {
+  const iconClass = className || 'h-8 w-8';
+
+  switch (icon) {
+    case 'crossover':
+      return <Car className={iconClass} />;
+    case 'truck':
+      return <Truck className={iconClass} />;
+    case 'lifted':
+      return <Cog className={iconClass} />;
+    case 'crawler':
+      return <Mountain className={iconClass} />;
+  }
+}
+
+// Capability bar visualization
+function CapabilityBar({ level }: { level: 1 | 2 | 3 | 4 }) {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4].map((bar) => (
+        <div
+          key={bar}
+          className={`h-1.5 w-4 rounded-full transition-colors ${
+            bar <= level ? 'bg-emerald-500' : 'bg-slate-700'
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function VehicleSelectionModal({
   open,
   onOpenChange,
   currentVehicle,
-  onSelectVehicle
+  onSelectVehicle,
 }: VehicleSelectionModalProps) {
-  // Simplified vehicle list with better grouping
-  const vehicles: Array<{ value: VehicleType; label: string; description: string }> = [
-    {
-      value: 'stockSUV_IFS',
-      label: 'Stock SUV - IFS',
-      description: 'Factory suspension, independent front'
-    },
-    {
-      value: 'stockSUV_solidAxle',
-      label: 'Stock SUV - Solid Axle',
-      description: 'Factory solid axle front and rear'
-    },
-    {
-      value: 'lifted4x4_IFS',
-      label: 'Lifted 4x4 - IFS',
-      description: 'Lifted with independent front suspension'
-    },
-    {
-      value: 'lifted4x4_solidAxle',
-      label: 'Lifted 4x4 - Solid Axle',
-      description: 'Lifted with solid axle setup'
-    },
-    {
-      value: 'sideBySide',
-      label: 'Side-by-Side',
-      description: 'UTV / ATV side-by-side vehicle'
-    },
-    {
-      value: 'dirtBike',
-      label: 'Dirt Bike',
-      description: 'Motorcycle / dirt bike'
-    }
-  ];
+  // Find which category the current vehicle belongs to
+  const currentCategory = VEHICLE_CATEGORIES.find(
+    (cat) => cat.mappedType === currentVehicle
+  );
+
+  const handleSelect = (category: VehicleCategoryInfo) => {
+    onSelectVehicle(category.mappedType);
+    // Small delay to show selection animation before closing
+    setTimeout(() => onOpenChange(false), 150);
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl bg-[#FAF6F1] border-[#DDD6CA] shadow-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3 text-2xl md:text-3xl text-[#2D5A3D] font-bold" style={{ fontFamily: 'var(--font-display)' }}>
-            <div className="p-2 bg-[#2D5A3D] rounded-xl">
-              <Car className="h-6 w-6 text-white" />
+    <Drawer.Root open={open} onOpenChange={onOpenChange}>
+      <Drawer.Portal>
+        <Drawer.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
+        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 outline-none">
+          <div className="bg-slate-900 border-t border-white/10 rounded-t-3xl max-h-[90vh] overflow-hidden">
+            {/* Drag Handle */}
+            <div className="flex justify-center pt-4 pb-2">
+              <div className="w-10 h-1 rounded-full bg-slate-700" />
             </div>
-            Select Your Vehicle
-          </DialogTitle>
-          <DialogDescription className="pt-3 text-base text-[#5C4B3A]" style={{ fontFamily: 'var(--font-body)' }}>
-            Get personalized trail risk assessments based on your setup. You can change this anytime.
-          </DialogDescription>
-        </DialogHeader>
 
-        {/* Why this matters */}
-        <div className="bg-gradient-to-br from-[#E8F5EC] to-[#D4E8DC] rounded-xl p-5 mb-2 border border-[#5FA777]/20">
-          <div className="flex items-start gap-3">
-            <div className="p-1.5 bg-[#5FA777] rounded-lg mt-0.5">
-              <Info className="h-4 w-4 text-white" />
-            </div>
-            <div className="text-sm" style={{ fontFamily: 'var(--font-body)' }}>
-              <strong className="text-[#2D5A3D] font-semibold block mb-1.5">Why select your vehicle?</strong>
-              <p className="text-[#3D5A45] leading-relaxed">
-                A trail that's "passable" for a lifted solid axle might be "impassable"
-                for a stock IFS. Your selection helps us show the most relevant reports
-                and give you accurate go/no-go decisions.
-              </p>
-            </div>
-          </div>
-        </div>
+            {/* Content */}
+            <div className="px-6 pb-8 overflow-y-auto max-h-[calc(90vh-60px)]">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <Drawer.Title className="text-2xl font-bold text-slate-50 tracking-tight">
+                  The Garage
+                </Drawer.Title>
+                <Drawer.Description className="mt-2 text-sm text-slate-400">
+                  Select your rig for personalized trail matching
+                </Drawer.Description>
+              </div>
 
-        {/* Vehicle options */}
-        <div className="space-y-2.5 max-h-[400px] overflow-y-auto pr-1">
-          {vehicles.map((vehicle) => {
-            const isSelected = currentVehicle === vehicle.value;
-            return (
+              {/* Vehicle Cards Grid */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                {VEHICLE_CATEGORIES.map((category, index) => {
+                  const isSelected = currentCategory?.id === category.id;
+
+                  return (
+                    <motion.button
+                      key={category.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.05 }}
+                      onClick={() => handleSelect(category)}
+                      className={`relative p-5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.98] ${
+                        isSelected
+                          ? 'bg-emerald-500/15 border-emerald-500/40 shadow-[0_0_30px_-5px_rgba(16,185,129,0.2)]'
+                          : 'bg-slate-800/50 border-slate-700/50 hover:border-emerald-500/30 hover:bg-slate-800/70'
+                      }`}
+                    >
+                      {/* Selection Indicator */}
+                      {isSelected && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute top-3 right-3 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center"
+                        >
+                          <Check className="h-4 w-4 text-slate-950" strokeWidth={3} />
+                        </motion.div>
+                      )}
+
+                      {/* Icon */}
+                      <div
+                        className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-colors ${
+                          isSelected
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : 'bg-slate-700/50 text-slate-400'
+                        }`}
+                      >
+                        <VehicleIcon icon={category.icon} />
+                      </div>
+
+                      {/* Text */}
+                      <h3
+                        className={`font-semibold text-base mb-1 transition-colors ${
+                          isSelected ? 'text-emerald-400' : 'text-slate-50'
+                        }`}
+                      >
+                        {category.name}
+                      </h3>
+                      <p className="text-xs text-slate-500 leading-relaxed mb-3">
+                        {category.description}
+                      </p>
+
+                      {/* Capability Bar */}
+                      <CapabilityBar level={category.capabilityLevel} />
+                    </motion.button>
+                  );
+                })}
+              </div>
+
+              {/* Skip Option */}
               <button
-                key={vehicle.value}
                 onClick={() => {
-                  onSelectVehicle(vehicle.value);
+                  onSelectVehicle(null);
                   onOpenChange(false);
                 }}
-                className={`group w-full text-left p-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
-                  isSelected
-                    ? 'border-[#5FA777] bg-gradient-to-br from-[#5FA777]/10 to-[#5FA777]/5 shadow-md'
-                    : 'border-[#DDD6CA] hover:border-[#5FA777]/50 hover:bg-white/50'
-                }`}
+                className="w-full py-3 text-sm font-medium text-slate-500 hover:text-slate-300 transition-colors"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className={`font-bold text-base transition-colors ${
-                        isSelected ? 'text-[#2D5A3D]' : 'text-[#3D2E24] group-hover:text-[#2D5A3D]'
-                      }`} style={{ fontFamily: 'var(--font-display)' }}>
-                        {vehicle.label}
-                      </div>
-                    </div>
-                    <div className="text-sm text-[#5C4B3A]/80" style={{ fontFamily: 'var(--font-body)' }}>
-                      {vehicle.description}
-                    </div>
-                  </div>
-                  {isSelected && (
-                    <div className="flex-shrink-0 p-1 bg-[#5FA777] rounded-full animate-in zoom-in-50 duration-200">
-                      <CheckCircle2 className="h-5 w-5 text-white" />
-                    </div>
-                  )}
-                </div>
+                Skip for now — browse without personalization
               </button>
-            );
-          })}
-        </div>
+            </div>
 
-        {/* Skip/Clear option */}
-        <div className="border-t border-[#DDD6CA] pt-4 mt-2">
-          <button
-            onClick={() => {
-              onSelectVehicle(null);
-              onOpenChange(false);
-            }}
-            className="w-full text-center px-4 py-3 text-sm text-[#7A6E5D] hover:text-[#3D2E24] hover:bg-[#EDE6DC] rounded-lg transition-all font-medium"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            Skip for now - Browse without personalization
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+            {/* Safe area spacing for mobile */}
+            <div className="safe-bottom" />
+          </div>
+        </Drawer.Content>
+      </Drawer.Portal>
+    </Drawer.Root>
   );
 }

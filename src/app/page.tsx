@@ -1,152 +1,105 @@
 'use client';
 
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Compass, Map, Car } from 'lucide-react';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
-
-// Animation variants
-const fadeSlideUp = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: 'easeOut' as const }
-  }
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.2
-    }
-  }
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: 'easeOut' as const }
-  }
-};
+import { HudNav, Hero, ActionGrid, NearbyTrails } from '@/components/landing';
 
 export default function Home() {
   const { selectedVehicle, setSelectedVehicle } = useVehicle();
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
-      {/* Background image */}
-      <img
-        src="/hero-bg.JPG"
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover"
+    <div className="min-h-screen bg-slate-950 text-slate-50 antialiased bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(16,185,129,0.12),transparent)]">
+      {/* Floating HUD Navigation */}
+      <HudNav
+        onOpenVehicleModal={() => setVehicleModalOpen(true)}
+        onOpenMobileMenu={() => setMobileMenuOpen(true)}
       />
 
-      {/* Subtle gradient overlay for text legibility */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/30" />
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-6">
+        {/* Hero Section */}
+        <Hero />
 
-      {/* Content centered in viewport */}
-      <div className="relative z-20 min-h-screen flex flex-col items-center justify-center px-8 py-16">
-        {/* Hero heading - visually dominant */}
-        <motion.div
-          className="text-center mb-12"
-          initial="hidden"
-          animate="visible"
-          variants={fadeSlideUp}
-        >
-          <h1 className="text-6xl sm:text-7xl font-bold text-white tracking-wide drop-shadow-lg mb-3">
-            TrailReady
-          </h1>
-          <p className="text-xl sm:text-2xl text-white/80 font-medium tracking-wide drop-shadow-md">
-            Know before you go.
-          </p>
-        </motion.div>
+        {/* Action Grid - The Three Cards */}
+        <ActionGrid onOpenVehicleModal={() => setVehicleModalOpen(true)} />
 
-        {/* Action cards - centered, floating on background */}
-        <motion.div
-          className="flex flex-col items-center gap-6"
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-        >
-          {/* Explore Trails Card */}
-          <motion.div
-            variants={cardVariants}
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            whileTap={{ scale: 0.98, transition: { duration: 0.1 } }}
-          >
-            <Link
-              href="/trails/search"
-              className="block glass-strong rounded-2xl px-8 py-6 shadow-large hover:shadow-xl cursor-pointer"
+        {/* Nearby Trails - Horizontal Scroll */}
+        <NearbyTrails />
+      </main>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+
+            {/* Menu Panel */}
+            <motion.div
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] as const }}
+              className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-white/10 rounded-t-3xl shadow-2xl safe-bottom"
             >
-              <div className="flex flex-col items-center text-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-[var(--color-forest)] flex items-center justify-center shadow-soft">
-                  <Compass className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Explore Trails</h2>
-                  <p className="text-sm text-white/70">Search and discover new routes</p>
-                </div>
-              </div>
-            </Link>
-          </motion.div>
+              <div className="p-6">
+                {/* Handle */}
+                <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-6" />
 
-          {/* Browse Map Card */}
-          <motion.div
-            variants={cardVariants}
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            whileTap={{ scale: 0.98, transition: { duration: 0.1 } }}
-          >
-            <Link
-              href="/trails/browse"
-              className="block glass-strong rounded-2xl px-8 py-6 shadow-large hover:shadow-xl cursor-pointer"
-            >
-              <div className="flex flex-col items-center text-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-[var(--color-stone)] flex items-center justify-center shadow-soft">
-                  <Map className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Browse Map</h2>
-                  <p className="text-sm text-white/70">View trails on an interactive map</p>
-                </div>
-              </div>
-            </Link>
-          </motion.div>
+                {/* Close Button */}
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/5 transition-colors"
+                  aria-label="Close menu"
+                >
+                  <X className="h-5 w-5 text-slate-400" />
+                </button>
 
-          {/* Select Vehicle Card */}
-          <motion.button
-            variants={cardVariants}
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            whileTap={{ scale: 0.98, transition: { duration: 0.1 } }}
-            onClick={() => setVehicleModalOpen(true)}
-            className="glass-strong rounded-2xl px-8 py-6 shadow-large hover:shadow-xl cursor-pointer"
-          >
-            <div className="flex flex-col items-center text-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-[var(--color-earth)] flex items-center justify-center shadow-soft">
-                <Car className="h-6 w-6 text-white" />
+                {/* Menu Links */}
+                <nav className="space-y-2">
+                  <Link
+                    href="/trails/browse"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-4 py-3.5 rounded-xl text-base font-medium text-slate-100 hover:bg-white/5 transition-colors"
+                  >
+                    Browse Trails
+                  </Link>
+                  <Link
+                    href="/trails/search"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-4 py-3.5 rounded-xl text-base font-medium text-slate-100 hover:bg-white/5 transition-colors"
+                  >
+                    Search Trails
+                  </Link>
+                  <div className="h-px bg-white/10 my-3" />
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setVehicleModalOpen(true);
+                    }}
+                    className="w-full text-left px-4 py-3.5 rounded-xl text-base font-medium text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                  >
+                    {selectedVehicle ? 'Change Vehicle' : 'Set Up Vehicle'}
+                  </button>
+                </nav>
               </div>
-              <div>
-                <h2 className="text-lg font-semibold text-white">
-                  {selectedVehicle ? 'Change Vehicle' : 'Select Vehicle'}
-                </h2>
-                <p className="text-sm text-white/70">
-                  {selectedVehicle
-                    ? selectedVehicle.replace(/_/g, ' ')
-                    : 'Set your vehicle for trail matching'}
-                </p>
-              </div>
-            </div>
-          </motion.button>
-        </motion.div>
-      </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Vehicle Selection Modal */}
       <VehicleSelectionModal

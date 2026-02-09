@@ -1,171 +1,35 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* TrailReady Design System
-   Earthy, modern outdoor aesthetic with HSL-based theming
-   Apple utility + Linear minimalism
+/* TrailReady Design System v2
+   High-End Dark Mode / Slate Aesthetic
 */
-
-@theme inline {
-  /* TrailReady Brand Colors (Hex for reference) */
-  --color-forest-dark: #2D5F3F;
-  --color-forest: #5FA777;
-  --color-forest-light: #7BC497;
-
-  --color-earth-dark: #A8653F;
-  --color-earth: #C67B4E;
-  --color-earth-light: #D4956A;
-
-  --color-stone-dark: #4A5568;
-  --color-stone: #718096;
-  --color-stone-light: #A0AEC0;
-
-  --color-alert-dark: #C93A3A;
-  --color-alert: #D84545;
-  --color-alert-light: #EF5555;
-
-  /* Status color aliases */
-  --color-status-passable: var(--color-forest);
-  --color-status-caution: var(--color-earth);
-  --color-status-not-passable: var(--color-alert);
-  --color-status-unknown: var(--color-stone);
-}
 
 @layer base {
   :root {
-    /* Core backgrounds */
-    --background: 40 20% 98%;
-    --foreground: 200 15% 15%;
-
-    /* Cards and surfaces */
-    --card: 0 0% 100%;
-    --card-foreground: 200 15% 15%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 200 15% 15%;
-
-    /* Primary - Forest Green (converted to HSL) */
-    --primary: 152 35% 54%;
-    --primary-foreground: 0 0% 100%;
-
-    /* Secondary - Warm cream */
-    --secondary: 40 10% 96%;
-    --secondary-foreground: 200 15% 25%;
-
-    /* Muted - Soft neutrals */
-    --muted: 40 10% 96%;
-    --muted-foreground: 200 10% 45%;
-
-    /* Accent - Warm Sand */
-    --accent: 35 40% 97%;
-    --accent-foreground: 21 42% 46%;
-
-    /* Status colors */
-    --destructive: 0 68% 53%;
+    --background: 222 47% 8%;
+    --foreground: 210 20% 94%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 20% 94%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 20% 94%;
+    --primary: 160 84% 45%;
+    --primary-foreground: 222 47% 8%;
+    --secondary: 222 47% 15%;
+    --secondary-foreground: 210 20% 88%;
+    --muted: 222 47% 15%;
+    --muted-foreground: 215 15% 55%;
+    --accent: 222 47% 15%;
+    --accent-foreground: 160 84% 45%;
+    --destructive: 350 89% 60%;
     --destructive-foreground: 0 0% 100%;
-
-    --success: 152 35% 54%;
-    --success-foreground: 0 0% 100%;
-
-    --warning: 21 85% 56%;
-    --warning-foreground: 21 85% 15%;
-
-    /* Borders and inputs */
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 152 35% 54%;
-
-    --radius: 0.75rem;
-
-    /* Custom design tokens */
-    --glass-bg: 0 0% 100% / 0.8;
-    --glass-border: 0 0% 100% / 0.3;
-    --shadow-soft: 0 4px 20px -4px hsl(200 15% 15% / 0.08);
-    --shadow-medium: 0 8px 30px -8px hsl(200 15% 15% / 0.12);
-    --shadow-large: 0 20px 50px -15px hsl(200 15% 15% / 0.15);
-
-    /* Gradient overlays */
-    --gradient-hero: linear-gradient(to bottom, hsl(200 15% 10% / 0.3) 0%, hsl(200 15% 10% / 0.7) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(40 20% 98%) 0%, hsl(40 15% 95%) 100%);
-
-    /* Sidebar - earthy tones */
-    --sidebar-background: 40 15% 96%;
-    --sidebar-foreground: 200 15% 25%;
-    --sidebar-primary: 152 35% 54%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 40 20% 92%;
-    --sidebar-accent-foreground: 200 15% 20%;
-    --sidebar-border: 40 15% 88%;
-    --sidebar-ring: 152 35% 54%;
+    --border: 222 47% 18%;
+    --input: 222 47% 18%;
+    --ring: 160 84% 45%;
+    --radius: 1rem;
   }
 
-  .dark {
-    /* Dark mode - deep forest night with earthy accents */
-    --background: 140 15% 10%;
-    --foreground: 40 15% 92%;
-
-    --card: 140 12% 14%;
-    --card-foreground: 40 15% 92%;
-
-    --popover: 140 12% 14%;
-    --popover-foreground: 40 15% 92%;
-
-    /* Primary - Brighter forest green for dark */
-    --primary: 152 45% 61%;
-    --primary-foreground: 140 15% 10%;
-
-    /* Secondary */
-    --secondary: 140 10% 17%;
-    --secondary-foreground: 40 15% 85%;
-
-    /* Muted */
-    --muted: 140 10% 17%;
-    --muted-foreground: 200 10% 55%;
-
-    /* Accent - Warm earth for dark */
-    --accent: 140 10% 17%;
-    --accent-foreground: 21 52% 61%;
-
-    --destructive: 0 72% 59%;
-    --destructive-foreground: 0 0% 100%;
-
-    --success: 152 45% 61%;
-    --success-foreground: 140 15% 10%;
-
-    --warning: 21 85% 56%;
-    --warning-foreground: 21 85% 10%;
-
-    --border: 140 10% 22%;
-    --input: 140 10% 22%;
-    --ring: 152 45% 61%;
-
-    /* Glass effects for dark */
-    --glass-bg: 140 15% 12% / 0.85;
-    --glass-border: 140 10% 25% / 0.4;
-    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
-    --shadow-medium: 0 8px 30px -8px hsl(0 0% 0% / 0.4);
-    --shadow-large: 0 20px 50px -15px hsl(0 0% 0% / 0.5);
-
-    --gradient-hero: linear-gradient(to bottom, hsl(140 15% 5% / 0.4) 0%, hsl(140 15% 5% / 0.85) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(140 12% 14%) 0%, hsl(140 15% 12%) 100%);
-
-    --sidebar-background: 140 12% 12%;
-    --sidebar-foreground: 40 15% 85%;
-    --sidebar-primary: 152 45% 61%;
-    --sidebar-primary-foreground: 140 15% 10%;
-    --sidebar-accent: 140 10% 17%;
-    --sidebar-accent-foreground: 40 15% 90%;
-    --sidebar-border: 140 10% 22%;
-    --sidebar-ring: 152 45% 61%;
-  }
-}
-
-@layer base {
   * {
     border-color: hsl(var(--border));
   }
@@ -173,58 +37,12 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-family: 'Inter', system-ui, sans-serif;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Smooth scrolling */
-  html {
-    scroll-behavior: smooth;
   }
 }
 
 @layer utilities {
-  /* Glass morphism utility */
-  .glass {
-    background: hsl(var(--glass-bg));
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--glass-border));
-  }
-
-  .glass-strong {
-    background: hsl(var(--glass-bg));
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid hsl(var(--glass-border));
-  }
-
-  /* Shadow utilities */
-  .shadow-soft {
-    box-shadow: var(--shadow-soft);
-  }
-
-  .shadow-medium {
-    box-shadow: var(--shadow-medium);
-  }
-
-  .shadow-large {
-    box-shadow: var(--shadow-large);
-  }
-
-  /* Hero gradient overlay */
-  .hero-overlay {
-    background: var(--gradient-hero);
-  }
-
-  /* Card gradient */
-  .card-gradient {
-    background: var(--gradient-card);
-  }
-
-  /* Safe area padding for mobile */
   .safe-bottom {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
@@ -232,116 +50,4 @@
   .safe-top {
     padding-top: max(1rem, env(safe-area-inset-top));
   }
-}
-
-/* Custom animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes float-slow {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.5s ease-out;
-}
-
-.animate-scale-in {
-  animation: scaleIn 0.3s ease-out;
-}
-
-.animate-float-slow {
-  animation: float-slow 6s ease-in-out infinite;
-}
-
-/* Staggered animation delays */
-.delay-100 { animation-delay: 100ms; }
-.delay-200 { animation-delay: 200ms; }
-.delay-300 { animation-delay: 300ms; }
-.delay-400 { animation-delay: 400ms; }
-
-/* Leaflet map customizations */
-.custom-trail-marker {
-  background: transparent !important;
-  border: none !important;
-}
-
-.leaflet-control-zoom {
-  border: 2px solid hsl(var(--border)) !important;
-  border-radius: var(--radius) !important;
-  overflow: hidden;
-  box-shadow: var(--shadow-medium) !important;
-}
-
-.leaflet-control-zoom a {
-  background-color: hsl(var(--card)) !important;
-  color: hsl(var(--foreground)) !important;
-  font-weight: 600 !important;
-  font-size: 20px !important;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.leaflet-control-zoom a:hover {
-  background-color: var(--color-forest) !important;
-  color: white !important;
-}
-
-.leaflet-control-zoom-in {
-  border-bottom: 1px solid hsl(var(--border)) !important;
-}
-
-.leaflet-popup-content-wrapper {
-  background-color: hsl(var(--card)) !important;
-  border-radius: var(--radius) !important;
-  border: 2px solid hsl(var(--border)) !important;
-  box-shadow: var(--shadow-large) !important;
-}
-
-.leaflet-popup-tip {
-  background-color: hsl(var(--card)) !important;
-  border-color: hsl(var(--border)) !important;
-}
-
-.leaflet-container a.leaflet-popup-close-button {
-  color: hsl(var(--muted-foreground)) !important;
-  font-size: 24px !important;
-  padding: 4px 8px !important;
-  font-weight: 600 !important;
-}
-
-.leaflet-container a.leaflet-popup-close-button:hover {
-  color: hsl(var(--foreground)) !important;
 }

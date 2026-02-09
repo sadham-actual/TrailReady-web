@@ -12,6 +12,11 @@ import { VEHICLE_TYPE_LABELS } from '@/types';
 export function Header() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
+
+  // Hide header on landing page (full-screen hero)
+  if (pathname === '/') {
+    return null;
+  }
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { selectedVehicle, setSelectedVehicle } = useVehicle();
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
