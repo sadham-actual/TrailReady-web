@@ -17,22 +17,17 @@ const recentIntel = [
   { trail: 'Barrett Lake', status: 'clear', timeAgo: '6h' },
 ];
 
-const statusColors = {
-  clear: 'bg-emerald-500',
-  caution: 'bg-amber-500',
-  impassable: 'bg-rose-500',
-};
-
-const statusTextColors = {
-  clear: 'text-emerald-400',
-  caution: 'text-amber-400',
-  impassable: 'text-rose-400',
+// High contrast solid status colors
+const statusBlockClasses = {
+  clear: 'bg-status-clear',
+  caution: 'bg-status-rough',
+  impassable: 'bg-status-impassable',
 };
 
 const statusLabels = {
-  clear: 'Passable',
+  clear: 'Clear',
   caution: 'Caution',
-  impassable: 'Impassable',
+  impassable: 'Blocked',
 };
 
 const containerVariants = {
@@ -40,18 +35,18 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.6,
+      staggerChildren: 0.1,
+      delayChildren: 0.5,
     },
   },
 };
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const },
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] as const },
   },
 };
 
@@ -59,37 +54,44 @@ export function ActionGrid({ onOpenVehicleModal }: ActionGridProps) {
   const { selectedVehicle } = useVehicle();
 
   return (
-    <section className="pb-20 md:pb-28">
+    <section className="pb-20 md:pb-28 px-4">
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6"
+        className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 max-w-6xl mx-auto"
       >
         {/* The Map Card */}
         <motion.div variants={cardVariants}>
           <Link
             href="/trails/browse"
-            className="group block h-full p-7 md:p-8 rounded-3xl bg-slate-900/50 backdrop-blur-md border border-slate-800/50 hover:border-emerald-500/30 hover:bg-slate-900/70 transition-all duration-300"
+            className="group block h-full p-6 md:p-7 bg-white border border-stone-border rounded-sm shadow-[2px_2px_0_0_var(--color-stone-border)] hover:shadow-[4px_4px_0_0_var(--color-stone-border)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-150"
           >
             <div className="flex items-start justify-between">
-              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
-                <Map className="h-6 w-6 text-emerald-400" />
+              <div className="p-3 rounded-sm bg-action-orange/10 border border-action-orange/20">
+                <Map className="h-6 w-6 text-action-orange" />
               </div>
-              <ChevronRight className="h-5 w-5 text-slate-600 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+              <ChevronRight className="h-5 w-5 text-muted-stone group-hover:text-action-orange group-hover:translate-x-1 transition-all" />
             </div>
 
-            <div className="mt-8">
-              <h3 className="text-xl font-semibold text-slate-50 tracking-tight">The Map</h3>
-              <p className="mt-2 text-sm text-slate-400 leading-relaxed">Visual Intelligence</p>
+            <div className="mt-6">
+              <span className="font-mono text-xs font-medium uppercase tracking-wider text-muted-stone">
+                01 / Map
+              </span>
+              <h3 className="mt-2 text-xl font-bold text-deep-stone tracking-tight">
+                Browse Trails
+              </h3>
+              <p className="mt-2 text-sm text-charcoal leading-relaxed">
+                Visual intel on 2,400+ trails
+              </p>
             </div>
 
-            {/* Mini Map Preview Placeholder */}
-            <div className="mt-8 h-28 rounded-2xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center overflow-hidden">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-xs font-medium text-slate-500">
-                  Interactive map
+            {/* Mini Map Preview */}
+            <div className="mt-6 h-24 rounded-sm bg-stone-light border border-stone-border flex items-center justify-center overflow-hidden bg-dots">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-stone-border rounded-sm shadow-[1px_1px_0_0_var(--color-stone-border)]">
+                <div className="w-2 h-2 rounded-full bg-status-clear animate-pulse" />
+                <span className="font-mono text-xs text-muted-stone uppercase">
+                  Live Map
                 </span>
               </div>
             </div>
@@ -100,40 +102,49 @@ export function ActionGrid({ onOpenVehicleModal }: ActionGridProps) {
         <motion.div variants={cardVariants}>
           <button
             onClick={onOpenVehicleModal}
-            className="group w-full h-full p-7 md:p-8 rounded-3xl bg-slate-900/50 backdrop-blur-md border border-slate-800/50 hover:border-emerald-500/30 hover:bg-slate-900/70 transition-all duration-300 text-left"
+            className="group w-full h-full p-6 md:p-7 bg-white border border-stone-border rounded-sm shadow-[2px_2px_0_0_var(--color-stone-border)] hover:shadow-[4px_4px_0_0_var(--color-stone-border)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-150 text-left"
           >
             <div className="flex items-start justify-between">
-              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
-                <Car className="h-6 w-6 text-emerald-400" />
+              <div className="p-3 rounded-sm bg-action-orange/10 border border-action-orange/20">
+                <Car className="h-6 w-6 text-action-orange" />
               </div>
               {selectedVehicle && (
-                <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium border border-emerald-500/20">
-                  Active
+                <span className="px-2.5 py-1 rounded-sm bg-status-clear text-white font-mono text-xs font-semibold uppercase tracking-wider">
+                  Set
                 </span>
               )}
             </div>
 
-            <div className="mt-8">
-              <h3 className="text-xl font-semibold text-slate-50 tracking-tight">The Garage</h3>
-              <p className="mt-2 text-sm text-slate-400 leading-relaxed">Your Rig's Capability</p>
+            <div className="mt-6">
+              <span className="font-mono text-xs font-medium uppercase tracking-wider text-muted-stone">
+                02 / Garage
+              </span>
+              <h3 className="mt-2 text-xl font-bold text-deep-stone tracking-tight">
+                Your Rig
+              </h3>
+              <p className="mt-2 text-sm text-charcoal leading-relaxed">
+                Set vehicle capability
+              </p>
             </div>
 
             {/* Vehicle Display */}
-            <div className="mt-8 h-28 rounded-2xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center px-4">
+            <div className="mt-6 h-24 rounded-sm bg-stone-light border border-stone-border flex items-center justify-center px-4">
               {selectedVehicle ? (
                 <div className="text-center">
-                  <p className="text-sm font-medium text-emerald-400">
+                  <p className="font-mono text-sm font-bold text-deep-stone uppercase tracking-wide">
                     {VEHICLE_TYPE_LABELS[selectedVehicle]}
                   </p>
-                  <p className="mt-2 text-xs text-slate-500">Tap to change</p>
+                  <p className="mt-2 font-mono text-xs text-muted-stone uppercase">
+                    Tap to change
+                  </p>
                 </div>
               ) : (
                 <div className="text-center">
-                  <p className="text-sm font-medium text-slate-500">
-                    No vehicle selected
+                  <p className="font-mono text-sm font-medium text-muted-stone uppercase">
+                    Not configured
                   </p>
-                  <p className="mt-2 text-xs text-emerald-400 font-medium">
-                    Tap to configure
+                  <p className="mt-2 font-mono text-xs text-action-orange font-bold uppercase">
+                    Tap to set
                   </p>
                 </div>
               )}
@@ -143,47 +154,56 @@ export function ActionGrid({ onOpenVehicleModal }: ActionGridProps) {
 
         {/* The Intel Card */}
         <motion.div variants={cardVariants}>
-          <div className="h-full p-7 md:p-8 rounded-3xl bg-slate-900/50 backdrop-blur-md border border-slate-800/50">
+          <div className="h-full p-6 md:p-7 bg-white border border-stone-border rounded-sm shadow-[2px_2px_0_0_var(--color-stone-border)]">
             <div className="flex items-start justify-between">
-              <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
-                <Radio className="h-6 w-6 text-emerald-400" />
+              <div className="p-3 rounded-sm bg-action-orange/10 border border-action-orange/20">
+                <Radio className="h-6 w-6 text-action-orange" />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <div className="flex items-center gap-2 px-2.5 py-1 rounded-sm bg-status-clear">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
                 </span>
-                <span className="text-xs font-medium text-emerald-400">Live</span>
+                <span className="font-mono text-xs font-bold text-white uppercase tracking-wider">
+                  Live
+                </span>
               </div>
             </div>
 
-            <div className="mt-8">
-              <h3 className="text-xl font-semibold text-slate-50 tracking-tight">The Intel</h3>
-              <p className="mt-2 text-sm text-slate-400 leading-relaxed">Latest Trail Reports</p>
+            <div className="mt-6">
+              <span className="font-mono text-xs font-medium uppercase tracking-wider text-muted-stone">
+                03 / Intel
+              </span>
+              <h3 className="mt-2 text-xl font-bold text-deep-stone tracking-tight">
+                Trail Reports
+              </h3>
+              <p className="mt-2 text-sm text-charcoal leading-relaxed">
+                Latest field updates
+              </p>
             </div>
 
             {/* Intel Feed */}
-            <div className="mt-8 space-y-3">
+            <div className="mt-6 space-y-0 border border-stone-border rounded-sm overflow-hidden">
               {recentIntel.map((intel, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between py-3 border-b border-slate-800/50 last:border-0 last:pb-0"
+                  className="flex items-center justify-between p-3 bg-white border-b border-stone-border last:border-b-0"
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-2 h-2 rounded-full ${statusColors[intel.status as keyof typeof statusColors]}`}
+                      className={`w-3 h-3 rounded-sm ${statusBlockClasses[intel.status as keyof typeof statusBlockClasses]}`}
                     />
-                    <span className="text-sm font-medium text-slate-300 truncate max-w-[100px]">
+                    <span className="text-sm font-medium text-deep-stone truncate max-w-[90px]">
                       {intel.trail}
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`text-xs font-medium ${statusTextColors[intel.status as keyof typeof statusTextColors]}`}>
+                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-stone">
                       {statusLabels[intel.status as keyof typeof statusLabels]}
                     </span>
-                    <div className="flex items-center gap-1 text-slate-500">
+                    <div className="flex items-center gap-1 text-muted-stone">
                       <Clock className="h-3 w-3" />
-                      <span className="text-xs">{intel.timeAgo}</span>
+                      <span className="font-mono text-xs">{intel.timeAgo}</span>
                     </div>
                   </div>
                 </div>

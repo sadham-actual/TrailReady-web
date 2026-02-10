@@ -2,24 +2,19 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Menu, X, Car, ChevronDown } from 'lucide-react';
+import { Menu, X, Car, ChevronDown, Compass } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
 import { VEHICLE_TYPE_LABELS } from '@/types';
 
 export function Header() {
+  // All hooks MUST be called before any conditional returns (React rules of hooks)
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
-
-  // Hide header on landing page (full-screen hero)
-  if (pathname === '/') {
-    return null;
-  }
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { selectedVehicle, setSelectedVehicle } = useVehicle();
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
+  const { selectedVehicle, setSelectedVehicle } = useVehicle();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,6 +23,11 @@ export function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Hide header on landing page (full-screen hero) - AFTER all hooks
+  if (pathname === '/') {
+    return null;
+  }
 
   const isActivePath = (path: string) => {
     if (path === '/trails/browse') return pathname.startsWith('/trails/browse');
@@ -39,39 +39,40 @@ export function Header() {
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-200 ${
         isScrolled
-          ? 'bg-background/95 backdrop-blur-sm border-b shadow-sm'
-          : 'bg-background border-b'
+          ? 'bg-bone/95 backdrop-blur-sm border-b border-stone-border shadow-sm'
+          : 'bg-bone border-b border-stone-border'
       }`}
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4 max-w-7xl">
         {/* Logo/Brand */}
         <Link
           href="/"
-          className="flex items-center gap-2 text-foreground hover:text-primary transition-colors"
+          className="flex items-center gap-2.5 text-deep-stone hover:text-action-orange transition-colors"
         >
-          <span className="text-xl font-semibold tracking-tight">
+          <Compass className="h-5 w-5 text-action-orange" strokeWidth={2.5} />
+          <span className="font-mono text-sm font-bold uppercase tracking-wider">
             TrailReady
           </span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-6">
           <Link
             href="/trails/browse"
-            className={`text-sm font-medium transition-colors ${
+            className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors ${
               isActivePath('/trails/browse')
-                ? 'text-primary'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'text-action-orange'
+                : 'text-muted-stone hover:text-deep-stone'
             }`}
           >
             Browse
           </Link>
           <Link
             href="/trails/search"
-            className={`text-sm font-medium transition-colors ${
+            className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors ${
               isActivePath('/trails/search')
-                ? 'text-primary'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'text-action-orange'
+                : 'text-muted-stone hover:text-deep-stone'
             }`}
           >
             Search
@@ -83,46 +84,48 @@ export function Header() {
           {selectedVehicle ? (
             <button
               onClick={() => setVehicleModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-light/10 hover:bg-stone-light/20 text-sm font-medium transition-all"
+              className="flex items-center gap-2 px-3 py-2 rounded-sm bg-status-clear text-white font-mono text-xs font-semibold uppercase tracking-wider border border-green-700 shadow-[2px_2px_0_0_#15803d] hover:bg-green-500 active:shadow-[1px_1px_0_0_#15803d] active:translate-x-px active:translate-y-px transition-all"
             >
-              <Car className="h-4 w-4 text-forest" />
-              <span className="text-foreground">
-                {VEHICLE_TYPE_LABELS[selectedVehicle].split(' - ')[0]}
-              </span>
-              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+              <Car className="h-4 w-4" />
+              <span>{VEHICLE_TYPE_LABELS[selectedVehicle].split(' - ')[0]}</span>
+              <ChevronDown className="h-3 w-3" />
             </button>
           ) : (
             <button
               onClick={() => setVehicleModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full border hover:border-forest/50 text-sm font-medium transition-all"
+              className="flex items-center gap-2 px-3 py-2 rounded-sm bg-action-orange text-white font-mono text-xs font-semibold uppercase tracking-wider border border-action-orange-dark shadow-[2px_2px_0_0_var(--color-action-orange-dark)] hover:bg-action-orange-light active:shadow-[1px_1px_0_0_var(--color-action-orange-dark)] active:translate-x-px active:translate-y-px transition-all"
             >
               <Car className="h-4 w-4" />
-              <span>Select Vehicle</span>
+              <span>Set Rig</span>
             </button>
           )}
         </div>
 
         {/* Mobile Actions */}
         <div className="md:hidden flex items-center gap-2">
-          {/* Mobile Vehicle Button - Icon Only */}
+          {/* Mobile Vehicle Button */}
           <button
             onClick={() => setVehicleModalOpen(true)}
-            className="p-2 rounded-lg hover:bg-secondary transition-colors"
+            className={`p-2 rounded-sm border transition-all ${
+              selectedVehicle
+                ? 'bg-status-clear text-white border-green-700'
+                : 'bg-action-orange text-white border-action-orange-dark'
+            }`}
             aria-label="Select vehicle"
           >
-            <Car className={`h-5 w-5 ${selectedVehicle ? 'text-forest' : 'text-muted-foreground'}`} />
+            <Car className="h-5 w-5" />
           </button>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg hover:bg-secondary transition-colors"
+            className="p-2 rounded-sm border border-stone-border bg-white hover:bg-stone-light shadow-[2px_2px_0_0_var(--color-stone-border)] active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-px active:translate-y-px transition-all"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? (
-              <X className="h-6 w-6" />
+              <X className="h-5 w-5 text-deep-stone" />
             ) : (
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5 text-deep-stone" />
             )}
           </button>
         </div>
@@ -130,15 +133,15 @@ export function Header() {
 
       {/* Mobile Menu Drawer */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-background border-t">
-          <nav className="container mx-auto px-4 py-4 space-y-1">
+        <div className="md:hidden bg-bone border-t border-stone-border">
+          <nav className="container mx-auto px-4 py-4 space-y-2">
             <Link
               href="/trails/browse"
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+              className={`block px-4 py-3 rounded-sm font-mono text-xs font-medium uppercase tracking-wider transition-all ${
                 isActivePath('/trails/browse')
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-foreground hover:bg-secondary'
+                  ? 'bg-action-orange/10 text-action-orange border border-action-orange/20'
+                  : 'text-deep-stone hover:bg-stone-light border border-transparent'
               }`}
             >
               Browse Trails
@@ -146,10 +149,10 @@ export function Header() {
             <Link
               href="/trails/search"
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+              className={`block px-4 py-3 rounded-sm font-mono text-xs font-medium uppercase tracking-wider transition-all ${
                 isActivePath('/trails/search')
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-foreground hover:bg-secondary'
+                  ? 'bg-action-orange/10 text-action-orange border border-action-orange/20'
+                  : 'text-deep-stone hover:bg-stone-light border border-transparent'
               }`}
             >
               Search Trails
@@ -162,13 +165,13 @@ export function Header() {
                   setVehicleModalOpen(true);
                   setIsMobileMenuOpen(false);
                 }}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium hover:bg-secondary transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 rounded-sm font-mono text-xs font-medium uppercase tracking-wider hover:bg-stone-light transition-colors border border-transparent"
               >
                 <span className="flex items-center gap-2">
-                  <Car className="h-4 w-4 text-forest" />
-                  <span>{VEHICLE_TYPE_LABELS[selectedVehicle]}</span>
+                  <Car className="h-4 w-4 text-status-clear" />
+                  <span className="text-deep-stone">{VEHICLE_TYPE_LABELS[selectedVehicle]}</span>
                 </span>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 text-muted-stone" />
               </button>
             )}
           </nav>

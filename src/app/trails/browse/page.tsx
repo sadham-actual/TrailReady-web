@@ -19,6 +19,133 @@ import {
   Car,
   X,
 } from 'lucide-react';
+
+// Viewfinder/Crosshair corner component for HUD aesthetic
+function ViewfinderCorner({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
+  const rotations = {
+    tl: 'rotate-0',
+    tr: 'rotate-90',
+    br: 'rotate-180',
+    bl: '-rotate-90',
+  };
+
+  const positions = {
+    tl: 'top-3 left-3',
+    tr: 'top-3 right-3',
+    bl: 'bottom-3 left-3',
+    br: 'bottom-3 right-3',
+  };
+
+  return (
+    <svg
+      className={`absolute ${positions[position]} ${rotations[position]} w-5 h-5 text-action-orange`}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      {/* L-shaped bracket */}
+      <path d="M4 4 L4 10" />
+      <path d="M4 4 L10 4" />
+      {/* Tick marks */}
+      <path d="M7 4 L7 5" />
+      <path d="M4 7 L5 7" />
+    </svg>
+  );
+}
+
+// Segmented Match Gauge - 5 vertical blocks field instrument style
+function SegmentedGauge({ score, label }: { score: number; label?: string }) {
+  const filledBlocks = Math.round(score * 5);
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((level) => (
+          <motion.div
+            key={level}
+            initial={{ scaleY: 0 }}
+            animate={{ scaleY: 1 }}
+            transition={{ delay: level * 0.05, duration: 0.2 }}
+            className={`w-2 h-4 rounded-sm origin-bottom ${
+              level <= filledBlocks
+                ? 'bg-action-orange'
+                : 'bg-stone-border'
+            }`}
+          />
+        ))}
+      </div>
+      {label && (
+        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-stone">
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// Status Block with glitch/vibration hover effect
+function StatusBlock({
+  status,
+  verdict,
+}: {
+  status: 'clear' | 'rough' | 'impassable' | 'unknown';
+  verdict: string;
+}) {
+  const bgColors = {
+    clear: 'bg-status-clear',
+    rough: 'bg-status-rough',
+    impassable: 'bg-status-impassable',
+    unknown: 'bg-muted-stone',
+  };
+
+  // Glitch animation variants
+  const glitchVariants = {
+    idle: { x: 0, y: 0 },
+    hover: {
+      x: [0, -1, 2, -1, 0, 1, -2, 0],
+      y: [0, 1, -1, 0, 1, -1, 0, 0],
+      transition: {
+        duration: 0.3,
+        repeat: Infinity,
+        repeatType: 'loop' as const,
+      },
+    },
+  };
+
+  return (
+    <motion.div
+      initial="idle"
+      whileHover="hover"
+      variants={glitchVariants}
+      className={`px-4 py-2 rounded-sm font-mono text-xs font-bold uppercase tracking-wider text-white cursor-default select-none ${bgColors[status]}`}
+      style={{
+        textShadow: '0 0 2px rgba(255,255,255,0.3)',
+      }}
+    >
+      {verdict}
+    </motion.div>
+  );
+}
+
+// Scanline overlay component for CRT/LCD effect
+function ScanlineOverlay() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 z-10"
+      style={{
+        background: `repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 0, 0, 0.02) 2px,
+          rgba(0, 0, 0, 0.02) 4px
+        )`,
+      }}
+    />
+  );
+}
 import { trailService } from '@/services/trailService';
 import {
   Trail,
@@ -409,99 +536,90 @@ export default function BrowseMapPage() {
         </div>
       </motion.div>
 
-      {/* Trail Peek Bottom Sheet */}
+      {/* Trail Peek Bottom Sheet - HUD Card with Viewfinder Corners */}
       <Drawer.Root open={peekOpen} onOpenChange={setPeekOpen}>
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[1001]" />
+          <Drawer.Overlay className="fixed inset-0 bg-deep-stone/40 backdrop-blur-sm z-[1001]" />
           <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[1002] outline-none">
-            <div className="bg-slate-900 border-t border-white/10 rounded-t-3xl safe-bottom">
+            <div className="bg-bone border-t border-stone-border safe-bottom">
               {/* Drag Handle */}
               <div className="flex justify-center pt-4 pb-2">
-                <div className="w-10 h-1 rounded-full bg-slate-700" />
+                <div className="w-12 h-1 rounded-sm bg-stone-medium" />
               </div>
 
               {selectedTrail && (
-                <div className="px-6 pb-8">
-                  {/* Header Row */}
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex-1 pr-4">
-                      <Drawer.Title className="text-xl font-bold text-slate-50 tracking-tight mb-1">
-                        {selectedTrail.name}
-                      </Drawer.Title>
-                      <div className="flex items-center gap-2 text-slate-400">
-                        <MapPin className="h-3.5 w-3.5" />
-                        <span className="text-sm">{selectedTrail.region}</span>
-                      </div>
-                    </div>
+                <div className="px-4 pb-8">
+                  {/* HUD Card with Viewfinder Corners and Scanline Overlay */}
+                  <div className="relative bg-white border border-stone-border rounded-sm shadow-[3px_3px_0_0_var(--color-stone-border)] p-6 overflow-hidden">
+                    {/* Scanline CRT/LCD Effect */}
+                    <ScanlineOverlay />
 
-                    {/* Verdict Badge */}
-                    <div
-                      className={`px-4 py-2 rounded-xl ${statusConfig.bgColor} ${statusConfig.borderColor} border`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <statusConfig.icon
-                          className={`h-5 w-5 ${statusConfig.color}`}
-                        />
-                        <span
-                          className={`text-sm font-bold tracking-wide ${statusConfig.color}`}
-                        >
-                          {statusConfig.verdict}
+                    {/* Viewfinder Corners */}
+                    <ViewfinderCorner position="tl" />
+                    <ViewfinderCorner position="tr" />
+                    <ViewfinderCorner position="bl" />
+                    <ViewfinderCorner position="br" />
+
+                    {/* Header Row */}
+                    <div className="relative z-20 flex items-start justify-between mb-5 pt-2">
+                      <div className="flex-1 pr-4">
+                        <span className="font-mono text-[10px] font-medium uppercase tracking-wider text-muted-stone">
+                          Trail Intel // {selectedTrail.id.slice(0, 8).toUpperCase()}
                         </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Info Row */}
-                  <div className="flex items-center gap-6 mb-6">
-                    {/* Last Report */}
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-slate-500" />
-                      <span className="text-sm text-slate-400">
-                        {formatRelativeTime(selectedTrail.lastReportAt)}
-                      </span>
-                    </div>
-
-                    {/* Match Score (if vehicle selected) */}
-                    {selectedVehicle && (
-                      <div className="flex items-center gap-2">
-                        <div className="flex gap-0.5">
-                          {[1, 2, 3, 4, 5].map((level) => (
-                            <div
-                              key={level}
-                              className={`h-2 w-3 rounded-sm ${
-                                level <= Math.round(selectedMatchScore * 5)
-                                  ? selectedMatchScore >= 0.7
-                                    ? 'bg-emerald-500'
-                                    : selectedMatchScore >= 0.4
-                                    ? 'bg-amber-500'
-                                    : 'bg-rose-500'
-                                  : 'bg-slate-700'
-                              }`}
-                            />
-                          ))}
+                        <Drawer.Title className="text-xl font-bold text-deep-stone tracking-tight mt-1">
+                          {selectedTrail.name}
+                        </Drawer.Title>
+                        <div className="flex items-center gap-2 text-muted-stone mt-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          <span className="text-sm">{selectedTrail.region}</span>
                         </div>
-                        <span className="text-sm text-slate-400">
-                          Match for {currentCategory?.shortName}
+                      </div>
+
+                      {/* Verdict Badge - with Glitch Effect */}
+                      <StatusBlock
+                        status={selectedStatus as 'clear' | 'rough' | 'impassable' | 'unknown'}
+                        verdict={statusConfig.verdict}
+                      />
+                    </div>
+
+                    {/* Divider */}
+                    <div className="relative z-20 border-t border-stone-border my-4" />
+
+                    {/* Info Row */}
+                    <div className="relative z-20 flex items-center gap-6 mb-5">
+                      {/* Last Report */}
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-muted-stone" />
+                        <span className="font-mono text-xs uppercase tracking-wide text-muted-stone">
+                          {formatRelativeTime(selectedTrail.lastReportAt)}
                         </span>
                       </div>
+
+                      {/* Match Score - Segmented Gauge */}
+                      {selectedVehicle && (
+                        <SegmentedGauge
+                          score={selectedMatchScore}
+                          label={`${currentCategory?.shortName} Match`}
+                        />
+                      )}
+                    </div>
+
+                    {/* Description */}
+                    {selectedTrail.description && (
+                      <Drawer.Description className="relative z-20 text-sm text-charcoal leading-relaxed mb-5 line-clamp-2">
+                        {selectedTrail.description}
+                      </Drawer.Description>
                     )}
+
+                    {/* View Details Button */}
+                    <Link
+                      href={`/trails/${selectedTrail.id}`}
+                      className="relative z-20 flex items-center justify-center gap-2 w-full py-3 rounded-sm bg-action-orange text-white font-mono text-sm font-bold uppercase tracking-wider border border-action-orange-dark shadow-[2px_2px_0_0_var(--color-action-orange-dark)] hover:bg-action-orange-light active:shadow-[1px_1px_0_0_var(--color-action-orange-dark)] active:translate-x-px active:translate-y-px transition-all"
+                    >
+                      View Details
+                      <ChevronRight className="h-5 w-5" />
+                    </Link>
                   </div>
-
-                  {/* Description */}
-                  {selectedTrail.description && (
-                    <Drawer.Description className="text-sm text-slate-400 leading-relaxed mb-6 line-clamp-2">
-                      {selectedTrail.description}
-                    </Drawer.Description>
-                  )}
-
-                  {/* View Details Button */}
-                  <Link
-                    href={`/trails/${selectedTrail.id}`}
-                    className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-base transition-all active:scale-[0.98] shadow-lg shadow-emerald-600/20"
-                  >
-                    View Details
-                    <ChevronRight className="h-5 w-5" />
-                  </Link>
                 </div>
               )}
             </div>

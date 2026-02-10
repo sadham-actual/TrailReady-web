@@ -5,6 +5,63 @@ import { motion } from 'framer-motion';
 import { Search, Crosshair, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+// Topographic pattern SVG component with earth-tone strokes
+function TopoPattern() {
+  return (
+    <svg
+      className="absolute inset-0 w-full h-full opacity-[0.18]"
+      xmlns="http://www.w3.org/2000/svg"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      <defs>
+        <pattern
+          id="topo-pattern"
+          x="0"
+          y="0"
+          width="200"
+          height="200"
+          patternUnits="userSpaceOnUse"
+        >
+          {/* Earth/Dust tone stroke color */}
+          <g fill="none" stroke="#B8B4A8" strokeWidth="0.8">
+            {/* Contour lines */}
+            <path d="M0 100 Q50 60 100 100 T200 100" />
+            <path d="M0 60 Q50 20 100 60 T200 60" />
+            <path d="M0 140 Q50 100 100 140 T200 140" />
+            <path d="M0 180 Q50 140 100 180 T200 180" />
+            <path d="M0 20 Q50 -20 100 20 T200 20" />
+            {/* Elevation markers */}
+            <circle cx="150" cy="50" r="16" />
+            <circle cx="150" cy="50" r="24" />
+            <circle cx="150" cy="50" r="32" />
+            <circle cx="50" cy="150" r="12" />
+            <circle cx="50" cy="150" r="20" />
+          </g>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#topo-pattern)" />
+    </svg>
+  );
+}
+
+// Radial vignette mask - fades topo at edges, keeps center clean
+function VignetteMask() {
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        background: `radial-gradient(
+          ellipse 70% 60% at 50% 40%,
+          transparent 0%,
+          transparent 40%,
+          rgba(249, 248, 246, 0.6) 70%,
+          rgba(249, 248, 246, 1) 100%
+        )`,
+      }}
+    />
+  );
+}
+
 export function Hero() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,21 +79,42 @@ export function Hero() {
   };
 
   return (
-    <section className="relative pt-24 pb-20 md:pt-32 md:pb-28">
-      <div className="max-w-4xl mx-auto text-center space-y-12">
+    <section className="relative pt-24 pb-20 md:pt-32 md:pb-28 overflow-hidden">
+      {/* Topographic Pattern Background - Layered for depth */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        {/* Base topo pattern */}
+        <TopoPattern />
+        {/* Radial vignette - fades edges, keeps center clean */}
+        <VignetteMask />
+        {/* Top/bottom gradient fade for seamless blending */}
+        <div className="absolute inset-0 bg-gradient-to-b from-bone/80 via-transparent to-bone/80" />
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto text-center space-y-12 px-4">
+        {/* Industrial Label */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <span className="inline-block px-3 py-1.5 bg-white border border-stone-border rounded-sm shadow-[2px_2px_0_0_var(--color-stone-border)] font-mono text-xs font-medium uppercase tracking-wider text-muted-stone">
+            Trail Intelligence Platform
+          </span>
+        </motion.div>
+
         {/* Main Headline */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
           className="space-y-6"
         >
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tighter leading-[0.9]">
-            <span className="bg-gradient-to-b from-slate-50 to-slate-400 bg-clip-text text-transparent">
+            <span className="text-deep-stone">
               Know before
             </span>
             <br />
-            <span className="bg-gradient-to-r from-emerald-400 to-emerald-500 bg-clip-text text-transparent">
+            <span className="text-action-orange">
               you go.
             </span>
           </h1>
@@ -44,8 +122,8 @@ export function Hero() {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto leading-relaxed"
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="inline-block px-5 py-2.5 rounded-sm bg-stone-light/60 backdrop-blur-sm text-lg sm:text-xl font-medium text-deep-stone max-w-xl mx-auto leading-relaxed drop-shadow-sm"
           >
             Real-time trail conditions matched to your vehicle capability.
           </motion.p>
@@ -55,20 +133,20 @@ export function Hero() {
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
           className="space-y-4"
         >
           <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
             <div
-              className={`relative flex items-center rounded-2xl bg-slate-900/80 border transition-all duration-300 ${
+              className={`relative flex items-center bg-white border rounded-sm transition-all duration-200 ${
                 isFocused
-                  ? 'border-emerald-500/40 shadow-[0_0_40px_-10px_rgba(16,185,129,0.25)]'
-                  : 'border-slate-800 shadow-2xl shadow-black/20'
+                  ? 'border-action-orange shadow-[4px_4px_0_0_var(--color-action-orange)]'
+                  : 'border-stone-border shadow-[3px_3px_0_0_var(--color-stone-border)]'
               }`}
             >
               {/* Search Input */}
               <div className="relative flex-1">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-stone" />
                 <input
                   type="text"
                   value={searchQuery}
@@ -76,7 +154,7 @@ export function Hero() {
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
                   placeholder="Search 2,400+ trails..."
-                  className="w-full h-14 md:h-16 pl-13 pr-4 bg-transparent text-slate-50 placeholder:text-slate-500 text-base md:text-lg focus:outline-none"
+                  className="w-full h-14 md:h-16 pl-13 pr-4 bg-transparent text-deep-stone placeholder:text-muted-stone text-base md:text-lg focus:outline-none font-medium"
                   style={{ paddingLeft: '3.25rem' }}
                 />
               </div>
@@ -84,7 +162,7 @@ export function Hero() {
               {/* Search Button */}
               <button
                 type="submit"
-                className="h-10 md:h-12 px-5 md:px-7 mr-2 rounded-xl bg-emerald-500 text-slate-950 font-semibold text-sm md:text-base hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all flex items-center gap-2"
+                className="h-10 md:h-12 px-5 md:px-7 mr-2 rounded-sm bg-action-orange text-white font-mono text-xs md:text-sm font-bold uppercase tracking-wider border border-action-orange-dark shadow-[2px_2px_0_0_var(--color-action-orange-dark)] hover:bg-action-orange-light active:shadow-[1px_1px_0_0_var(--color-action-orange-dark)] active:translate-x-px active:translate-y-px transition-all flex items-center gap-2"
               >
                 <span className="hidden sm:inline">Search</span>
                 <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
@@ -92,20 +170,43 @@ export function Hero() {
             </div>
           </form>
 
-          {/* Locate Me - Ghost Button */}
+          {/* Locate Me Button */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.7 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
           >
             <button
               onClick={handleLocateMe}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium text-slate-400 hover:text-emerald-400 border border-transparent hover:border-emerald-500/20 hover:bg-emerald-500/5 transition-all duration-300"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-sm font-mono text-xs font-medium uppercase tracking-wider text-muted-stone border border-transparent hover:text-deep-stone hover:border-stone-border hover:bg-white hover:shadow-[2px_2px_0_0_var(--color-stone-border)] transition-all"
             >
               <Crosshair className="h-4 w-4" />
               <span>Use my location</span>
             </button>
           </motion.div>
+        </motion.div>
+
+        {/* Stats Row */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.7 }}
+          className="flex items-center justify-center gap-8 pt-8"
+        >
+          {[
+            { value: '2,400+', label: 'Trails' },
+            { value: '12K+', label: 'Reports' },
+            { value: '98%', label: 'Accuracy' },
+          ].map((stat, idx) => (
+            <div key={idx} className="text-center">
+              <div className="text-2xl md:text-3xl font-bold text-deep-stone tracking-tight">
+                {stat.value}
+              </div>
+              <div className="font-mono text-xs uppercase tracking-wider text-muted-stone mt-1">
+                {stat.label}
+              </div>
+            </div>
+          ))}
         </motion.div>
       </div>
     </section>

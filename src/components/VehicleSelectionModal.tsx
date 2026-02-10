@@ -28,15 +28,15 @@ function VehicleIcon({ icon, className }: { icon: VehicleCategoryInfo['icon']; c
   }
 }
 
-// Capability bar visualization
+// Capability bar visualization - Industrial style
 function CapabilityBar({ level }: { level: 1 | 2 | 3 | 4 }) {
   return (
     <div className="flex gap-1">
       {[1, 2, 3, 4].map((bar) => (
         <div
           key={bar}
-          className={`h-1.5 w-4 rounded-full transition-colors ${
-            bar <= level ? 'bg-emerald-500' : 'bg-slate-700'
+          className={`h-2 w-4 rounded-sm transition-colors ${
+            bar <= level ? 'bg-action-orange' : 'bg-stone-border'
           }`}
         />
       ))}
@@ -64,23 +64,26 @@ export function VehicleSelectionModal({
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" />
+        <Drawer.Overlay className="fixed inset-0 bg-deep-stone/40 backdrop-blur-sm z-50" />
         <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 outline-none">
-          <div className="bg-slate-900 border-t border-white/10 rounded-t-3xl max-h-[90vh] overflow-hidden">
+          <div className="bg-bone border-t border-stone-border max-h-[90vh] overflow-hidden">
             {/* Drag Handle */}
             <div className="flex justify-center pt-4 pb-2">
-              <div className="w-10 h-1 rounded-full bg-slate-700" />
+              <div className="w-12 h-1 rounded-sm bg-stone-medium" />
             </div>
 
             {/* Content */}
             <div className="px-6 pb-8 overflow-y-auto max-h-[calc(90vh-60px)]">
               {/* Header */}
               <div className="text-center mb-8">
-                <Drawer.Title className="text-2xl font-bold text-slate-50 tracking-tight">
-                  The Garage
+                <Drawer.Title className="font-mono text-xs font-bold uppercase tracking-wider text-muted-stone mb-2">
+                  02 / Garage
                 </Drawer.Title>
-                <Drawer.Description className="mt-2 text-sm text-slate-400">
-                  Select your rig for personalized trail matching
+                <h2 className="text-2xl font-bold text-deep-stone tracking-tight">
+                  Select Your Rig
+                </h2>
+                <Drawer.Description className="mt-2 text-sm text-charcoal">
+                  Match trail recommendations to your vehicle capability
                 </Drawer.Description>
               </div>
 
@@ -92,14 +95,14 @@ export function VehicleSelectionModal({
                   return (
                     <motion.button
                       key={category.id}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.05 }}
                       onClick={() => handleSelect(category)}
-                      className={`relative p-5 rounded-2xl border text-left transition-all duration-200 active:scale-[0.98] ${
+                      className={`relative p-5 rounded-sm border text-left transition-all duration-150 ${
                         isSelected
-                          ? 'bg-emerald-500/15 border-emerald-500/40 shadow-[0_0_30px_-5px_rgba(16,185,129,0.2)]'
-                          : 'bg-slate-800/50 border-slate-700/50 hover:border-emerald-500/30 hover:bg-slate-800/70'
+                          ? 'bg-white border-action-orange shadow-[3px_3px_0_0_var(--color-action-orange)]'
+                          : 'bg-white border-stone-border shadow-[2px_2px_0_0_var(--color-stone-border)] hover:shadow-[3px_3px_0_0_var(--color-stone-border)] hover:-translate-x-px hover:-translate-y-px'
                       }`}
                     >
                       {/* Selection Indicator */}
@@ -107,18 +110,18 @@ export function VehicleSelectionModal({
                         <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          className="absolute top-3 right-3 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center"
+                          className="absolute top-3 right-3 w-6 h-6 rounded-sm bg-action-orange flex items-center justify-center"
                         >
-                          <Check className="h-4 w-4 text-slate-950" strokeWidth={3} />
+                          <Check className="h-4 w-4 text-white" strokeWidth={3} />
                         </motion.div>
                       )}
 
                       {/* Icon */}
                       <div
-                        className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-colors ${
+                        className={`w-12 h-12 rounded-sm flex items-center justify-center mb-4 transition-colors ${
                           isSelected
-                            ? 'bg-emerald-500/20 text-emerald-400'
-                            : 'bg-slate-700/50 text-slate-400'
+                            ? 'bg-action-orange/10 text-action-orange'
+                            : 'bg-stone-light text-muted-stone'
                         }`}
                       >
                         <VehicleIcon icon={category.icon} />
@@ -126,13 +129,13 @@ export function VehicleSelectionModal({
 
                       {/* Text */}
                       <h3
-                        className={`font-semibold text-base mb-1 transition-colors ${
-                          isSelected ? 'text-emerald-400' : 'text-slate-50'
+                        className={`font-bold text-base mb-1 transition-colors ${
+                          isSelected ? 'text-action-orange' : 'text-deep-stone'
                         }`}
                       >
                         {category.name}
                       </h3>
-                      <p className="text-xs text-slate-500 leading-relaxed mb-3">
+                      <p className="font-mono text-xs text-muted-stone leading-relaxed mb-3 uppercase tracking-wide">
                         {category.description}
                       </p>
 
@@ -149,9 +152,9 @@ export function VehicleSelectionModal({
                   onSelectVehicle(null);
                   onOpenChange(false);
                 }}
-                className="w-full py-3 text-sm font-medium text-slate-500 hover:text-slate-300 transition-colors"
+                className="w-full py-3 font-mono text-xs font-medium uppercase tracking-wider text-muted-stone hover:text-deep-stone transition-colors border border-transparent hover:border-stone-border hover:bg-white rounded-sm"
               >
-                Skip for now — browse without personalization
+                Skip — browse without personalization
               </button>
             </div>
 

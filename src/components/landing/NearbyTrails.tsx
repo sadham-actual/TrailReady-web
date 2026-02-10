@@ -73,10 +73,10 @@ function calculateMatch(trail: TrailData, vehicleCapability: number | null): Mat
       level: 'neutral',
       label: 'Set Vehicle',
       percent: 50,
-      bg: 'bg-slate-500/10',
-      text: 'text-slate-400',
-      border: 'border-slate-500/20',
-      barColor: 'bg-slate-500',
+      bg: 'bg-stone-100',
+      text: 'text-muted-stone',
+      border: 'border-stone-border',
+      barColor: 'bg-stone-medium',
       icon: <HelpCircle className="h-3 w-3" />,
     };
   }
@@ -90,10 +90,10 @@ function calculateMatch(trail: TrailData, vehicleCapability: number | null): Mat
       level: 'strong',
       label: 'Strong Match',
       percent,
-      bg: 'bg-emerald-500/10',
-      text: 'text-emerald-400',
-      border: 'border-emerald-500/20',
-      barColor: 'bg-emerald-500',
+      bg: 'bg-status-clear/10',
+      text: 'text-status-clear',
+      border: 'border-status-clear/30',
+      barColor: 'bg-status-clear',
       icon: <CheckCircle2 className="h-3 w-3" />,
     };
   }
@@ -104,10 +104,10 @@ function calculateMatch(trail: TrailData, vehicleCapability: number | null): Mat
       level: 'caution',
       label: 'Caution',
       percent: 65,
-      bg: 'bg-amber-500/10',
-      text: 'text-amber-400',
-      border: 'border-amber-500/20',
-      barColor: 'bg-amber-500',
+      bg: 'bg-status-rough/10',
+      text: 'text-status-rough',
+      border: 'border-status-rough/30',
+      barColor: 'bg-status-rough',
       icon: <AlertTriangle className="h-3 w-3" />,
     };
   }
@@ -117,10 +117,10 @@ function calculateMatch(trail: TrailData, vehicleCapability: number | null): Mat
     level: 'risk',
     label: 'High Risk',
     percent: Math.max(20, 50 + diff * 15),
-    bg: 'bg-rose-500/10',
-    text: 'text-rose-400',
-    border: 'border-rose-500/20',
-    barColor: 'bg-rose-500',
+    bg: 'bg-status-impassable/10',
+    text: 'text-status-impassable',
+    border: 'border-status-impassable/30',
+    barColor: 'bg-status-impassable',
     icon: <AlertTriangle className="h-3 w-3" />,
   };
 }
@@ -166,7 +166,7 @@ export function NearbyTrails() {
 
   return (
     <section className="pb-32 md:pb-28">
-      {/* Section Header */}
+      {/* Section Header - Industrial Typography */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -174,10 +174,10 @@ export function NearbyTrails() {
         className="mb-6 flex items-end justify-between"
       >
         <div>
-          <h2 className="text-2xl font-semibold text-slate-50 tracking-tight">
+          <h2 className="font-mono text-xl font-bold uppercase tracking-wider text-charcoal">
             Match Intelligence
           </h2>
-          <p className="mt-2 text-sm text-slate-400 leading-relaxed">
+          <p className="mt-2 text-sm font-medium text-deep-stone leading-relaxed">
             {selectedVehicle
               ? `Trails matched to your ${currentCategory?.shortName}`
               : 'Select a vehicle for personalized matching'}
@@ -185,7 +185,7 @@ export function NearbyTrails() {
         </div>
         <Link
           href="/trails/browse"
-          className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-emerald-400 transition-colors"
+          className="hidden sm:flex items-center gap-1.5 font-mono text-xs font-medium uppercase tracking-wider text-muted-stone hover:text-action-orange transition-colors"
         >
           View all
           <ChevronRight className="h-4 w-4" />
@@ -215,19 +215,19 @@ export function NearbyTrails() {
               >
                 <Link
                   href={`/trails/${trail.id}`}
-                  className={`group block w-[300px] p-6 rounded-2xl bg-slate-900/40 backdrop-blur-md border border-white/5 hover:border-emerald-500/30 transition-all duration-300 flex-shrink-0 ${
+                  className={`group block w-[300px] p-5 rounded-sm bg-white border border-stone-border shadow-[3px_3px_0_0_var(--color-stone-border)] hover:shadow-[4px_4px_0_0_var(--color-action-orange)] hover:border-action-orange/30 transition-all duration-200 flex-shrink-0 ${
                     isRecalculating ? 'animate-pulse' : ''
                   }`}
                 >
                   {/* Trail Name & Distance */}
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h3 className="text-base font-semibold text-slate-50 group-hover:text-emerald-400 transition-colors">
+                      <h3 className="text-base font-bold text-stone-900 group-hover:text-action-orange transition-colors">
                         {trail.name}
                       </h3>
-                      <div className="mt-1.5 flex items-center gap-1.5 text-slate-500">
+                      <div className="mt-1.5 flex items-center gap-1.5 text-muted-stone">
                         <MapPin className="h-3.5 w-3.5" />
-                        <span className="text-sm">{trail.distance}</span>
+                        <span className="font-mono text-xs">{trail.distance}</span>
                       </div>
                     </div>
 
@@ -237,25 +237,25 @@ export function NearbyTrails() {
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{ duration: 0.3 }}
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${match.bg} ${match.text} ${match.border}`}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-sm text-[10px] font-mono font-bold uppercase tracking-wider border ${match.bg} ${match.text} ${match.border}`}
                     >
                       {match.icon}
                       {match.label}
                     </motion.span>
                   </div>
 
-                  {/* Match Bar */}
-                  <div className="mt-6">
-                    <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  {/* Match Bar - Field Instrument Gauge */}
+                  <div className="mt-5">
+                    <div className="h-2 rounded-none bg-stone-200 overflow-hidden border border-stone-border">
                       <motion.div
                         key={`${trail.id}-bar-${match.percent}`}
                         initial={{ width: 0 }}
                         animate={{ width: `${match.percent}%` }}
                         transition={{ duration: 0.5, ease: 'easeOut' }}
-                        className={`h-full rounded-full ${match.barColor}`}
+                        className={`h-full ${match.barColor}`}
                       />
                     </div>
-                    <p className="mt-2.5 text-xs text-slate-500">
+                    <p className="mt-2 font-mono text-[10px] uppercase tracking-wider text-muted-stone">
                       {selectedVehicle ? 'Vehicle compatibility' : 'Select vehicle for match'}
                     </p>
                   </div>
@@ -269,12 +269,12 @@ export function NearbyTrails() {
         <motion.div variants={cardVariants} className="snap-start">
           <Link
             href="/trails/browse"
-            className="group flex flex-col items-center justify-center w-[160px] h-full min-h-[140px] p-5 rounded-2xl bg-slate-900/20 border border-white/5 hover:border-emerald-500/20 hover:bg-slate-900/40 transition-all duration-300 flex-shrink-0"
+            className="group flex flex-col items-center justify-center w-[140px] h-full min-h-[140px] p-5 rounded-sm bg-stone-light border border-stone-border hover:border-action-orange/30 hover:shadow-[3px_3px_0_0_var(--color-action-orange)] transition-all duration-200 flex-shrink-0"
           >
-            <div className="w-12 h-12 rounded-full bg-slate-800/50 border border-white/5 flex items-center justify-center group-hover:border-emerald-500/20 group-hover:bg-emerald-500/10 transition-all">
-              <ChevronRight className="h-5 w-5 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+            <div className="w-10 h-10 rounded-sm bg-white border border-stone-border flex items-center justify-center group-hover:border-action-orange/30 group-hover:bg-action-orange/10 transition-all shadow-[2px_2px_0_0_var(--color-stone-border)]">
+              <ChevronRight className="h-5 w-5 text-muted-stone group-hover:text-action-orange transition-colors" />
             </div>
-            <span className="mt-4 text-sm font-medium text-slate-500 group-hover:text-slate-300 transition-colors">
+            <span className="mt-3 font-mono text-[10px] font-medium uppercase tracking-wider text-muted-stone group-hover:text-deep-stone transition-colors text-center">
               View all trails
             </span>
           </Link>

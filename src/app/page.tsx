@@ -6,19 +6,22 @@ import { X } from 'lucide-react';
 import Link from 'next/link';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
+import { CommandBar, useCommandBar } from '@/components/CommandBar';
 import { HudNav, Hero, ActionGrid, NearbyTrails } from '@/components/landing';
 
 export default function Home() {
   const { selectedVehicle, setSelectedVehicle } = useVehicle();
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { open: searchOpen, setOpen: setSearchOpen } = useCommandBar();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 antialiased bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(16,185,129,0.12),transparent)]">
+    <div className="min-h-screen bg-bone text-deep-stone antialiased">
       {/* Floating HUD Navigation */}
       <HudNav
         onOpenVehicleModal={() => setVehicleModalOpen(true)}
         onOpenMobileMenu={() => setMobileMenuOpen(true)}
+        onOpenSearch={() => setSearchOpen(true)}
       />
 
       {/* Main Content */}
@@ -43,7 +46,7 @@ export default function Home() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              className="fixed inset-0 bg-deep-stone/40 backdrop-blur-sm z-50"
               onClick={() => setMobileMenuOpen(false)}
             />
 
@@ -53,19 +56,19 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 100 }}
               transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-white/10 rounded-t-3xl shadow-2xl safe-bottom"
+              className="fixed bottom-0 left-0 right-0 z-50 bg-bone border-t border-stone-border rounded-t-sm shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)] safe-bottom"
             >
               <div className="p-6">
                 {/* Handle */}
-                <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-6" />
+                <div className="w-10 h-1 bg-stone-medium rounded-sm mx-auto mb-6" />
 
                 {/* Close Button */}
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="absolute top-6 right-6 p-2 rounded-full hover:bg-white/5 transition-colors"
+                  className="absolute top-6 right-6 p-2 rounded-sm hover:bg-stone-light transition-colors"
                   aria-label="Close menu"
                 >
-                  <X className="h-5 w-5 text-slate-400" />
+                  <X className="h-5 w-5 text-muted-stone" />
                 </button>
 
                 {/* Menu Links */}
@@ -73,24 +76,24 @@ export default function Home() {
                   <Link
                     href="/trails/browse"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3.5 rounded-xl text-base font-medium text-slate-100 hover:bg-white/5 transition-colors"
+                    className="block px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light transition-colors"
                   >
                     Browse Trails
                   </Link>
                   <Link
                     href="/trails/search"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3.5 rounded-xl text-base font-medium text-slate-100 hover:bg-white/5 transition-colors"
+                    className="block px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light transition-colors"
                   >
                     Search Trails
                   </Link>
-                  <div className="h-px bg-white/10 my-3" />
+                  <div className="h-px bg-stone-border my-3" />
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
                       setVehicleModalOpen(true);
                     }}
-                    className="w-full text-left px-4 py-3.5 rounded-xl text-base font-medium text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                    className="w-full text-left px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-action-orange hover:bg-action-orange/10 transition-colors"
                   >
                     {selectedVehicle ? 'Change Vehicle' : 'Set Up Vehicle'}
                   </button>
@@ -100,6 +103,9 @@ export default function Home() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Command Bar - Global Search */}
+      <CommandBar open={searchOpen} onOpenChange={setSearchOpen} />
 
       {/* Vehicle Selection Modal */}
       <VehicleSelectionModal
