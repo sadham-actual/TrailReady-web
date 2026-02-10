@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:decision-test": "tsx prisma/seed-decision-test.ts",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate"
   },

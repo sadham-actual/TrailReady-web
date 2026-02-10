@@ -46,7 +46,14 @@
       "Bash(do cp \"$file\" /home/jacob/trailready-web/src/components/ui/)",
       "Bash(done)",
       "Bash(for file in card.tsx dialog.tsx input.tsx label.tsx select.tsx skeleton.tsx textarea.tsx badge.tsx)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(git cherry-pick:*)",
+      "mcp__claude_ai_Vercel__get_deployment_build_logs",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(export:*)",
+      "Bash(npm run db:seed:decision-test:*)"
     ]
   }
 }

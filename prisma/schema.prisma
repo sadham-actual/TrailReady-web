@@ -52,14 +52,15 @@ model User {
 
 // Trail model - matches existing Trail interface
 model Trail {
-  id          String   @id @default(cuid())
-  name        String
-  region      String
-  latitude    Float
-  longitude   Float
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String   @id @default(cuid())
+  name           String
+  region         String
+  latitude       Float
+  longitude      Float
+  description    String?
+  baseDifficulty Int?     // 1-4 scale: 1=easy, 2=moderate, 3=difficult, 4=extreme. Used as fallback when no recent reports.
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   reports ConditionReport[]
 

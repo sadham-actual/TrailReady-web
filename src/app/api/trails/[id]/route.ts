@@ -2,6 +2,19 @@ import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { successResponse, errors } from '@/lib/api/response';
 import { Trail } from '@/types';
+import { getReportFreshness } from '@/lib/trailOutcome';
+
+/**
+ * Extended trail response with freshness metadata
+ */
+interface TrailWithMeta extends Trail {
+  baseDifficulty?: number;
+  reportMeta?: {
+    isFresh: boolean;   // Report is < 7 days old
+    isStale: boolean;   // Report is >= 14 days old
+    ageInDays: number;  // Age of most recent report
+  };
+}
 
 export async function GET(
   request: NextRequest,
@@ -10,7 +23,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    // Fetch trail with its latest report
+    // Fetch trail with its latest report and baseDifficulty
     const trail = await prisma.trail.findUnique({
       where: { id },
       include: {
@@ -26,16 +39,24 @@ export async function GET(
       return errors.notFound('Trail');
     }
 
-    // Transform to match frontend Trail type
-    const trailWithStatus: Trail = {
+    // Calculate report freshness if we have a report
+    const latestReport = trail.reports[0];
+    const reportMeta = latestReport
+      ? getReportFreshness(latestReport.timestamp)
+      : undefined;
+
+    // Transform to extended trail response
+    const trailWithStatus: TrailWithMeta = {
       id: trail.id,
       name: trail.name,
       region: trail.region,
       latitude: trail.latitude,
       longitude: trail.longitude,
       description: trail.description ?? undefined,
-      latestStatus: trail.reports[0]?.status,
-      lastReportAt: trail.reports[0]?.timestamp.toISOString(),
+      baseDifficulty: trail.baseDifficulty ?? undefined,
+      latestStatus: latestReport?.status,
+      lastReportAt: latestReport?.timestamp.toISOString(),
+      reportMeta,
     };
 
     return successResponse(trailWithStatus);
