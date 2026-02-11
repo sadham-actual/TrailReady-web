@@ -407,7 +407,7 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
       handleSelect(trails[selectedIndex].id);
     } else if (query.trim()) {
       onOpenChange(false);
-      router.push(`/trails/search?q=${encodeURIComponent(query.trim())}`);
+      router.push(`/map?q=${encodeURIComponent(query.trim())}`);
     }
   }, [trails, selectedIndex, query, handleSelect, onOpenChange, router]);
 

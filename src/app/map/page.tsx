@@ -1,11 +1,12 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Map } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, List, Map } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Trail } from '@/types';
 
 // Dynamic import for Leaflet (SSR incompatible)
 const DiscoveryMap = dynamic(
@@ -25,18 +26,47 @@ const DiscoveryMap = dynamic(
   }
 );
 
-function MapContent() {
-  const searchParams = useSearchParams();
-  const focusTrailId = searchParams.get('id');
-
+function MapContent({
+  focusTrailId,
+  searchQuery,
+  onFilteredTrailsChange,
+}: {
+  focusTrailId?: string | null;
+  searchQuery?: string | null;
+  onFilteredTrailsChange?: (trails: Trail[]) => void;
+}) {
   return (
-    <div className="flex-1 relative">
-      <DiscoveryMap focusTrailId={focusTrailId} />
+    <div className="flex-1 min-h-0 relative">
+      <DiscoveryMap
+        focusTrailId={focusTrailId}
+        searchQuery={searchQuery}
+        onFilteredTrailsChange={onFilteredTrailsChange}
+      />
     </div>
   );
 }
 
 export default function MapPage() {
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get('q');
+  const idParam = searchParams.get('id');
+
+  const [listOpen, setListOpen] = useState(false);
+  const [focusTrailId, setFocusTrailId] = useState<string | null>(idParam);
+  const [filteredTrails, setFilteredTrails] = useState<Trail[]>([]);
+
+  useEffect(() => {
+    setFocusTrailId(idParam);
+  }, [idParam]);
+
+  const trailCountLabel = useMemo(() => {
+    return `${filteredTrails.length} Trail${filteredTrails.length === 1 ? '' : 's'}`;
+  }, [filteredTrails.length]);
+
+  const handleTrailClick = (trailId: string) => {
+    setFocusTrailId(trailId);
+  };
+
   return (
     <div className="h-screen flex flex-col bg-bone">
       {/* Header Bar */}
@@ -66,6 +96,15 @@ export default function MapPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setListOpen((open) => !open)}
+            className="flex items-center gap-2 px-3 py-2 border border-stone-800 bg-stone-100 text-stone-900 font-mono text-[10px] uppercase tracking-wider rounded-none hover:bg-stone-50 transition-colors"
+            aria-label="Toggle trail list"
+          >
+            <List className="w-4 h-4 text-action-orange" />
+            Trail List
+          </button>
           <span className="hidden md:block font-mono text-[10px] uppercase tracking-wider text-muted-stone">
             Topographic Intel Layer
           </span>
@@ -74,18 +113,126 @@ export default function MapPage() {
       </motion.header>
 
       {/* Map Container - Full Height */}
-      <Suspense fallback={
-        <div className="flex-1 relative bg-stone-light flex items-center justify-center">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border-2 border-action-orange border-t-transparent rounded-full animate-spin" />
-            <p className="font-mono text-xs uppercase tracking-wider text-muted-stone">
-              Loading Map...
-            </p>
+      <div className="flex-1 min-h-0 flex">
+        <Suspense
+          fallback={
+            <div className="flex-1 relative bg-stone-light flex items-center justify-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-2 border-action-orange border-t-transparent rounded-full animate-spin" />
+                <p className="font-mono text-xs uppercase tracking-wider text-muted-stone">
+                  Loading Map...
+                </p>
+              </div>
+            </div>
+          }
+        >
+          <MapContent
+            focusTrailId={focusTrailId}
+            searchQuery={searchQuery}
+            onFilteredTrailsChange={setFilteredTrails}
+          />
+        </Suspense>
+
+        {/* Desktop Trail List Panel */}
+        <div
+          className={`hidden md:flex flex-col bg-stone-100 border-l border-stone-800 transition-all duration-200 ${
+            listOpen ? 'w-80' : 'w-10'
+          }`}
+        >
+          <div className="px-2 py-3 border-b border-stone-800 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setListOpen((open) => !open)}
+              className="flex items-center justify-center h-6 w-6 border border-stone-800 bg-stone-50 hover:bg-stone-200 transition-colors"
+              aria-label={listOpen ? 'Collapse trail list' : 'Expand trail list'}
+            >
+              {listOpen ? (
+                <ChevronRight className="h-4 w-4 text-action-orange" />
+              ) : (
+                <ChevronLeft className="h-4 w-4 text-action-orange" />
+              )}
+            </button>
+            {listOpen && (
+              <>
+                <div className="font-mono text-xs uppercase tracking-wider text-stone-900">
+                  Trail List
+                </div>
+                <div className="font-mono text-[10px] uppercase tracking-wider text-stone-700">
+                  {trailCountLabel}
+                </div>
+              </>
+            )}
+          </div>
+          {listOpen && (
+            <div className="flex-1 overflow-y-auto">
+              {filteredTrails.length === 0 ? (
+                <div className="p-4 text-xs font-mono uppercase tracking-wider text-stone-700">
+                  No trails match this filter.
+                </div>
+              ) : (
+                filteredTrails.map((trail) => (
+                  <button
+                    key={trail.id}
+                    type="button"
+                    onClick={() => handleTrailClick(trail.id)}
+                    className={`w-full text-left px-4 py-3 border-b border-stone-800 font-mono uppercase tracking-wider text-xs transition-colors ${
+                      focusTrailId === trail.id
+                        ? 'bg-stone-50 text-action-orange'
+                        : 'text-stone-900 hover:bg-stone-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="truncate">{trail.name}</span>
+                      <span className="text-[10px] text-stone-700 truncate">{trail.region}</span>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Trail List Sheet */}
+        <div
+          className={`md:hidden fixed left-0 right-0 bottom-0 z-[1100] bg-stone-100 border-t border-stone-800 transition-transform duration-200 ${
+            listOpen ? 'translate-y-0' : 'translate-y-full'
+          }`}
+        >
+          <div className="px-4 py-3 border-b border-stone-800 flex items-center justify-between">
+            <div className="font-mono text-xs uppercase tracking-wider text-stone-900">
+              Trail List
+            </div>
+            <div className="font-mono text-[10px] uppercase tracking-wider text-stone-700">
+              {trailCountLabel}
+            </div>
+          </div>
+          <div className="max-h-[55vh] overflow-y-auto">
+            {filteredTrails.length === 0 ? (
+              <div className="p-4 text-xs font-mono uppercase tracking-wider text-stone-700">
+                No trails match this filter.
+              </div>
+            ) : (
+              filteredTrails.map((trail) => (
+                <button
+                  key={trail.id}
+                  type="button"
+                  onClick={() => handleTrailClick(trail.id)}
+                  className={`w-full text-left px-4 py-3 border-b border-stone-800 font-mono uppercase tracking-wider text-xs transition-colors ${
+                    focusTrailId === trail.id
+                      ? 'bg-stone-50 text-action-orange'
+                      : 'text-stone-900 hover:bg-stone-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="truncate">{trail.name}</span>
+                    <span className="text-[10px] text-stone-700 truncate">{trail.region}</span>
+                  </div>
+                </button>
+              ))
+            )}
           </div>
         </div>
-      }>
-        <MapContent />
-      </Suspense>
+      </div>
     </div>
   );
 }

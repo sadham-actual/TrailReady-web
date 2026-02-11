@@ -275,7 +275,7 @@ export function NearbyTrails() {
           </p>
         </div>
         <Link
-          href="/trails/browse"
+          href="/map"
           className="hidden sm:flex items-center gap-1.5 font-mono text-xs font-medium uppercase tracking-wider text-muted-stone hover:text-action-orange transition-colors"
         >
           View all
@@ -365,7 +365,7 @@ export function NearbyTrails() {
         {/* View More Card */}
         <motion.div variants={cardVariants} className="snap-start">
           <Link
-            href="/trails/browse"
+            href="/map"
             className="group flex flex-col items-center justify-center w-[140px] h-full min-h-[140px] p-5 rounded-sm bg-stone-light border border-stone-border hover:border-action-orange/30 hover:shadow-[3px_3px_0_0_var(--color-action-orange)] transition-all duration-200 flex-shrink-0"
           >
             <div className="w-10 h-10 rounded-sm bg-white border border-stone-border flex items-center justify-center group-hover:border-action-orange/30 group-hover:bg-action-orange/10 transition-all shadow-[2px_2px_0_0_var(--color-stone-border)]">

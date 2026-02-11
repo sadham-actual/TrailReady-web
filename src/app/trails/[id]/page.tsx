@@ -138,16 +138,21 @@ export default function TrailDetailPage() {
   const currentCategory = VEHICLE_CATEGORIES.find(cat => cat.mappedType === selectedVehicle);
 
   return (
-    <div className="min-h-screen bg-slate-950 pb-24">
+    <div className="min-h-screen bg-stone-50 pb-24">
       {/* Back navigation */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4 }}
-        className="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/50"
+        className="sticky top-0 z-50 backdrop-blur-xl bg-stone-50/90 border-b border-stone-800"
       >
         <div className="container mx-auto px-4 py-3 max-w-3xl">
-          <Button variant="ghost" size="sm" asChild className="text-slate-400 hover:text-white hover:bg-slate-800/50 -ml-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="text-stone-700 hover:text-stone-900 hover:bg-stone-100 -ml-2"
+          >
             <Link href="/trails">
               <ArrowLeft className="h-4 w-4 mr-1.5" />
               Back
@@ -164,16 +169,16 @@ export default function TrailDetailPage() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="pt-6 pb-4"
         >
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2 tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-bold font-mono uppercase tracking-wider text-stone-900 mb-2">
             {trail.name}
           </h1>
-          <div className="flex items-center gap-3 text-slate-400">
+          <div className="flex items-center gap-3 text-stone-700 font-mono uppercase tracking-wider text-xs">
             <MapPin className="h-4 w-4" />
-            <span className="text-sm">{trail.region}</span>
+            <span>{trail.region}</span>
             {trail.baseDifficulty && (
               <>
-                <span className="text-slate-600">•</span>
-                <span className="text-sm">Difficulty {trail.baseDifficulty}/4</span>
+                <span className="text-stone-400">•</span>
+                <span>Difficulty {trail.baseDifficulty}/4</span>
               </>
             )}
           </div>
@@ -202,8 +207,8 @@ export default function TrailDetailPage() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="mb-6"
         >
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Zap className="h-5 w-5 text-amber-400" />
+          <h2 className="text-lg font-semibold font-mono uppercase tracking-wider text-stone-900 mb-4 flex items-center gap-2">
+            <Zap className="h-5 w-5 text-action-orange" />
             Capability Matrix
           </h2>
           <CapabilityMatrix
@@ -223,10 +228,10 @@ export default function TrailDetailPage() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="mb-6"
           >
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <FileText className="h-5 w-5 text-slate-400" />
+            <h2 className="text-lg font-semibold font-mono uppercase tracking-wider text-stone-900 mb-4 flex items-center gap-2">
+              <FileText className="h-5 w-5 text-stone-700" />
               Recent Reports
-              <Badge variant="secondary" className="bg-slate-800 text-slate-300 text-xs ml-auto">
+              <Badge variant="secondary" className="bg-stone-100 text-stone-700 text-xs ml-auto">
                 {reports.length} total
               </Badge>
             </h2>
@@ -242,9 +247,9 @@ export default function TrailDetailPage() {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="mb-6"
           >
-            <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800/50 rounded-2xl p-5">
-              <h3 className="text-sm font-medium text-slate-400 mb-2">About this trail</h3>
-              <p className="text-slate-300 text-sm leading-relaxed">
+            <div className="bg-stone-100 border border-stone-800 rounded-none p-5">
+              <h3 className="text-sm font-mono uppercase tracking-wider text-stone-900 mb-2">About this trail</h3>
+              <p className="text-stone-700 text-sm leading-relaxed">
                 {trail.description}
               </p>
             </div>
@@ -286,19 +291,20 @@ function VerdictHeroCard({
   // No vehicle selected
   if (!outcome || !vehicle) {
     return (
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl border border-slate-700/50 p-8">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5" />
+      <div className="relative overflow-hidden rounded-none bg-stone-100 border border-stone-800 p-8">
         <div className="relative z-10 text-center">
-          <div className="inline-flex p-4 bg-amber-500/10 rounded-2xl mb-4">
-            <Car className="h-8 w-8 text-amber-400" />
+          <div className="inline-flex p-4 bg-stone-50 border border-stone-800 rounded-none mb-4">
+            <Car className="h-8 w-8 text-action-orange" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Select Your Vehicle</h2>
-          <p className="text-slate-400 text-sm mb-6 max-w-sm mx-auto">
+          <h2 className="text-xl font-bold font-mono uppercase tracking-wider text-stone-900 mb-2">
+            Select Your Vehicle
+          </h2>
+          <p className="text-stone-700 text-sm mb-6 max-w-sm mx-auto">
             Get a personalized risk assessment based on your vehicle&apos;s capabilities
           </p>
           <Button
             onClick={onSelectVehicle}
-            className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold"
+            className="bg-stone-100 hover:bg-stone-50 text-action-orange border border-stone-800 rounded-none font-mono uppercase tracking-wider font-semibold"
           >
             <Car className="h-4 w-4 mr-2" />
             Choose Vehicle
@@ -311,23 +317,20 @@ function VerdictHeroCard({
   const { riskLevel, bgGradient, borderColor, textColor, Icon } = getVerdictStyles(outcome.status);
 
   return (
-    <div className={`relative overflow-hidden rounded-3xl backdrop-blur-xl border ${borderColor} p-6 md:p-8`}>
-      {/* Background gradient */}
-      <div className={`absolute inset-0 ${bgGradient}`} />
-
-      {/* Decorative glow */}
-      <div className={`absolute -top-20 -right-20 w-64 h-64 rounded-full blur-3xl opacity-20 ${bgGradient.replace('to-br', 'to-r')}`} />
+    <div className="relative overflow-hidden rounded-none bg-stone-100 border border-stone-800 p-6 md:p-8">
 
       <div className="relative z-10">
         {/* Top row: Vehicle + Freshness */}
         <div className="flex items-start justify-between mb-6">
           <button
             onClick={onSelectVehicle}
-            className="flex items-center gap-2 bg-slate-800/60 hover:bg-slate-700/60 backdrop-blur px-3 py-1.5 rounded-full transition-colors"
+            className="flex items-center gap-2 bg-stone-50 hover:bg-stone-100 border border-stone-800 px-3 py-1.5 rounded-none transition-colors"
           >
-            <Car className="h-4 w-4 text-slate-400" />
-            <span className="text-sm font-medium text-slate-300">{vehicle.shortName}</span>
-            <ChevronDown className="h-3 w-3 text-slate-500" />
+            <Car className="h-4 w-4 text-action-orange" />
+            <span className="text-sm font-mono uppercase tracking-wider text-stone-900">
+              {vehicle.shortName}
+            </span>
+            <ChevronDown className="h-3 w-3 text-stone-700" />
           </button>
 
           {reportFreshness && (
@@ -337,15 +340,15 @@ function VerdictHeroCard({
 
         {/* Main verdict display */}
         <div className="flex items-start gap-5 mb-6">
-          <div className={`flex-shrink-0 p-4 rounded-2xl ${bgGradient} shadow-2xl`}>
-            <Icon className="h-10 w-10 md:h-12 md:w-12 text-white" strokeWidth={2.5} />
+          <div className="flex-shrink-0 p-4 rounded-none bg-stone-50 border border-stone-800 shadow-sm">
+            <Icon className="h-10 w-10 md:h-12 md:w-12 text-action-orange" strokeWidth={2.5} />
           </div>
 
           <div className="flex-1">
-            <h2 className={`text-3xl md:text-4xl font-black tracking-tight mb-2 ${textColor}`}>
+            <h2 className="text-3xl md:text-4xl font-black font-mono uppercase tracking-wider text-stone-900 mb-2">
               {riskLevel}
             </h2>
-            <p className="text-slate-400 text-sm leading-relaxed">
+            <p className="text-stone-700 text-sm leading-relaxed">
               {outcome.explanation}
             </p>
           </div>
@@ -353,22 +356,22 @@ function VerdictHeroCard({
 
         {/* Success Ratio */}
         {successRatio && successRatio.total > 0 && (
-          <div className="bg-slate-800/40 backdrop-blur rounded-xl p-4 mb-4">
+          <div className="bg-stone-50 border border-stone-800 rounded-none p-4 mb-4">
             <div className="flex items-center justify-between">
-              <span className="text-slate-400 text-sm">Success Rate</span>
+              <span className="text-stone-700 text-sm font-mono uppercase tracking-wider">Success Rate</span>
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-white">
+                <span className="text-2xl font-bold text-stone-900">
                   {successRatio.successful}
                 </span>
-                <span className="text-slate-500">of</span>
-                <span className="text-2xl font-bold text-white">
+                <span className="text-stone-500">of</span>
+                <span className="text-2xl font-bold text-stone-900">
                   {successRatio.total}
                 </span>
-                <span className="text-slate-400 text-sm ml-1">attempts</span>
+                <span className="text-stone-700 text-sm ml-1">attempts</span>
               </div>
             </div>
             {/* Progress bar */}
-            <div className="mt-3 h-2 bg-slate-700 rounded-full overflow-hidden">
+            <div className="mt-3 h-2 bg-stone-100 border border-stone-800 rounded-none overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${(successRatio.successful / successRatio.total) * 100}%` }}
@@ -381,11 +384,13 @@ function VerdictHeroCard({
 
         {/* Baseline indicator */}
         {outcome.isBaseline && (
-          <div className="flex items-start gap-3 bg-slate-800/40 backdrop-blur rounded-xl p-4">
-            <Info className="h-5 w-5 text-sky-400 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 bg-stone-50 border border-stone-800 rounded-none p-4">
+            <Info className="h-5 w-5 text-action-orange flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sky-400 text-sm font-medium mb-1">Baseline Assessment</p>
-              <p className="text-slate-400 text-xs leading-relaxed">
+              <p className="text-stone-900 text-sm font-mono uppercase tracking-wider mb-1">
+                Baseline Assessment
+              </p>
+              <p className="text-stone-700 text-xs leading-relaxed">
                 Based on trail difficulty rating. No reports within the last 30 days.
               </p>
             </div>
@@ -394,13 +399,13 @@ function VerdictHeroCard({
 
         {/* Inherited verdict indicator - Light Industrial theme */}
         {outcome.inheritedFrom && (
-          <div className="flex items-start gap-3 bg-stone-200/50 backdrop-blur rounded-xl p-4">
+          <div className="flex items-start gap-3 bg-stone-100 border border-stone-800 rounded-none p-4">
             <AlertTriangle className="h-5 w-5 text-action-orange flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-action-orange text-sm font-medium mb-1">
+              <p className="text-action-orange text-sm font-mono uppercase tracking-wider mb-1">
                 Based on {getCapabilityLabel(outcome.inheritedFrom.capabilityLevel)} Report
               </p>
-              <p className="text-deep-stone text-xs leading-relaxed">
+              <p className="text-stone-700 text-xs leading-relaxed">
                 A higher-capability vehicle reported this trail as not passable{' '}
                 {formatRelativeTime(outcome.inheritedFrom.reportTimestamp)}.
               </p>
@@ -431,7 +436,7 @@ function FreshnessBadge({ freshness }: { freshness: { isFresh: boolean; isStale:
     );
   }
   return (
-    <Badge variant="outline" className="border-slate-600 text-slate-400 gap-1.5">
+    <Badge variant="outline" className="border-stone-800 text-stone-700 gap-1.5">
       <Clock className="h-3 w-3" />
       {freshness.ageInDays}d ago
     </Badge>
@@ -460,28 +465,30 @@ function CapabilityMatrix({
             onClick={() => onSelectVehicle(category.mappedType)}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className={`relative overflow-hidden rounded-xl p-4 text-left transition-all ${
+            className={`relative overflow-hidden rounded-none p-4 text-left transition-all ${
               isSelected
-                ? 'bg-slate-800 border-2 border-slate-600 ring-2 ring-slate-500/30'
-                : 'bg-slate-900/50 border border-slate-800/50 hover:border-slate-700'
+                ? 'bg-stone-100 border-2 border-stone-800 ring-2 ring-action-orange/20'
+                : 'bg-stone-100 border border-stone-800 hover:border-stone-900'
             }`}
           >
             <div className="flex items-start justify-between mb-3">
-              <div className={`p-2 rounded-lg ${statusBg}`}>
+              <div className={`p-2 rounded-none border border-stone-800 ${statusBg}`}>
                 <Icon className={`h-4 w-4 ${statusColor}`} />
               </div>
               {isSelected && (
-                <Badge className="bg-slate-700 text-slate-300 text-[10px] px-1.5 py-0.5">
+                <Badge className="bg-stone-50 border border-stone-800 text-stone-900 text-[10px] px-1.5 py-0.5">
                   Selected
                 </Badge>
               )}
             </div>
-            <h3 className="font-semibold text-white text-sm mb-1">{category.shortName}</h3>
+            <h3 className="font-semibold font-mono uppercase tracking-wider text-stone-900 text-sm mb-1">
+              {category.shortName}
+            </h3>
             <p className={`text-xs font-medium ${statusColor}`}>
               {getStatusLabel(outcome.status)}
             </p>
             {outcome.isBaseline && (
-              <p className="text-[10px] text-slate-500 mt-1">Baseline</p>
+              <p className="text-[10px] text-stone-700 mt-1">Baseline</p>
             )}
             {outcome.inheritedFrom && (
               <p className="text-[10px] text-action-orange mt-1">Inherited</p>
@@ -503,33 +510,30 @@ function ReportsList({ reports }: { reports: ConditionReport[] }) {
         );
 
         return (
-          <div
-            key={report.id}
-            className="bg-slate-900/50 backdrop-blur border border-slate-800/50 rounded-xl p-4"
-          >
+          <div key={report.id} className="bg-stone-100 border border-stone-800 rounded-none p-4">
             <div className="flex items-start gap-3">
-              <div className={`p-2 rounded-lg ${statusBg}`}>
+              <div className={`p-2 rounded-none border border-stone-800 ${statusBg}`}>
                 <Icon className={`h-4 w-4 ${statusColor}`} />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium text-white">
+                  <span className="text-sm font-medium font-mono uppercase tracking-wider text-stone-900">
                     {report.status === 'clear' ? 'Passable' : report.status === 'rough' ? 'Rough' : 'Impassable'}
                   </span>
-                  <span className="text-slate-600">•</span>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-stone-400">•</span>
+                  <span className="text-xs text-stone-700">
                     {VEHICLE_TYPE_LABELS[report.vehicleType]}
                   </span>
                 </div>
                 {report.notes && (
-                  <p className="text-sm text-slate-400 line-clamp-2">{report.notes}</p>
+                  <p className="text-sm text-stone-700 line-clamp-2">{report.notes}</p>
                 )}
-                <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                <p className="text-xs text-stone-700 mt-1 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {formatRelativeTime(report.timestamp)}
                 </p>
               </div>
-              <Badge variant="outline" className="text-[10px] border-slate-700 text-slate-400">
+              <Badge variant="outline" className="text-[10px] border-stone-800 text-stone-700">
                 {report.confidence}
               </Badge>
             </div>
@@ -580,43 +584,45 @@ function NavigationFooter({
             exit={{ opacity: 0, y: 20 }}
             className="fixed bottom-24 left-4 right-4 z-50 max-w-3xl mx-auto"
           >
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl">
-              <div className="p-4 border-b border-slate-700">
-                <h3 className="text-white font-semibold">Navigate to Trailhead</h3>
-                <p className="text-slate-400 text-sm">Choose your navigation app</p>
+            <div className="bg-stone-50 border border-stone-800 rounded-none overflow-hidden shadow-sm">
+              <div className="p-4 border-b border-stone-800">
+                <h3 className="text-stone-900 font-mono uppercase tracking-wider font-semibold">
+                  Navigate to Trailhead
+                </h3>
+                <p className="text-stone-700 text-sm">Choose your navigation app</p>
               </div>
               <div className="p-2">
                 <a
                   href={googleMapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-700/50 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-none hover:bg-stone-100 transition-colors"
                   onClick={() => setNavMenuOpen(false)}
                 >
-                  <div className="p-2 bg-blue-500/20 rounded-lg">
-                    <Navigation className="h-5 w-5 text-blue-400" />
+                  <div className="p-2 bg-stone-100 border border-stone-800 rounded-none">
+                    <Navigation className="h-5 w-5 text-action-orange" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-white font-medium">Google Maps</p>
-                    <p className="text-slate-400 text-xs">Open in new tab</p>
+                    <p className="text-stone-900 font-mono uppercase tracking-wider font-medium">Google Maps</p>
+                    <p className="text-stone-700 text-xs">Open in new tab</p>
                   </div>
-                  <ExternalLink className="h-4 w-4 text-slate-500" />
+                  <ExternalLink className="h-4 w-4 text-stone-700" />
                 </a>
                 <a
                   href={appleMapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-700/50 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-none hover:bg-stone-100 transition-colors"
                   onClick={() => setNavMenuOpen(false)}
                 >
-                  <div className="p-2 bg-slate-500/20 rounded-lg">
-                    <MapPin className="h-5 w-5 text-slate-300" />
+                  <div className="p-2 bg-stone-100 border border-stone-800 rounded-none">
+                    <MapPin className="h-5 w-5 text-action-orange" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-white font-medium">Apple Maps</p>
-                    <p className="text-slate-400 text-xs">Open in new tab</p>
+                    <p className="text-stone-900 font-mono uppercase tracking-wider font-medium">Apple Maps</p>
+                    <p className="text-stone-700 text-xs">Open in new tab</p>
                   </div>
-                  <ExternalLink className="h-4 w-4 text-slate-500" />
+                  <ExternalLink className="h-4 w-4 text-stone-700" />
                 </a>
               </div>
             </div>
@@ -631,12 +637,12 @@ function NavigationFooter({
         transition={{ duration: 0.4, delay: 0.5 }}
         className="fixed bottom-0 left-0 right-0 z-30"
       >
-        <div className="bg-slate-900/95 backdrop-blur-xl border-t border-slate-800">
+        <div className="bg-stone-50 backdrop-blur-xl border-t border-stone-800">
           <div className="container mx-auto px-4 py-3 max-w-3xl">
             <div className="flex gap-3">
               <Button
                 asChild
-                className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold h-12"
+                className="flex-1 bg-stone-100 hover:bg-stone-50 text-action-orange border border-stone-800 rounded-none font-mono uppercase tracking-wider font-semibold h-12"
               >
                 <Link href={`/trails/${trailId}/submit`}>
                   <Plus className="h-5 w-5 mr-2" />
@@ -646,7 +652,7 @@ function NavigationFooter({
               <Button
                 onClick={() => setNavMenuOpen(!navMenuOpen)}
                 variant="outline"
-                className="flex-1 border-slate-700 bg-slate-800/50 hover:bg-slate-700 text-white font-semibold h-12"
+                className="flex-1 border-stone-800 bg-stone-100 hover:bg-stone-50 text-stone-900 rounded-none font-mono uppercase tracking-wider font-semibold h-12"
               >
                 <Navigation className="h-5 w-5 mr-2" />
                 Navigate
@@ -662,17 +668,17 @@ function NavigationFooter({
 // Loading Skeleton
 function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-slate-950 pb-24">
-      <div className="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/80 border-b border-slate-800/50">
+    <div className="min-h-screen bg-stone-50 pb-24">
+      <div className="sticky top-0 z-50 backdrop-blur-xl bg-stone-50/90 border-b border-stone-800">
         <div className="container mx-auto px-4 py-3 max-w-3xl">
-          <div className="h-8 w-16 bg-slate-800 rounded animate-pulse" />
+          <div className="h-8 w-16 bg-stone-100 border border-stone-800 rounded-none animate-pulse" />
         </div>
       </div>
       <div className="container mx-auto px-4 max-w-3xl pt-6">
-        <div className="h-8 w-48 bg-slate-800 rounded mb-2 animate-pulse" />
-        <div className="h-4 w-32 bg-slate-800 rounded mb-8 animate-pulse" />
-        <div className="h-64 bg-slate-800/50 rounded-3xl mb-6 animate-pulse" />
-        <div className="h-40 bg-slate-800/50 rounded-2xl animate-pulse" />
+        <div className="h-8 w-48 bg-stone-100 border border-stone-800 rounded-none mb-2 animate-pulse" />
+        <div className="h-4 w-32 bg-stone-100 border border-stone-800 rounded-none mb-8 animate-pulse" />
+        <div className="h-64 bg-stone-100 border border-stone-800 rounded-none mb-6 animate-pulse" />
+        <div className="h-40 bg-stone-100 border border-stone-800 rounded-none animate-pulse" />
       </div>
     </div>
   );

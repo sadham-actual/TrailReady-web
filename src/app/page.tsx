@@ -74,14 +74,14 @@ export default function Home() {
                 {/* Menu Links */}
                 <nav className="space-y-2">
                   <Link
-                    href="/trails/browse"
+                    href="/map"
                     onClick={() => setMobileMenuOpen(false)}
                     className="block px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light transition-colors"
                   >
                     Browse Trails
                   </Link>
                   <Link
-                    href="/trails/search"
+                    href="/map"
                     onClick={() => setMobileMenuOpen(false)}
                     className="block px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light transition-colors"
                   >

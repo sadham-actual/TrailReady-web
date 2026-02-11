@@ -10,34 +10,42 @@ const buttonVariants = cva(
     variants: {
       variant: {
         // Primary - Action Orange with offset shadow
-        default: "bg-action-orange text-white border border-action-orange-dark rounded-sm shadow-[2px_2px_0_0_var(--color-action-orange-dark)] hover:bg-action-orange-light active:shadow-[1px_1px_0_0_var(--color-action-orange-dark)] active:translate-x-px active:translate-y-px",
+        default:
+          "bg-stone-100 text-action-orange border border-stone-800 rounded-none shadow-[2px_2px_0_0_var(--color-stone-border)] hover:bg-stone-50 active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-px active:translate-y-px",
 
         // Secondary - White with stone offset shadow
-        secondary: "bg-white text-deep-stone border border-stone-border rounded-sm shadow-[2px_2px_0_0_var(--color-stone-border)] hover:bg-stone-light active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-px active:translate-y-px",
+        secondary:
+          "bg-stone-100 text-stone-900 border border-stone-800 rounded-none shadow-[2px_2px_0_0_var(--color-stone-border)] hover:bg-stone-50 active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-px active:translate-y-px",
 
         // Outline - Transparent with border
-        outline: "bg-transparent text-deep-stone border border-stone-border rounded-sm hover:bg-stone-light active:bg-stone-medium/30",
+        outline:
+          "bg-stone-50 text-stone-900 border border-stone-800 rounded-none hover:bg-stone-100 hover:text-action-orange active:bg-stone-100",
 
         // Ghost - Minimal, no border
-        ghost: "bg-transparent text-muted-stone hover:text-deep-stone hover:bg-stone-light rounded-sm",
+        ghost: "bg-stone-50 text-stone-900 hover:text-action-orange hover:bg-stone-100 rounded-none",
 
         // Destructive - Red with offset shadow
-        destructive: "bg-status-impassable text-white border border-red-700 rounded-sm shadow-[2px_2px_0_0_#b91c1c] hover:bg-red-500 active:shadow-[1px_1px_0_0_#b91c1c] active:translate-x-px active:translate-y-px",
+        destructive:
+          "bg-stone-100 text-red-700 border border-stone-800 rounded-none shadow-[2px_2px_0_0_var(--color-stone-border)] hover:bg-stone-50 active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-px active:translate-y-px",
 
         // Success - Green with offset shadow
-        success: "bg-status-clear text-white border border-green-700 rounded-sm shadow-[2px_2px_0_0_#15803d] hover:bg-green-500 active:shadow-[1px_1px_0_0_#15803d] active:translate-x-px active:translate-y-px",
+        success:
+          "bg-stone-100 text-green-700 border border-stone-800 rounded-none shadow-[2px_2px_0_0_var(--color-stone-border)] hover:bg-stone-50 active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-px active:translate-y-px",
 
         // Link - Text only
         link: "text-action-orange underline-offset-4 hover:underline p-0 h-auto",
 
         // Hero - Large, prominent for landing pages
-        hero: "bg-action-orange text-white border border-action-orange-dark rounded-sm shadow-[3px_3px_0_0_var(--color-action-orange-dark)] hover:bg-action-orange-light active:shadow-[1px_1px_0_0_var(--color-action-orange-dark)] active:translate-x-0.5 active:translate-y-0.5 font-bold",
+        hero:
+          "bg-stone-100 text-action-orange border border-stone-800 rounded-none shadow-[3px_3px_0_0_var(--color-stone-border)] hover:bg-stone-50 active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-0.5 active:translate-y-0.5 font-bold",
 
         // Hero Secondary - White plate style
-        heroSecondary: "bg-white text-deep-stone border border-stone-border rounded-sm shadow-[3px_3px_0_0_var(--color-stone-border)] hover:bg-stone-light active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-0.5 active:translate-y-0.5 font-bold",
+        heroSecondary:
+          "bg-stone-100 text-stone-900 border border-stone-800 rounded-none shadow-[3px_3px_0_0_var(--color-stone-border)] hover:bg-stone-50 active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-0.5 active:translate-y-0.5 font-bold",
 
         // Map Control - Compact for overlays
-        mapControl: "bg-white text-deep-stone border border-stone-border rounded-sm shadow-[2px_2px_0_0_var(--color-stone-border)] hover:bg-stone-light active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-px active:translate-y-px",
+        mapControl:
+          "bg-stone-100 text-stone-900 border border-stone-800 rounded-none shadow-[2px_2px_0_0_var(--color-stone-border)] hover:bg-stone-50 active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-px active:translate-y-px",
       },
       size: {
         default: "h-10 px-5 py-2",

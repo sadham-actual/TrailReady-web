@@ -70,12 +70,12 @@ export function Hero() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/trails/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/map?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
   const handleLocateMe = () => {
-    router.push('/trails/browse?locate=true');
+    router.push('/map?locate=true');
   };
 
   return (

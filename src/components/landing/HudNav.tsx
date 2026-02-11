@@ -78,7 +78,7 @@ export function HudNav({ onOpenVehicleModal, onOpenMobileMenu, onOpenSearch }: H
 
           {/* Nav Links */}
           <Link
-            href="/trails/browse"
+            href="/map"
             className="px-3 py-2 rounded-sm font-mono text-xs font-medium uppercase tracking-wider text-muted-stone hover:text-deep-stone hover:bg-stone-light transition-colors"
           >
             Browse

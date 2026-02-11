@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -435,7 +435,15 @@ function FlyToTrail({ trailId, trails }: { trailId: string | null; trails: Trail
 }
 
 // Main DiscoveryMap Component
-export function DiscoveryMap({ focusTrailId }: { focusTrailId?: string | null }) {
+export function DiscoveryMap({
+  focusTrailId,
+  searchQuery,
+  onFilteredTrailsChange,
+}: {
+  focusTrailId?: string | null;
+  searchQuery?: string | null;
+  onFilteredTrailsChange?: (trails: Trail[]) => void;
+}) {
   const { selectedVehicle } = useVehicle();
   const [trails, setTrails] = useState<TrailWithData[]>([]);
   const [trailReports, setTrailReports] = useState<Record<string, ConditionReport[]>>({});
@@ -446,6 +454,29 @@ export function DiscoveryMap({ focusTrailId }: { focusTrailId?: string | null })
   const currentCategory = VEHICLE_CATEGORIES.find(
     (cat) => cat.mappedType === selectedVehicle
   );
+
+  const normalizedQuery = useMemo(() => {
+    return searchQuery?.trim().toLowerCase() ?? '';
+  }, [searchQuery]);
+
+  const filteredTrails = useMemo(() => {
+    if (!normalizedQuery) {
+      return trails;
+    }
+
+    return trails.filter((trail) => {
+      const haystack = [trail.name, trail.region, trail.description]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(normalizedQuery);
+    });
+  }, [trails, normalizedQuery]);
+
+  useEffect(() => {
+    onFilteredTrailsChange?.(filteredTrails as Trail[]);
+  }, [filteredTrails, onFilteredTrailsChange]);
 
   // Fetch trails and their reports
   useEffect(() => {
@@ -518,7 +549,7 @@ export function DiscoveryMap({ focusTrailId }: { focusTrailId?: string | null })
   }
 
   // Enhance trails with generated paths
-  const trailsWithPaths = trails
+  const trailsWithPaths = filteredTrails
     .filter((trail) => trail.latitude && trail.longitude)
     .map((trail) => ensureTrailPath(trail));
 

@@ -30,8 +30,7 @@ export function Header() {
   }
 
   const isActivePath = (path: string) => {
-    if (path === '/trails/browse') return pathname.startsWith('/trails/browse');
-    if (path === '/trails/search') return pathname.startsWith('/trails/search');
+    if (path === '/map') return pathname.startsWith('/map');
     return pathname === path;
   };
 
@@ -58,9 +57,9 @@ export function Header() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           <Link
-            href="/trails/browse"
+            href="/map"
             className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors ${
-              isActivePath('/trails/browse')
+              isActivePath('/map')
                 ? 'text-action-orange'
                 : 'text-muted-stone hover:text-deep-stone'
             }`}
@@ -68,9 +67,9 @@ export function Header() {
             Browse
           </Link>
           <Link
-            href="/trails/search"
+            href="/map"
             className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors ${
-              isActivePath('/trails/search')
+              isActivePath('/map')
                 ? 'text-action-orange'
                 : 'text-muted-stone hover:text-deep-stone'
             }`}
@@ -136,10 +135,10 @@ export function Header() {
         <div className="md:hidden bg-bone border-t border-stone-border">
           <nav className="container mx-auto px-4 py-4 space-y-2">
             <Link
-              href="/trails/browse"
+              href="/map"
               onClick={() => setIsMobileMenuOpen(false)}
               className={`block px-4 py-3 rounded-sm font-mono text-xs font-medium uppercase tracking-wider transition-all ${
-                isActivePath('/trails/browse')
+                isActivePath('/map')
                   ? 'bg-action-orange/10 text-action-orange border border-action-orange/20'
                   : 'text-deep-stone hover:bg-stone-light border border-transparent'
               }`}
@@ -147,10 +146,10 @@ export function Header() {
               Browse Trails
             </Link>
             <Link
-              href="/trails/search"
+              href="/map"
               onClick={() => setIsMobileMenuOpen(false)}
               className={`block px-4 py-3 rounded-sm font-mono text-xs font-medium uppercase tracking-wider transition-all ${
-                isActivePath('/trails/search')
+                isActivePath('/map')
                   ? 'bg-action-orange/10 text-action-orange border border-action-orange/20'
                   : 'text-deep-stone hover:bg-stone-light border border-transparent'
               }`}

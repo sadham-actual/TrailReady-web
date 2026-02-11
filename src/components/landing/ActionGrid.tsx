@@ -64,7 +64,7 @@ export function ActionGrid({ onOpenVehicleModal }: ActionGridProps) {
         {/* The Map Card */}
         <motion.div variants={cardVariants}>
           <Link
-            href="/trails/browse"
+            href="/map"
             className="group block h-full p-6 md:p-7 bg-white border border-stone-border rounded-sm shadow-[2px_2px_0_0_var(--color-stone-border)] hover:shadow-[4px_4px_0_0_var(--color-stone-border)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-150"
           >
             <div className="flex items-start justify-between">

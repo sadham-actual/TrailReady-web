@@ -7,7 +7,7 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        "bg-white border border-stone-border rounded-sm shadow-[2px_2px_0_0_var(--color-stone-border)] transition-all duration-150 hover:shadow-[4px_4px_0_0_var(--color-stone-border)] hover:-translate-x-0.5 hover:-translate-y-0.5",
+        "bg-stone-50 border border-stone-800 rounded-none shadow-[2px_2px_0_0_var(--color-stone-border)] transition-all duration-150 hover:shadow-[4px_4px_0_0_var(--color-stone-border)] hover:-translate-x-0.5 hover:-translate-y-0.5",
         className
       )}
       {...props}
@@ -20,7 +20,7 @@ const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn("flex flex-col space-y-1.5 p-6 border-b border-stone-border", className)}
+      className={cn("flex flex-col space-y-1.5 p-6 border-b border-stone-800", className)}
       {...props}
     />
   )
@@ -34,7 +34,7 @@ const CardTitle = React.forwardRef<
   <h3
     ref={ref}
     className={cn(
-      "text-lg font-bold leading-none tracking-tight text-deep-stone",
+      "text-lg font-mono font-bold uppercase tracking-wider text-stone-900",
       className
     )}
     {...props}
@@ -48,7 +48,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-muted-stone font-mono uppercase tracking-wide", className)}
+    className={cn("text-sm text-stone-700 font-mono uppercase tracking-wider", className)}
     {...props}
   />
 ));
@@ -66,7 +66,7 @@ const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
     <div
       ref={ref}
       className={cn(
-        "flex items-center p-6 pt-0 border-t border-stone-border mt-auto",
+        "flex items-center p-6 pt-0 border-t border-stone-800 mt-auto",
         className
       )}
       {...props}
@@ -83,7 +83,7 @@ const CardLabel = React.forwardRef<
   <span
     ref={ref}
     className={cn(
-      "font-mono text-xs font-medium uppercase tracking-wider text-muted-stone",
+      "font-mono text-xs font-medium uppercase tracking-wider text-stone-700",
       className
     )}
     {...props}
