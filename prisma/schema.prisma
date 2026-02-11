@@ -91,3 +91,11 @@ model ConditionReport {
   @@index([userId])
   @@map("condition_reports")
 }
+
+// Waitlist model - 
+model Waitlist {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  status    String   @default("PENDING") // For future use: PENDING, INVITED, ACTIVE
+}

@@ -79,7 +79,7 @@ export function Header() {
         </nav>
 
         {/* Vehicle Selector - Desktop */}
-        <div className="hidden md:flex items-center">
+        <div className="hidden md:flex items-center gap-3">
           {selectedVehicle ? (
             <button
               onClick={() => setVehicleModalOpen(true)}
@@ -98,6 +98,12 @@ export function Header() {
               <span>Set Rig</span>
             </button>
           )}
+          <Link
+            href="/waitlist"
+            className="px-3 py-2 border-2 border-orange-500 text-orange-500 font-mono text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-orange-500 hover:text-stone-100"
+          >
+            Join Expedition
+          </Link>
         </div>
 
         {/* Mobile Actions */}
@@ -173,6 +179,14 @@ export function Header() {
                 <ChevronDown className="h-4 w-4 text-muted-stone" />
               </button>
             )}
+
+            <Link
+              href="/waitlist"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="mt-2 block w-full px-4 py-3 text-center border-2 border-orange-500 text-orange-500 font-mono text-xs font-semibold uppercase tracking-wider transition-colors hover:bg-orange-500 hover:text-stone-100"
+            >
+              Join Expedition
+            </Link>
           </nav>
         </div>
       )}

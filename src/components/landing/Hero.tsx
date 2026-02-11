@@ -127,6 +127,19 @@ export function Hero() {
           >
             Real-time trail conditions matched to your vehicle capability.
           </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.35 }}
+          >
+            <a
+              href="/waitlist"
+              className="inline-flex items-center justify-center rounded-none bg-orange-500 px-8 py-4 font-mono text-sm font-semibold uppercase tracking-wider text-stone-100 transition-colors hover:bg-orange-600"
+            >
+              Join the Expedition
+            </a>
+          </motion.div>
         </motion.div>
 
         {/* Command Center - The Search Bar */}
