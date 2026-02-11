@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Command } from 'cmdk';
 import { Drawer } from 'vaul';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MapPin, ArrowRight, Loader2, X } from 'lucide-react';
+import { Search, MapPin, ArrowRight, Loader2, X, Map } from 'lucide-react';
 import { trailService } from '@/services/trailService';
 import { Trail, Status, VEHICLE_CATEGORIES } from '@/types';
 import { useVehicle } from '@/contexts/VehicleContext';
@@ -191,26 +191,29 @@ interface SearchResultProps {
   trail: Trail;
   selectedVehicle: string | null;
   onSelect: () => void;
+  onShowOnMap: () => void;
   isSelected?: boolean;
   isNavigating?: boolean;
 }
 
-function SearchResult({ trail, selectedVehicle, onSelect, isSelected, isNavigating }: SearchResultProps) {
+function SearchResult({ trail, selectedVehicle, onSelect, onShowOnMap, isSelected, isNavigating }: SearchResultProps) {
   const matchScore = calculateMatchScore(trail, selectedVehicle);
 
   return (
-    <button
-      onClick={onSelect}
-      disabled={isNavigating}
-      className={`w-full text-left px-4 py-3 rounded-sm cursor-pointer transition-all ${
+    <div
+      className={`w-full px-4 py-3 rounded-sm transition-all ${
         isSelected
           ? 'bg-white border border-stone-border shadow-[2px_2px_0_0_var(--color-stone-border)]'
           : 'border border-transparent hover:bg-white hover:border-stone-border'
       } ${isNavigating ? 'animate-pulse' : ''}`}
     >
-      <div className="flex items-center justify-between gap-4">
-        {/* Trail Info */}
-        <div className="flex-1 min-w-0">
+      <div className="flex items-center justify-between gap-3">
+        {/* Trail Info - Clickable */}
+        <button
+          onClick={onSelect}
+          disabled={isNavigating}
+          className="flex-1 min-w-0 text-left cursor-pointer"
+        >
           <div className="flex items-center gap-3">
             {isNavigating ? (
               <span className="font-mono text-xs font-bold uppercase tracking-wider text-action-orange animate-pulse">
@@ -231,21 +234,37 @@ function SearchResult({ trail, selectedVehicle, onSelect, isSelected, isNavigati
               </span>
             </div>
           )}
-        </div>
+        </button>
 
-        {/* Match Gauge or Loading Indicator */}
-        <div className="flex items-center gap-3 flex-shrink-0">
+        {/* Actions */}
+        <div className="flex items-center gap-2 flex-shrink-0">
           {isNavigating ? (
             <Loader2 className="h-4 w-4 text-action-orange animate-spin" />
           ) : (
             <>
               {selectedVehicle && <MiniGauge score={matchScore} />}
-              <ArrowRight className="h-4 w-4 text-muted-stone" />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShowOnMap();
+                }}
+                className="p-1.5 rounded-sm border border-stone-border hover:bg-stone-light hover:border-action-orange transition-colors group"
+                title="Show on Map"
+              >
+                <Map className="h-3.5 w-3.5 text-muted-stone group-hover:text-action-orange" />
+              </button>
+              <button
+                onClick={onSelect}
+                disabled={isNavigating}
+                className="p-1.5"
+              >
+                <ArrowRight className="h-4 w-4 text-muted-stone" />
+              </button>
             </>
           )}
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -376,6 +395,12 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
     }, 150);
   }, [onOpenChange, router]);
 
+  // Handle show on map - navigate to map with trail ID
+  const handleShowOnMap = useCallback((trailId: string) => {
+    onOpenChange(false);
+    router.push(`/map?id=${trailId}`);
+  }, [onOpenChange, router]);
+
   // Handle search submit
   const handleSearchSubmit = useCallback(() => {
     if (trails.length > 0) {
@@ -496,6 +521,7 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
                     trail={trail}
                     selectedVehicle={selectedVehicle}
                     onSelect={() => handleSelect(trail.id)}
+                    onShowOnMap={() => handleShowOnMap(trail.id)}
                     isSelected={index === selectedIndex}
                     isNavigating={navigatingId === trail.id}
                   />
@@ -639,12 +665,22 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
                           </div>
 
                           {/* Match Gauge or Loading Indicator */}
-                          <div className="flex items-center gap-3 flex-shrink-0">
+                          <div className="flex items-center gap-2 flex-shrink-0">
                             {isNavigating ? (
                               <Loader2 className="h-4 w-4 text-action-orange animate-spin" />
                             ) : (
                               <>
                                 {selectedVehicle && <MiniGauge score={matchScore} />}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleShowOnMap(trail.id);
+                                  }}
+                                  className="p-1.5 rounded-sm border border-stone-border hover:bg-stone-light hover:border-action-orange transition-colors group"
+                                  title="Show on Map"
+                                >
+                                  <Map className="h-3.5 w-3.5 text-muted-stone group-hover:text-action-orange" />
+                                </button>
                                 <ArrowRight className="h-4 w-4 text-muted-stone" />
                               </>
                             )}

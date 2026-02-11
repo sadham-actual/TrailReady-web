@@ -8,6 +8,7 @@ import { trailService } from '@/services/trailService';
 import { Trail, Status, Confidence, VEHICLE_CATEGORIES, VehicleCategoryInfo } from '@/types';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
+import { useTrailRefresh } from '@/components/landing';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -151,6 +152,7 @@ export default function SubmitReportPage() {
   const router = useRouter();
   const trailId = params.id as string;
   const { selectedVehicle, setSelectedVehicle } = useVehicle();
+  const { triggerRefresh } = useTrailRefresh();
 
   // State
   const [trail, setTrail] = useState<Trail | null>(null);
@@ -234,9 +236,11 @@ export default function SubmitReportPage() {
 
   // Handle success animation complete
   const handleSuccessComplete = useCallback(() => {
+    // Trigger cross-tab/page refresh for landing page and other listeners
+    triggerRefresh();
     // Navigate back and force a refresh by adding a cache-busting query
     router.push(`/trails/${trailId}?refresh=${Date.now()}`);
-  }, [router, trailId]);
+  }, [router, trailId, triggerRefresh]);
 
   // Loading state
   if (isLoading) {

@@ -18,6 +18,11 @@ export interface VehicleOutcome {
   confidence: Confidence;
   explanation: string;
   isBaseline?: boolean; // True when verdict is derived from baseDifficulty, not recent reports
+  inheritedFrom?: {
+    vehicleType: VehicleType;
+    capabilityLevel: number;
+    reportTimestamp: string;
+  };
 }
 
 /**
@@ -83,7 +88,7 @@ export function getReportFreshness(timestamp: string | Date): {
  * Uses the VEHICLE_CATEGORIES mapping for the 4 simplified categories
  * Falls back to a direct mapping for other vehicle types
  */
-function getVehicleCapability(vehicleType: VehicleType): number {
+export function getVehicleCapability(vehicleType: VehicleType): number {
   // Check simplified categories first
   const category = VEHICLE_CATEGORIES.find(cat => cat.mappedType === vehicleType);
   if (category) {
@@ -103,6 +108,75 @@ function getVehicleCapability(vehicleType: VehicleType): number {
   };
 
   return fallbackCapability[vehicleType] ?? 2;
+}
+
+/**
+ * Get human-readable label for capability level
+ */
+export function getCapabilityLabel(level: number): string {
+  switch (level) {
+    case 1: return 'Stock AWD';
+    case 2: return 'High Clearance 4x4';
+    case 3: return 'Modified 4x4';
+    case 4: return 'Extreme Build';
+    default: return 'Unknown';
+  }
+}
+
+/**
+ * Find an impassable report from a higher-capability vehicle that should
+ * propagate down to the target vehicle type.
+ *
+ * Propagation rules:
+ * - Only considers impassable reports from higher capability vehicles
+ * - Must be within freshness threshold (30 days)
+ * - Returns the highest-capability impassable report if multiple exist
+ */
+function findInheritedImpassable(
+  reports: ConditionReport[],
+  targetVehicleType: VehicleType
+): {
+  sourceVehicleType: VehicleType;
+  capabilityLevel: number;
+  report: ConditionReport;
+} | null {
+  const targetCapability = getVehicleCapability(targetVehicleType);
+  const staleThresholdMs = STALE_REPORT_DAYS * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+
+  // Find all impassable reports from higher-capability vehicles that are fresh
+  const higherImpassable = reports
+    .filter(r => {
+      const reportCapability = getVehicleCapability(r.vehicleType);
+      const reportAge = now - new Date(r.timestamp).getTime();
+      return (
+        r.status === 'impassable' &&
+        reportCapability > targetCapability &&
+        reportAge <= staleThresholdMs
+      );
+    })
+    .map(r => ({
+      report: r,
+      capabilityLevel: getVehicleCapability(r.vehicleType),
+    }))
+    // Sort by capability (highest first), then by recency
+    .sort((a, b) => {
+      if (b.capabilityLevel !== a.capabilityLevel) {
+        return b.capabilityLevel - a.capabilityLevel;
+      }
+      return new Date(b.report.timestamp).getTime() - new Date(a.report.timestamp).getTime();
+    });
+
+  if (higherImpassable.length === 0) {
+    return null;
+  }
+
+  const top = higherImpassable[0];
+  return {
+    sourceVehicleType: top.report.vehicleType,
+    capabilityLevel: top.capabilityLevel,
+    report: top.report,
+  };
 }
 
 /**
@@ -296,23 +370,40 @@ function areReportsStale(reports: ConditionReport[]): boolean {
 }
 
 /**
- * Enhanced vehicle outcome that falls back to baseline verdict when reports are stale
+ * Enhanced vehicle outcome with condition propagation and baseline fallback
  *
- * Rules:
- * - If reports exist within 30 days → use standard getVehicleOutcome logic
- * - If no reports within 30 days AND baseDifficulty is set → use baseline verdict
- * - If no reports and no baseDifficulty → return 'unknown'
+ * Rules (in priority order):
+ * 1. If a higher-capability vehicle reported impassable → inherit that verdict
+ * 2. If fresh reports exist for this vehicle (within 30 days) → use direct verdict
+ * 3. If baseDifficulty is set → use baseline verdict
+ * 4. Otherwise → return 'unknown'
  *
  * @param reports All condition reports for a trail
  * @param vehicleType The vehicle type to evaluate for
  * @param baseDifficulty Optional trail base difficulty (1-4)
- * @returns Outcome with status, confidence, explanation, and isBaseline flag
+ * @returns Outcome with status, confidence, explanation, and inheritance/baseline flags
  */
 export function getVehicleOutcomeWithFallback(
   reports: ConditionReport[],
   vehicleType: VehicleType,
   baseDifficulty?: number | null
 ): VehicleOutcome {
+  // Check for inherited impassable from higher-capability vehicles FIRST
+  // If a more capable vehicle can't pass, this vehicle definitely can't either
+  const inherited = findInheritedImpassable(reports, vehicleType);
+  if (inherited) {
+    return {
+      status: 'impassable',
+      confidence: inherited.report.confidence,
+      explanation: `Higher-capability vehicle (${getCapabilityLabel(inherited.capabilityLevel)}) reported trail not passable`,
+      inheritedFrom: {
+        vehicleType: inherited.sourceVehicleType,
+        capabilityLevel: inherited.capabilityLevel,
+        reportTimestamp: inherited.report.timestamp,
+      },
+    };
+  }
+
   // Filter to reports for this vehicle type
   const vehicleReports = reports.filter(r => r.vehicleType === vehicleType);
 

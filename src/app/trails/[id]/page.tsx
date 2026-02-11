@@ -16,7 +16,8 @@ import {
 import {
   getVehicleOutcomeWithFallback,
   VehicleOutcome,
-  getReportFreshness
+  getReportFreshness,
+  getCapabilityLabel
 } from '@/lib/trailOutcome';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { Button } from '@/components/ui/button';
@@ -390,6 +391,22 @@ function VerdictHeroCard({
             </div>
           </div>
         )}
+
+        {/* Inherited verdict indicator - Light Industrial theme */}
+        {outcome.inheritedFrom && (
+          <div className="flex items-start gap-3 bg-stone-200/50 backdrop-blur rounded-xl p-4">
+            <AlertTriangle className="h-5 w-5 text-action-orange flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-action-orange text-sm font-medium mb-1">
+                Based on {getCapabilityLabel(outcome.inheritedFrom.capabilityLevel)} Report
+              </p>
+              <p className="text-deep-stone text-xs leading-relaxed">
+                A higher-capability vehicle reported this trail as not passable{' '}
+                {formatRelativeTime(outcome.inheritedFrom.reportTimestamp)}.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -465,6 +482,9 @@ function CapabilityMatrix({
             </p>
             {outcome.isBaseline && (
               <p className="text-[10px] text-slate-500 mt-1">Baseline</p>
+            )}
+            {outcome.inheritedFrom && (
+              <p className="text-[10px] text-action-orange mt-1">Inherited</p>
             )}
           </motion.button>
         );

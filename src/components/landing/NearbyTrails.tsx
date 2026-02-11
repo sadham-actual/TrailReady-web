@@ -1,59 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, ChevronRight, AlertTriangle, CheckCircle2, HelpCircle } from 'lucide-react';
+import { MapPin, ChevronRight, AlertTriangle, CheckCircle2, HelpCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useVehicle } from '@/contexts/VehicleContext';
-import { VEHICLE_CATEGORIES } from '@/types';
+import { VEHICLE_CATEGORIES, Trail, Status } from '@/types';
+import { trailService } from '@/services/trailService';
 
-// Trail difficulty: 1 = easy (fire road), 2 = moderate, 3 = difficult, 4 = extreme
-interface TrailData {
-  id: string;
-  name: string;
-  distance: string;
-  difficulty: 1 | 2 | 3 | 4;
-  status: 'clear' | 'caution' | 'impassable';
+// Extended trail type with baseDifficulty from API
+interface TrailWithDifficulty extends Trail {
+  baseDifficulty?: number;
 }
-
-// Mock trail data with difficulty levels
-const nearbyTrails: TrailData[] = [
-  {
-    id: '1',
-    name: 'Rubicon Trail',
-    distance: '12 mi',
-    difficulty: 4, // Extreme - needs extreme build
-    status: 'clear',
-  },
-  {
-    id: '2',
-    name: 'Fordyce Creek',
-    distance: '18 mi',
-    difficulty: 3, // Difficult - needs modified 4x4
-    status: 'caution',
-  },
-  {
-    id: '3',
-    name: 'Barrett Lake Road',
-    distance: '24 mi',
-    difficulty: 2, // Moderate - HC 4x4 can do it
-    status: 'clear',
-  },
-  {
-    id: '4',
-    name: 'Slick Rock',
-    distance: '45 mi',
-    difficulty: 4, // Extreme
-    status: 'clear',
-  },
-  {
-    id: '5',
-    name: 'Hell Hole Trail',
-    distance: '52 mi',
-    difficulty: 2, // Moderate
-    status: 'clear',
-  },
-];
 
 type MatchResult = {
   level: 'strong' | 'caution' | 'risk' | 'neutral';
@@ -66,7 +24,11 @@ type MatchResult = {
   icon: React.ReactNode;
 };
 
-function calculateMatch(trail: TrailData, vehicleCapability: number | null): MatchResult {
+function calculateMatch(
+  trail: TrailWithDifficulty,
+  vehicleCapability: number | null,
+  latestStatus?: Status
+): MatchResult {
   // No vehicle selected - neutral badge
   if (vehicleCapability === null) {
     return {
@@ -81,14 +43,34 @@ function calculateMatch(trail: TrailData, vehicleCapability: number | null): Mat
     };
   }
 
-  const diff = vehicleCapability - trail.difficulty;
+  // If trail is impassable, show high risk regardless of vehicle
+  if (latestStatus === 'impassable') {
+    return {
+      level: 'risk',
+      label: 'Impassable',
+      percent: 15,
+      bg: 'bg-status-impassable/10',
+      text: 'text-status-impassable',
+      border: 'border-status-impassable/30',
+      barColor: 'bg-status-impassable',
+      icon: <AlertTriangle className="h-3 w-3" />,
+    };
+  }
+
+  // Use baseDifficulty for matching (default to 2 if not set)
+  const trailDifficulty = trail.baseDifficulty ?? 2;
+  const diff = vehicleCapability - trailDifficulty;
+
+  // Adjust for rough conditions
+  const roughAdjustment = latestStatus === 'rough' ? -1 : 0;
+  const adjustedDiff = diff + roughAdjustment;
 
   // Vehicle capability >= trail difficulty = Strong Match
-  if (diff >= 0) {
-    const percent = Math.min(95, 80 + diff * 5);
+  if (adjustedDiff >= 0) {
+    const percent = Math.min(95, 80 + adjustedDiff * 5);
     return {
       level: 'strong',
-      label: 'Strong Match',
+      label: latestStatus === 'rough' ? 'Good Match' : 'Strong Match',
       percent,
       bg: 'bg-status-clear/10',
       text: 'text-status-clear',
@@ -99,7 +81,7 @@ function calculateMatch(trail: TrailData, vehicleCapability: number | null): Mat
   }
 
   // Vehicle is 1 level below trail = Caution
-  if (diff === -1) {
+  if (adjustedDiff === -1) {
     return {
       level: 'caution',
       label: 'Caution',
@@ -116,13 +98,21 @@ function calculateMatch(trail: TrailData, vehicleCapability: number | null): Mat
   return {
     level: 'risk',
     label: 'High Risk',
-    percent: Math.max(20, 50 + diff * 15),
+    percent: Math.max(20, 50 + adjustedDiff * 15),
     bg: 'bg-status-impassable/10',
     text: 'text-status-impassable',
     border: 'border-status-impassable/30',
     barColor: 'bg-status-impassable',
     icon: <AlertTriangle className="h-3 w-3" />,
   };
+}
+
+// Format distance from lat/long (mock for now - would use geolocation)
+function formatDistance(trail: Trail): string {
+  // Generate a consistent "distance" based on trail ID hash
+  const hash = trail.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+  const distance = (hash % 50) + 5;
+  return `${distance} mi`;
 }
 
 const containerVariants = {
@@ -145,8 +135,26 @@ const cardVariants = {
   },
 };
 
+// Custom event for trail data refresh (same-tab)
+const TRAIL_REFRESH_EVENT = 'trailready:refresh';
+// LocalStorage key for cross-tab refresh
+const TRAIL_REFRESH_KEY = 'trailready:lastRefresh';
+
+export function useTrailRefresh() {
+  const triggerRefresh = useCallback(() => {
+    // Same-tab refresh via custom event
+    window.dispatchEvent(new CustomEvent(TRAIL_REFRESH_EVENT));
+    // Cross-tab refresh via localStorage (triggers 'storage' event in other tabs)
+    localStorage.setItem(TRAIL_REFRESH_KEY, Date.now().toString());
+  }, []);
+
+  return { triggerRefresh };
+}
+
 export function NearbyTrails() {
   const { selectedVehicle } = useVehicle();
+  const [trails, setTrails] = useState<TrailWithDifficulty[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isRecalculating, setIsRecalculating] = useState(false);
 
   // Find current vehicle capability level
@@ -154,6 +162,50 @@ export function NearbyTrails() {
     (cat) => cat.mappedType === selectedVehicle
   );
   const vehicleCapability = currentCategory?.capabilityLevel ?? null;
+
+  // Fetch trails from API
+  const fetchTrails = useCallback(async () => {
+    try {
+      const data = await trailService.getTrails();
+      // Take first 5 trails for the carousel
+      setTrails((data as TrailWithDifficulty[]).slice(0, 5));
+    } catch (error) {
+      console.error('Failed to fetch trails:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Initial load
+  useEffect(() => {
+    fetchTrails();
+  }, [fetchTrails]);
+
+  // Listen for refresh events (triggered after report submission)
+  useEffect(() => {
+    const handleRefresh = () => {
+      setIsRecalculating(true);
+      fetchTrails().finally(() => {
+        setTimeout(() => setIsRecalculating(false), 600);
+      });
+    };
+
+    // Same-tab refresh via custom event
+    window.addEventListener(TRAIL_REFRESH_EVENT, handleRefresh);
+
+    // Cross-tab refresh via localStorage change
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === TRAIL_REFRESH_KEY) {
+        handleRefresh();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener(TRAIL_REFRESH_EVENT, handleRefresh);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [fetchTrails]);
 
   // Flash animation when vehicle changes
   useEffect(() => {
@@ -163,6 +215,45 @@ export function NearbyTrails() {
       return () => clearTimeout(timer);
     }
   }, [selectedVehicle]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <section className="pb-32 md:pb-28">
+        <div className="mb-6">
+          <div className="h-7 w-48 bg-stone-200 rounded animate-pulse" />
+          <div className="mt-2 h-5 w-64 bg-stone-100 rounded animate-pulse" />
+        </div>
+        <div className="flex gap-4 overflow-hidden">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="w-[300px] h-[140px] bg-stone-100 rounded-sm border border-stone-border animate-pulse flex-shrink-0"
+            />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  // No trails available
+  if (trails.length === 0) {
+    return (
+      <section className="pb-32 md:pb-28">
+        <div className="mb-6">
+          <h2 className="font-mono text-xl font-bold uppercase tracking-wider text-charcoal">
+            Match Intelligence
+          </h2>
+          <p className="mt-2 text-sm font-medium text-deep-stone leading-relaxed">
+            No trails available yet
+          </p>
+        </div>
+        <div className="flex items-center justify-center h-32 bg-stone-100 rounded-sm border border-stone-border">
+          <p className="text-muted-stone font-mono text-sm">Check back soon for trail data</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="pb-32 md:pb-28">
@@ -204,8 +295,8 @@ export function NearbyTrails() {
         }}
       >
         <AnimatePresence mode="sync">
-          {nearbyTrails.map((trail) => {
-            const match = calculateMatch(trail, vehicleCapability);
+          {trails.map((trail) => {
+            const match = calculateMatch(trail, vehicleCapability, trail.latestStatus);
 
             return (
               <motion.div
@@ -227,7 +318,13 @@ export function NearbyTrails() {
                       </h3>
                       <div className="mt-1.5 flex items-center gap-1.5 text-muted-stone">
                         <MapPin className="h-3.5 w-3.5" />
-                        <span className="font-mono text-xs">{trail.distance}</span>
+                        <span className="font-mono text-xs">{formatDistance(trail)}</span>
+                        {trail.baseDifficulty && (
+                          <>
+                            <span className="text-stone-border">•</span>
+                            <span className="font-mono text-xs">D{trail.baseDifficulty}</span>
+                          </>
+                        )}
                       </div>
                     </div>
 

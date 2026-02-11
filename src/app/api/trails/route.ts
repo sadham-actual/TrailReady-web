@@ -42,14 +42,15 @@ export async function GET(request: NextRequest) {
       orderBy: { name: 'asc' },
     });
 
-    // Transform to match frontend Trail type
-    const trailsWithStatus: Trail[] = trails.map((trail) => ({
+    // Transform to match frontend Trail type (with baseDifficulty for matching)
+    const trailsWithStatus = trails.map((trail) => ({
       id: trail.id,
       name: trail.name,
       region: trail.region,
       latitude: trail.latitude,
       longitude: trail.longitude,
       description: trail.description ?? undefined,
+      baseDifficulty: trail.baseDifficulty ?? undefined,
       latestStatus: trail.reports[0]?.status,
       lastReportAt: trail.reports[0]?.timestamp.toISOString(),
     }));

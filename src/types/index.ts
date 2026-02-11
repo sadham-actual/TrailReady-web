@@ -14,6 +14,9 @@ export type VehicleType =
   | 'sideBySide'
   | 'dirtBike';
 
+// Coordinate pair for trail paths [latitude, longitude]
+export type LatLng = [number, number];
+
 export interface Trail {
   id: string;
   name: string;
@@ -23,6 +26,7 @@ export interface Trail {
   description?: string;
   latestStatus?: Status;
   lastReportAt?: string; // ISO-8601 timestamp
+  pathCoordinates?: LatLng[]; // GPS path for trail polyline rendering
 }
 
 export interface ConditionReport {
