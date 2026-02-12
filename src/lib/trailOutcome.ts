@@ -427,6 +427,159 @@ export function getVehicleOutcomeWithFallback(
 }
 
 /**
+ * Weighted status calculation result
+ * Used for the "Clear Answer" UI in trail detail page
+ */
+export interface WeightedStatusResult {
+  status: 'passable' | 'high-risk' | 'impassable' | 'unknown';
+  label: string;
+  hasMixedReports: boolean;
+  mixedReportReason?: string;
+  totalWeight: number;
+  statusWeights: {
+    clear: number;
+    rough: number;
+    impassable: number;
+  };
+  dominantConfidence: Confidence;
+  recentHighConfidenceVehicles: {
+    vehicleType: VehicleType;
+    status: Status;
+    timestamp: string;
+  }[];
+}
+
+/**
+ * Calculate weighted trail status from reports
+ *
+ * Weighting rules:
+ * - Confidence weight: high=2x, medium=1.5x, low=1x
+ * - Time decay: Reports >48 hours old have 50% weight
+ *
+ * Conflict detection:
+ * - Conflicting intel flagged when high-confidence impassable conflicts with low-confidence passable
+ *
+ * @param reports Condition reports (pre-sorted by recency, limited to last 5)
+ * @returns Weighted status with conflict detection
+ */
+export function calculateWeightedStatus(reports: ConditionReport[]): WeightedStatusResult {
+  // No reports = unknown
+  if (reports.length === 0) {
+    return {
+      status: 'unknown',
+      label: 'NO DATA',
+      hasMixedReports: false,
+      totalWeight: 0,
+      statusWeights: { clear: 0, rough: 0, impassable: 0 },
+      dominantConfidence: 'low',
+      recentHighConfidenceVehicles: [],
+    };
+  }
+
+  // Take last 5 reports (should already be sorted by recency)
+  const recentReports = reports.slice(0, 5);
+
+  // Confidence weights: High=2x, Medium=1.5x, Low=1x
+  const confidenceWeight: Record<Confidence, number> = {
+    high: 2,
+    medium: 1.5,
+    low: 1,
+  };
+
+  // Calculate time decay (reports >48 hours old get 50% weight)
+  const getTimeDecay = (timestamp: string): number => {
+    const reportTime = new Date(timestamp).getTime();
+    const now = Date.now();
+    const hoursOld = (now - reportTime) / (1000 * 60 * 60);
+    return hoursOld > 48 ? 0.5 : 1;
+  };
+
+  // Calculate weighted sums for each status
+  const statusWeights = { clear: 0, rough: 0, impassable: 0 };
+  let totalWeight = 0;
+  let dominantConfidence: Confidence = 'low';
+  let maxConfidenceWeight = 0;
+
+  // Track reports for conflict detection
+  const hasHighConfidenceImpassable = recentReports.some(r => r.confidence === 'high' && r.status === 'impassable');
+  const hasLowConfidenceClear = recentReports.some(r => r.confidence === 'low' && r.status === 'clear');
+
+  // Track vehicles with High or Medium confidence for matrix highlighting (within 48 hours)
+  const recentHighConfidenceVehicles: WeightedStatusResult['recentHighConfidenceVehicles'] = [];
+  const fortyEightHoursAgo = Date.now() - (48 * 60 * 60 * 1000);
+
+  recentReports.forEach(report => {
+    const confWeight = confidenceWeight[report.confidence];
+    const timeDecay = getTimeDecay(report.timestamp);
+    const weight = confWeight * timeDecay;
+
+    statusWeights[report.status] += weight;
+    totalWeight += weight;
+
+    // Track dominant confidence
+    if (confWeight > maxConfidenceWeight) {
+      maxConfidenceWeight = confWeight;
+      dominantConfidence = report.confidence;
+    }
+
+    // Track High or Medium confidence vehicles for matrix highlighting
+    if (
+      (report.confidence === 'high' || report.confidence === 'medium') &&
+      new Date(report.timestamp).getTime() > fortyEightHoursAgo
+    ) {
+      recentHighConfidenceVehicles.push({
+        vehicleType: report.vehicleType,
+        status: report.status,
+        timestamp: report.timestamp,
+      });
+    }
+  });
+
+  // Detect conflicting intel: high-confidence impassable vs low-confidence passable
+  const hasMixedReports = hasHighConfidenceImpassable && hasLowConfidenceClear;
+  let mixedReportReason: string | undefined;
+  if (hasMixedReports) {
+    mixedReportReason = 'High-confidence impassable report conflicts with low-confidence passable';
+  }
+
+  // Determine overall status from weighted scores
+  let status: WeightedStatusResult['status'];
+  let label: string;
+
+  // If impassable has the highest weight, trail is impassable
+  if (statusWeights.impassable > statusWeights.clear && statusWeights.impassable > statusWeights.rough) {
+    status = 'impassable';
+    label = 'NOT PASSABLE';
+  }
+  // If clear dominates, trail is passable
+  else if (statusWeights.clear > statusWeights.impassable && statusWeights.clear >= statusWeights.rough) {
+    status = 'passable';
+    label = 'PASSABLE';
+  }
+  // If rough dominates or tied with clear, challenging
+  else if (statusWeights.rough > 0 || statusWeights.clear > 0) {
+    status = 'high-risk';
+    label = 'CHALLENGING';
+  }
+  // Fallback
+  else {
+    status = 'unknown';
+    label = 'UNKNOWN';
+  }
+
+  return {
+    status,
+    label,
+    hasMixedReports,
+    mixedReportReason,
+    totalWeight,
+    statusWeights,
+    dominantConfidence,
+    recentHighConfidenceVehicles,
+  };
+}
+
+/**
  * Get all 8 vehicle types in a consistent order
  */
 const ALL_VEHICLE_TYPES: VehicleType[] = [

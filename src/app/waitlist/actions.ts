@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import prisma from '@/lib/prisma';
 
 export type WaitlistState = {
   status: 'idle' | 'success' | 'duplicate' | 'error';

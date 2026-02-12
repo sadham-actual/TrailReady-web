@@ -17,7 +17,9 @@ import {
   getVehicleOutcomeWithFallback,
   VehicleOutcome,
   getReportFreshness,
-  getCapabilityLabel
+  getCapabilityLabel,
+  calculateWeightedStatus,
+  WeightedStatusResult
 } from '@/lib/trailOutcome';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { Button } from '@/components/ui/button';
@@ -127,6 +129,11 @@ export default function TrailDetailPage() {
     return getReportFreshness(new Date(mostRecent));
   }, [reports]);
 
+  // Weighted overall trail status (uses last 5 reports)
+  const weightedStatus = useMemo(() => {
+    return calculateWeightedStatus(reports);
+  }, [reports]);
+
   if (isLoading) {
     return <LoadingSkeleton />;
   }
@@ -184,11 +191,24 @@ export default function TrailDetailPage() {
           </div>
         </motion.div>
 
+        {/* Overall Trail Status - Weighted Algorithm */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15 }}
+          className="mb-6"
+        >
+          <OverallStatusCard
+            weightedStatus={weightedStatus}
+            reportCount={reports.length}
+          />
+        </motion.div>
+
         {/* Hero Verdict Card */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          transition={{ duration: 0.6, delay: 0.25 }}
           className="mb-6"
         >
           <VerdictHeroCard
@@ -204,7 +224,7 @@ export default function TrailDetailPage() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
+          transition={{ duration: 0.6, delay: 0.35 }}
           className="mb-6"
         >
           <h2 className="text-lg font-semibold font-mono uppercase tracking-wider text-stone-900 mb-4 flex items-center gap-2">
@@ -217,6 +237,7 @@ export default function TrailDetailPage() {
             onSelectVehicle={(vehicleType) => {
               setSelectedVehicle(vehicleType);
             }}
+            recentHighConfidenceVehicles={weightedStatus.recentHighConfidenceVehicles}
           />
         </motion.div>
 
@@ -225,7 +246,7 @@ export default function TrailDetailPage() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.45 }}
             className="mb-6"
           >
             <h2 className="text-lg font-semibold font-mono uppercase tracking-wider text-stone-900 mb-4 flex items-center gap-2">
@@ -244,7 +265,7 @@ export default function TrailDetailPage() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
+            transition={{ duration: 0.6, delay: 0.55 }}
             className="mb-6"
           >
             <div className="bg-stone-100 border border-stone-800 rounded-none p-5">
@@ -443,20 +464,189 @@ function FreshnessBadge({ freshness }: { freshness: { isFresh: boolean; isStale:
   );
 }
 
+// Overall Trail Status Component - Weighted Algorithm
+function OverallStatusCard({
+  weightedStatus,
+  reportCount
+}: {
+  weightedStatus: WeightedStatusResult;
+  reportCount: number;
+}) {
+  // No reports
+  if (reportCount === 0) {
+    return (
+      <div className="relative overflow-hidden rounded-none bg-stone-100 border border-stone-800 p-6">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-stone-50 border border-stone-800 rounded-none">
+            <HelpCircle className="h-8 w-8 text-stone-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black font-mono uppercase tracking-wider text-stone-400 mb-1">
+              NO DATA
+            </h2>
+            <p className="text-stone-600 text-sm">
+              No condition reports submitted yet. Be the first to report!
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Get status-specific styles
+  const getStatusStyles = () => {
+    switch (weightedStatus.status) {
+      case 'passable':
+        return {
+          bgClass: 'bg-emerald-500/10',
+          borderClass: 'border-emerald-600',
+          textClass: 'text-emerald-600',
+          Icon: CheckCircle2,
+        };
+      case 'high-risk':
+        return {
+          bgClass: 'bg-amber-500/10',
+          borderClass: 'border-amber-600',
+          textClass: 'text-amber-600',
+          Icon: AlertTriangle,
+        };
+      case 'impassable':
+        return {
+          bgClass: 'bg-rose-500/10',
+          borderClass: 'border-rose-600',
+          textClass: 'text-rose-600',
+          Icon: XCircle,
+        };
+      default:
+        return {
+          bgClass: 'bg-stone-100',
+          borderClass: 'border-stone-400',
+          textClass: 'text-stone-600',
+          Icon: HelpCircle,
+        };
+    }
+  };
+
+  const styles = getStatusStyles();
+  const StatusIcon = styles.Icon;
+
+  return (
+    <div className={`relative overflow-hidden rounded-none ${styles.bgClass} border-2 ${styles.borderClass} p-6`}>
+      {/* Main Status Display */}
+      <div className="flex items-center gap-4 mb-4">
+        <div className={`p-3 bg-white/80 border ${styles.borderClass} rounded-none`}>
+          <StatusIcon className={`h-10 w-10 ${styles.textClass}`} strokeWidth={2.5} />
+        </div>
+        <div className="flex-1">
+          <h2 className={`text-3xl md:text-4xl font-black font-mono uppercase tracking-wider ${styles.textClass}`}>
+            {weightedStatus.label}
+          </h2>
+          <p className="text-stone-600 text-sm font-mono uppercase tracking-wider">
+            Based on {reportCount} report{reportCount !== 1 ? 's' : ''} • Weighted by confidence & recency
+          </p>
+        </div>
+      </div>
+
+      {/* Conflicting Intel Warning */}
+      {weightedStatus.hasMixedReports && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-3 bg-amber-500/20 border border-amber-500 rounded-none p-4"
+        >
+          <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-amber-700 text-sm font-mono uppercase tracking-wider font-semibold mb-1">
+              CAUTION: CONFLICTING INTEL
+            </p>
+            <p className="text-amber-700 text-xs leading-relaxed">
+              {weightedStatus.mixedReportReason || 'Recent reports show conflicting conditions. Exercise extra caution.'}
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Weight Distribution Bar */}
+      {weightedStatus.totalWeight > 0 && (
+        <div className="mt-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xs font-mono uppercase tracking-wider text-stone-600">Status Distribution</span>
+          </div>
+          <div className="h-3 bg-stone-200 border border-stone-300 rounded-none overflow-hidden flex">
+            {weightedStatus.statusWeights.clear > 0 && (
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${(weightedStatus.statusWeights.clear / weightedStatus.totalWeight) * 100}%` }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="h-full bg-emerald-500"
+              />
+            )}
+            {weightedStatus.statusWeights.rough > 0 && (
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${(weightedStatus.statusWeights.rough / weightedStatus.totalWeight) * 100}%` }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="h-full bg-amber-500"
+              />
+            )}
+            {weightedStatus.statusWeights.impassable > 0 && (
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${(weightedStatus.statusWeights.impassable / weightedStatus.totalWeight) * 100}%` }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="h-full bg-rose-500"
+              />
+            )}
+          </div>
+          <div className="flex items-center gap-4 mt-2 text-[10px] font-mono uppercase tracking-wider font-semibold">
+            {weightedStatus.statusWeights.clear > 0 && (
+              <span className="flex items-center gap-1.5 text-emerald-600">
+                <span className="w-2 h-2 bg-emerald-500" />
+                Passable
+              </span>
+            )}
+            {weightedStatus.statusWeights.rough > 0 && (
+              <span className="flex items-center gap-1.5 text-amber-600">
+                <span className="w-2 h-2 bg-amber-500" />
+                Challenging
+              </span>
+            )}
+            {weightedStatus.statusWeights.impassable > 0 && (
+              <span className="flex items-center gap-1.5 text-rose-600">
+                <span className="w-2 h-2 bg-rose-500" />
+                Not Passable
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Capability Matrix Component
 function CapabilityMatrix({
   outcomes,
   selectedVehicle,
-  onSelectVehicle
+  onSelectVehicle,
+  recentHighConfidenceVehicles = []
 }: {
   outcomes: { category: VehicleCategoryInfo; outcome: VehicleOutcome }[];
   selectedVehicle: VehicleType | null;
   onSelectVehicle: (vehicleType: VehicleType) => void;
+  recentHighConfidenceVehicles?: { vehicleType: VehicleType; status: string; timestamp: string }[];
 }) {
+  // Create a set of vehicle types with recent High or Medium confidence reports
+  // These are highlighted in the matrix to show which vehicles have reported recently
+  const verifiedVehicles = new Set(
+    recentHighConfidenceVehicles.map(v => v.vehicleType)
+  );
+
   return (
     <div className="grid grid-cols-2 gap-3">
       {outcomes.map(({ category, outcome }) => {
         const isSelected = selectedVehicle === category.mappedType;
+        const isVerified = verifiedVehicles.has(category.mappedType);
         const { Icon, statusColor, statusBg } = getStatusStyles(outcome.status);
 
         return (
@@ -468,23 +658,38 @@ function CapabilityMatrix({
             className={`relative overflow-hidden rounded-none p-4 text-left transition-all ${
               isSelected
                 ? 'bg-stone-100 border-2 border-stone-800 ring-2 ring-action-orange/20'
-                : 'bg-stone-100 border border-stone-800 hover:border-stone-900'
+                : isVerified
+                  ? 'bg-sky-50 border-2 border-sky-400 hover:border-sky-500'
+                  : 'bg-stone-100 border border-stone-800 hover:border-stone-900'
             }`}
           >
             <div className="flex items-start justify-between mb-3">
               <div className={`p-2 rounded-none border border-stone-800 ${statusBg}`}>
                 <Icon className={`h-4 w-4 ${statusColor}`} />
               </div>
-              {isSelected && (
-                <Badge className="bg-stone-50 border border-stone-800 text-stone-900 text-[10px] px-1.5 py-0.5">
-                  Selected
-                </Badge>
-              )}
+              <div className="flex flex-col items-end gap-1">
+                {isSelected && (
+                  <Badge className="bg-stone-50 border border-stone-800 text-stone-900 text-[10px] px-1.5 py-0.5">
+                    Selected
+                  </Badge>
+                )}
+                {isVerified && (
+                  <Badge className="bg-sky-100 border border-sky-500 text-sky-700 text-[10px] px-1.5 py-0.5 gap-1">
+                    <Sparkles className="h-2.5 w-2.5" />
+                    Recent Intel
+                  </Badge>
+                )}
+              </div>
             </div>
             <h3 className="font-semibold font-mono uppercase tracking-wider text-stone-900 text-sm mb-1">
               {category.shortName}
             </h3>
-            <p className={`text-xs font-medium ${statusColor}`}>
+            <p className={`text-xs font-mono uppercase tracking-wider font-semibold ${
+              outcome.status === 'passable' ? 'text-emerald-600' :
+              outcome.status === 'high-risk' ? 'text-amber-600' :
+              outcome.status === 'impassable' ? 'text-rose-600' :
+              outcome.status === 'baseline' ? 'text-sky-600' : 'text-stone-500'
+            }`}>
               {getStatusLabel(outcome.status)}
             </p>
             {outcome.isBaseline && (
@@ -500,6 +705,36 @@ function CapabilityMatrix({
   );
 }
 
+// Reliability badge helper
+function getReliabilityBadge(status: string, confidence: string) {
+  // High confidence + Passable = VERIFIED (green)
+  if (confidence === 'high' && status === 'clear') {
+    return {
+      label: 'VERIFIED',
+      className: 'bg-emerald-500/20 text-emerald-600 border-emerald-500/40'
+    };
+  }
+  // High confidence + any status = RELIABLE
+  if (confidence === 'high') {
+    return {
+      label: 'RELIABLE',
+      className: 'bg-sky-500/20 text-sky-600 border-sky-500/40'
+    };
+  }
+  // Medium confidence
+  if (confidence === 'medium') {
+    return {
+      label: 'STANDARD',
+      className: 'bg-stone-200 text-stone-600 border-stone-300'
+    };
+  }
+  // Low confidence
+  return {
+    label: 'UNVERIFIED',
+    className: 'bg-amber-500/20 text-amber-600 border-amber-500/40'
+  };
+}
+
 // Reports List Component
 function ReportsList({ reports }: { reports: ConditionReport[] }) {
   return (
@@ -508,6 +743,7 @@ function ReportsList({ reports }: { reports: ConditionReport[] }) {
         const { Icon, statusColor, statusBg } = getStatusStyles(
           report.status === 'clear' ? 'passable' : report.status === 'rough' ? 'high-risk' : 'impassable'
         );
+        const reliability = getReliabilityBadge(report.status, report.confidence);
 
         return (
           <div key={report.id} className="bg-stone-100 border border-stone-800 rounded-none p-4">
@@ -517,8 +753,11 @@ function ReportsList({ reports }: { reports: ConditionReport[] }) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm font-medium font-mono uppercase tracking-wider text-stone-900">
-                    {report.status === 'clear' ? 'Passable' : report.status === 'rough' ? 'Rough' : 'Impassable'}
+                  <span className={`text-sm font-semibold font-mono uppercase tracking-wider ${
+                    report.status === 'clear' ? 'text-emerald-600' :
+                    report.status === 'rough' ? 'text-amber-600' : 'text-rose-600'
+                  }`}>
+                    {report.status === 'clear' ? 'PASSABLE' : report.status === 'rough' ? 'CHALLENGING' : 'NOT PASSABLE'}
                   </span>
                   <span className="text-stone-400">•</span>
                   <span className="text-xs text-stone-700">
@@ -533,8 +772,8 @@ function ReportsList({ reports }: { reports: ConditionReport[] }) {
                   {formatRelativeTime(report.timestamp)}
                 </p>
               </div>
-              <Badge variant="outline" className="text-[10px] border-stone-800 text-stone-700">
-                {report.confidence}
+              <Badge variant="outline" className={`text-[10px] font-mono uppercase tracking-wider ${reliability.className}`}>
+                {reliability.label}
               </Badge>
             </div>
           </div>
@@ -644,7 +883,7 @@ function NavigationFooter({
                 asChild
                 className="flex-1 bg-stone-100 hover:bg-stone-50 text-action-orange border border-stone-800 rounded-none font-mono uppercase tracking-wider font-semibold h-12"
               >
-                <Link href={`/trails/${trailId}/submit`}>
+                <Link href={`/trails/${trailId}/report`}>
                   <Plus className="h-5 w-5 mr-2" />
                   Report Condition
                 </Link>
@@ -689,10 +928,10 @@ function getVerdictStyles(status: VehicleOutcome['status']) {
   switch (status) {
     case 'passable':
       return {
-        riskLevel: 'LOW RISK',
+        riskLevel: 'PASSABLE',
         bgGradient: 'bg-gradient-to-br from-emerald-600/30 to-emerald-800/20',
         borderColor: 'border-emerald-500/40',
-        textColor: 'text-emerald-400',
+        textColor: 'text-emerald-600',
         Icon: CheckCircle2
       };
     case 'baseline':
@@ -700,15 +939,15 @@ function getVerdictStyles(status: VehicleOutcome['status']) {
         riskLevel: 'BASELINE',
         bgGradient: 'bg-gradient-to-br from-sky-600/30 to-sky-800/20',
         borderColor: 'border-sky-500/40',
-        textColor: 'text-sky-400',
+        textColor: 'text-sky-600',
         Icon: Info
       };
     case 'high-risk':
       return {
-        riskLevel: 'HIGH RISK',
+        riskLevel: 'CHALLENGING',
         bgGradient: 'bg-gradient-to-br from-amber-600/30 to-amber-800/20',
         borderColor: 'border-amber-500/40',
-        textColor: 'text-amber-400',
+        textColor: 'text-amber-600',
         Icon: AlertTriangle
       };
     case 'impassable':
@@ -716,7 +955,7 @@ function getVerdictStyles(status: VehicleOutcome['status']) {
         riskLevel: 'NOT PASSABLE',
         bgGradient: 'bg-gradient-to-br from-rose-600/30 to-rose-800/20',
         borderColor: 'border-rose-500/40',
-        textColor: 'text-rose-400',
+        textColor: 'text-rose-600',
         Icon: XCircle
       };
     default:
@@ -724,7 +963,7 @@ function getVerdictStyles(status: VehicleOutcome['status']) {
         riskLevel: 'UNKNOWN',
         bgGradient: 'bg-gradient-to-br from-slate-600/30 to-slate-800/20',
         borderColor: 'border-slate-500/40',
-        textColor: 'text-slate-400',
+        textColor: 'text-slate-600',
         Icon: HelpCircle
       };
   }
@@ -735,43 +974,43 @@ function getStatusStyles(status: VehicleOutcome['status']) {
     case 'passable':
       return {
         Icon: CheckCircle2,
-        statusColor: 'text-emerald-400',
+        statusColor: 'text-emerald-600',
         statusBg: 'bg-emerald-500/20'
       };
     case 'baseline':
       return {
         Icon: Info,
-        statusColor: 'text-sky-400',
+        statusColor: 'text-sky-600',
         statusBg: 'bg-sky-500/20'
       };
     case 'high-risk':
       return {
         Icon: AlertTriangle,
-        statusColor: 'text-amber-400',
+        statusColor: 'text-amber-600',
         statusBg: 'bg-amber-500/20'
       };
     case 'impassable':
       return {
         Icon: XCircle,
-        statusColor: 'text-rose-400',
+        statusColor: 'text-rose-600',
         statusBg: 'bg-rose-500/20'
       };
     default:
       return {
         Icon: HelpCircle,
-        statusColor: 'text-slate-400',
-        statusBg: 'bg-slate-500/20'
+        statusColor: 'text-stone-500',
+        statusBg: 'bg-stone-500/20'
       };
   }
 }
 
 function getStatusLabel(status: VehicleOutcome['status']) {
   switch (status) {
-    case 'passable': return 'Low Risk';
-    case 'baseline': return 'Baseline';
-    case 'high-risk': return 'High Risk';
-    case 'impassable': return 'Not Passable';
-    default: return 'Unknown';
+    case 'passable': return 'PASSABLE';
+    case 'baseline': return 'BASELINE';
+    case 'high-risk': return 'CHALLENGING';
+    case 'impassable': return 'NOT PASSABLE';
+    default: return 'UNKNOWN';
   }
 }
 

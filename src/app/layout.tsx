@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { Header } from "@/components/Header";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { VehicleProvider } from "@/contexts/VehicleContext";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -35,6 +36,7 @@ export default function RootLayout({
           <VehicleProvider>
             <Header />
             <main>{children}</main>
+            <Toaster position="top-center" />
           </VehicleProvider>
         </ThemeProvider>
       </body>

@@ -63,11 +63,28 @@ model Trail {
   updatedAt      DateTime @updatedAt
 
   reports ConditionReport[]
+  photos  Photo[]
 
   // Indexes for common queries
   @@index([region])
   @@index([name])
   @@map("trails")
+}
+
+// Photo model - trail intel imagery
+model Photo {
+  id        String   @id @default(cuid())
+  url       String
+  caption   String?
+  trailId   String
+  createdAt DateTime @default(now())
+
+  // Relations
+  trail Trail @relation(fields: [trailId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([trailId, createdAt(sort: Desc)])
+  @@map("photo")
 }
 
 // ConditionReport model - matches existing ConditionReport interface
@@ -97,5 +114,7 @@ model Waitlist {
   id        String   @id @default(cuid())
   email     String   @unique
   createdAt DateTime @default(now())
-  status    String   @default("PENDING") // For future use: PENDING, INVITED, ACTIVE
+  status    String   @default("PENDING")
+
+  @@map("waitlist") // This forces Prisma to look for the lowercase table
 }

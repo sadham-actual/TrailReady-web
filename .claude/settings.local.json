@@ -53,7 +53,8 @@
       "Bash(npx tsx:*)",
       "Bash(npx prisma db push:*)",
       "Bash(export:*)",
-      "Bash(npm run db:seed:decision-test:*)"
+      "Bash(npm run db:seed:decision-test:*)",
+      "Bash(pgrep:*)"
     ]
   }
 }
