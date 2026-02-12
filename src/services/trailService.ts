@@ -1,6 +1,18 @@
 import { Trail, ConditionReport } from '@/types';
 import { ApiResponse } from '@/lib/api/response';
 
+export interface TrailPhoto {
+  id: string;
+  url: string;
+  createdAt: string;
+  report: {
+    vehicleType: string;
+    notes: string | null;
+    confidence: string;
+    createdAt: string;
+  } | null;
+}
+
 class TrailService {
   private async fetchAPI<T>(
     endpoint: string,
@@ -49,6 +61,11 @@ class TrailService {
   // GET /api/trails/{id}/reports
   async getConditionReports(trailId: string): Promise<ConditionReport[]> {
     return this.fetchAPI<ConditionReport[]>(`/api/trails/${trailId}/reports`);
+  }
+
+  // GET /api/trails/{id}/photos
+  async getTrailPhotos(id: string): Promise<TrailPhoto[]> {
+    return this.fetchAPI<TrailPhoto[]>(`/api/trails/${id}/photos`);
   }
 
   // POST /api/reports

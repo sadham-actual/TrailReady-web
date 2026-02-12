@@ -124,6 +124,7 @@ export async function submitFieldReport(input: FieldReportInput): Promise<Report
                 url: photo.url,
                 caption: photo.caption,
                 trailId,
+                reportId: report.id,
               },
               select: { id: true },
             })

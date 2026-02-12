@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Crosshair, ArrowRight } from 'lucide-react';
+import { Crosshair } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { HeroSearch } from '@/components/landing/HeroSearch';
 
 // Topographic pattern SVG component with earth-tone strokes
 function TopoPattern() {
@@ -64,15 +64,6 @@ function VignetteMask() {
 
 export function Hero() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/map?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
 
   const handleLocateMe = () => {
     router.push('/map?locate=true');
@@ -149,39 +140,7 @@ export function Hero() {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="space-y-4"
         >
-          <form onSubmit={handleSearch} className="relative max-w-2xl mx-auto">
-            <div
-              className={`relative flex items-center bg-white border rounded-sm transition-all duration-200 ${
-                isFocused
-                  ? 'border-action-orange shadow-[4px_4px_0_0_var(--color-action-orange)]'
-                  : 'border-stone-border shadow-[3px_3px_0_0_var(--color-stone-border)]'
-              }`}
-            >
-              {/* Search Input */}
-              <div className="relative flex-1">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-stone" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  placeholder="Search 2,400+ trails..."
-                  className="w-full h-14 md:h-16 pl-13 pr-4 bg-transparent text-deep-stone placeholder:text-muted-stone text-base md:text-lg focus:outline-none font-medium"
-                  style={{ paddingLeft: '3.25rem' }}
-                />
-              </div>
-
-              {/* Search Button */}
-              <button
-                type="submit"
-                className="h-10 md:h-12 px-5 md:px-7 mr-2 rounded-sm bg-action-orange text-white font-mono text-xs md:text-sm font-bold uppercase tracking-wider border border-action-orange-dark shadow-[2px_2px_0_0_var(--color-action-orange-dark)] hover:bg-action-orange-light active:shadow-[1px_1px_0_0_var(--color-action-orange-dark)] active:translate-x-px active:translate-y-px transition-all flex items-center gap-2"
-              >
-                <span className="hidden sm:inline">Search</span>
-                <ArrowRight className="h-4 w-4 md:h-5 md:w-5" />
-              </button>
-            </div>
-          </form>
+          <HeroSearch />
 
           {/* Locate Me Button */}
           <motion.div

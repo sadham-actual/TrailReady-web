@@ -6,6 +6,7 @@ import { Menu, X, Car, ChevronDown, Compass } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
+import { CommandBar, useCommandBar } from '@/components/CommandBar';
 import { VEHICLE_TYPE_LABELS } from '@/types';
 
 export function Header() {
@@ -15,6 +16,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
   const { selectedVehicle, setSelectedVehicle } = useVehicle();
+  const { open: searchOpen, setOpen: setSearchOpen } = useCommandBar();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -25,7 +27,7 @@ export function Header() {
   }, []);
 
   // Hide header on landing page (full-screen hero) - AFTER all hooks
-  if (pathname === '/') {
+  if (pathname === '/' || pathname.startsWith('/map')) {
     return null;
   }
 
@@ -60,22 +62,23 @@ export function Header() {
             href="/map"
             className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors ${
               isActivePath('/map')
-                ? 'text-action-orange'
-                : 'text-muted-stone hover:text-deep-stone'
+                ? 'text-orange-600'
+                : 'text-muted-stone hover:text-orange-600'
             }`}
           >
             Browse
           </Link>
-          <Link
-            href="/map"
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
             className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors ${
-              isActivePath('/map')
-                ? 'text-action-orange'
-                : 'text-muted-stone hover:text-deep-stone'
+              searchOpen
+                ? 'text-orange-600'
+                : 'text-muted-stone hover:text-orange-600'
             }`}
           >
             Search
-          </Link>
+          </button>
         </nav>
 
         {/* Vehicle Selector - Desktop */}
@@ -151,17 +154,20 @@ export function Header() {
             >
               Browse Trails
             </Link>
-            <Link
-              href="/map"
-              onClick={() => setIsMobileMenuOpen(false)}
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setSearchOpen(true);
+              }}
               className={`block px-4 py-3 rounded-sm font-mono text-xs font-medium uppercase tracking-wider transition-all ${
-                isActivePath('/map')
-                  ? 'bg-action-orange/10 text-action-orange border border-action-orange/20'
-                  : 'text-deep-stone hover:bg-stone-light border border-transparent'
+                searchOpen
+                  ? 'bg-orange-600/10 text-orange-600 border border-orange-600/20'
+                  : 'text-deep-stone hover:bg-stone-light hover:text-orange-600 border border-transparent'
               }`}
             >
               Search Trails
-            </Link>
+            </button>
 
             {/* Vehicle Selection in Mobile Menu */}
             {selectedVehicle && (
@@ -198,6 +204,7 @@ export function Header() {
         currentVehicle={selectedVehicle}
         onSelectVehicle={setSelectedVehicle}
       />
+      <CommandBar open={searchOpen} onOpenChange={setSearchOpen} />
     </header>
   );
 }

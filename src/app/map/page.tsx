@@ -4,9 +4,10 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, ChevronLeft, ChevronRight, List, Map } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, List, Map, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Trail } from '@/types';
+import { CommandBar, useCommandBar } from '@/components/CommandBar';
 
 // Dynamic import for Leaflet (SSR incompatible)
 const DiscoveryMap = dynamic(
@@ -50,6 +51,7 @@ export default function MapPage() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q');
   const idParam = searchParams.get('id');
+  const { open: searchOpen, setOpen: setSearchOpen } = useCommandBar();
 
   const [listOpen, setListOpen] = useState(false);
   const [focusTrailId, setFocusTrailId] = useState<string | null>(idParam);
@@ -96,6 +98,20 @@ export default function MapPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link
+            href="/map"
+            className="px-3 py-2 border border-stone-800 bg-stone-100 font-mono text-[10px] uppercase tracking-wider text-stone-900 rounded-none transition-colors hover:text-orange-600 hover:border-orange-600"
+          >
+            Browse
+          </Link>
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="inline-flex items-center gap-2 px-3 py-2 border border-stone-800 bg-stone-100 font-mono text-[10px] uppercase tracking-wider text-stone-900 rounded-none transition-colors hover:text-orange-600 hover:border-orange-600"
+          >
+            <Search className="w-3.5 h-3.5" />
+            Search
+          </button>
           <button
             type="button"
             onClick={() => setListOpen((open) => !open)}
@@ -233,6 +249,7 @@ export default function MapPage() {
           </div>
         </div>
       </div>
+      <CommandBar open={searchOpen} onOpenChange={setSearchOpen} />
     </div>
   );
 }

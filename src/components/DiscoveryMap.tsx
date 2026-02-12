@@ -5,11 +5,11 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents 
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Link from 'next/link';
-import { Crosshair, Navigation, ExternalLink, Loader2, MapPin } from 'lucide-react';
-import { Trail, LatLng, VEHICLE_CATEGORIES, VehicleType, ConditionReport } from '@/types';
+import { Crosshair, Navigation, ExternalLink, Loader2 } from 'lucide-react';
+import { Trail, LatLng, VEHICLE_CATEGORIES, ConditionReport } from '@/types';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { trailService } from '@/services/trailService';
-import { getVehicleOutcomeWithFallback, VehicleOutcome, OutcomeStatus } from '@/lib/trailOutcome';
+import { calculateWeightedStatus, getVehicleOutcomeWithFallback, VehicleOutcome, OutcomeStatus } from '@/lib/trailOutcome';
 import { ensureTrailPath, getPathCenter, getPathLengthKm } from '@/lib/trailPaths';
 
 // Extended trail with baseDifficulty and reports
@@ -72,6 +72,30 @@ const PATH_STYLES: Record<OutcomeStatus | 'passable', PathStyle> = {
   },
 };
 
+type LiveTrailStatus = 'CLEAR' | 'CHALLENGING' | 'NOT PASSABLE' | 'UNKNOWN';
+
+function getDifficultyLabel(baseDifficulty?: number): string {
+  if (baseDifficulty === 1) return 'EASY';
+  if (baseDifficulty === 2) return 'MODERATE';
+  if (baseDifficulty === 3) return 'DIFFICULT';
+  if (baseDifficulty === 4) return 'EXTREME';
+  return 'UNRATED';
+}
+
+function getLiveTrailStatus(trail: TrailWithData, reports: ConditionReport[]): LiveTrailStatus {
+  if (reports.length > 0) {
+    const weighted = calculateWeightedStatus(reports);
+    if (weighted.label === 'PASSABLE') return 'CLEAR';
+    if (weighted.label === 'CHALLENGING') return 'CHALLENGING';
+    if (weighted.label === 'NOT PASSABLE') return 'NOT PASSABLE';
+  }
+
+  if (trail.latestStatus === 'clear') return 'CLEAR';
+  if (trail.latestStatus === 'rough') return 'CHALLENGING';
+  if (trail.latestStatus === 'impassable') return 'NOT PASSABLE';
+  return 'UNKNOWN';
+}
+
 // Create small label marker icon
 function createLabelMarkerIcon(trailName: string, outcome: VehicleOutcome): L.DivIcon {
   const style = PATH_STYLES[outcome.status] || PATH_STYLES.unknown;
@@ -119,54 +143,50 @@ function ViewfinderOverlay() {
   const cornerThickness = 3;
   const cornerColor = 'var(--color-action-orange)';
 
-  const Corner = ({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) => {
-    const isTop = position.startsWith('t');
-    const isLeft = position.endsWith('l');
-
-    return (
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          top: isTop ? 16 : 'auto',
-          bottom: !isTop ? 16 : 'auto',
-          left: isLeft ? 16 : 'auto',
-          right: !isLeft ? 16 : 'auto',
-        }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            width: cornerSize,
-            height: cornerThickness,
-            backgroundColor: cornerColor,
-            top: isTop ? 0 : 'auto',
-            bottom: !isTop ? 0 : 'auto',
-            left: isLeft ? 0 : 'auto',
-            right: !isLeft ? 0 : 'auto',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            width: cornerThickness,
-            height: cornerSize,
-            backgroundColor: cornerColor,
-            top: isTop ? 0 : 'auto',
-            bottom: !isTop ? 0 : 'auto',
-            left: isLeft ? 0 : 'auto',
-            right: !isLeft ? 0 : 'auto',
-          }}
-        />
-      </div>
-    );
-  };
-
   return (
     <div className="absolute inset-0 pointer-events-none z-[999]">
-      <Corner position="tl" />
-      <Corner position="tr" />
-      <Corner position="bl" />
-      <Corner position="br" />
+      {(['tl', 'tr', 'bl', 'br'] as const).map((position) => {
+        const isTop = position.startsWith('t');
+        const isLeft = position.endsWith('l');
+
+        return (
+          <div
+            key={position}
+            className="absolute pointer-events-none"
+            style={{
+              top: isTop ? 16 : 'auto',
+              bottom: !isTop ? 16 : 'auto',
+              left: isLeft ? 16 : 'auto',
+              right: !isLeft ? 16 : 'auto',
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                width: cornerSize,
+                height: cornerThickness,
+                backgroundColor: cornerColor,
+                top: isTop ? 0 : 'auto',
+                bottom: !isTop ? 0 : 'auto',
+                left: isLeft ? 0 : 'auto',
+                right: !isLeft ? 0 : 'auto',
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                width: cornerThickness,
+                height: cornerSize,
+                backgroundColor: cornerColor,
+                top: isTop ? 0 : 'auto',
+                bottom: !isTop ? 0 : 'auto',
+                left: isLeft ? 0 : 'auto',
+                right: !isLeft ? 0 : 'auto',
+              }}
+            />
+          </div>
+        );
+      })}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
         <Crosshair className="w-8 h-8 text-action-orange opacity-40" strokeWidth={1} />
       </div>
@@ -194,40 +214,27 @@ function MapEventHandler({ onCoordsChange }: { onCoordsChange: (lat: number, lng
   return null;
 }
 
-// Match Score Badge
-function MatchScoreBadge({ outcome }: { outcome: VehicleOutcome }) {
-  const style = PATH_STYLES[outcome.status] || PATH_STYLES.unknown;
-
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-sm text-[10px] font-mono font-bold uppercase tracking-wider"
-      style={{
-        backgroundColor: `${style.color}20`,
-        color: style.color,
-        border: `1px solid ${style.color}40`,
-      }}
-    >
-      <span
-        className="w-2 h-2 rounded-full"
-        style={{ backgroundColor: style.color }}
-      />
-      {style.label}
-    </span>
-  );
-}
-
 // Field Intel Popup Content
 function FieldIntelPopup({
   trail,
   outcome,
+  liveStatus,
   vehicleName,
   pathLength,
 }: {
   trail: TrailWithData;
   outcome: VehicleOutcome;
+  liveStatus: LiveTrailStatus;
   vehicleName: string | null;
   pathLength: number;
 }) {
+  const liveStatusClasses: Record<LiveTrailStatus, string> = {
+    CLEAR: 'border-emerald-600 bg-emerald-50 text-emerald-700',
+    CHALLENGING: 'border-amber-600 bg-amber-50 text-amber-700',
+    'NOT PASSABLE': 'border-rose-600 bg-rose-50 text-rose-700',
+    UNKNOWN: 'border-stone-400 bg-stone-100 text-stone-700',
+  };
+
   return (
     <div className="min-w-[240px] p-1">
       <div className="flex items-start justify-between gap-2 mb-3">
@@ -237,14 +244,19 @@ function FieldIntelPopup({
           </h3>
           <p className="text-xs text-muted-stone mt-0.5">{trail.region}</p>
         </div>
-        <MatchScoreBadge outcome={outcome} />
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider ${liveStatusClasses[liveStatus]}`}
+        >
+          <span className="text-[11px] leading-none">●</span>
+          {liveStatus}
+        </span>
       </div>
 
       <div className="grid grid-cols-3 gap-2 mb-3 text-[10px] font-mono uppercase tracking-wider">
         <div className="bg-stone-light p-2 rounded-sm">
           <span className="text-muted-stone">Diff</span>
           <p className="text-deep-stone font-bold text-sm mt-0.5">
-            D{trail.baseDifficulty || '?'}
+            {getDifficultyLabel(trail.baseDifficulty)}
           </p>
         </div>
         <div className="bg-stone-light p-2 rounded-sm">
@@ -267,6 +279,7 @@ function FieldIntelPopup({
 
       <Link
         href={`/trails/${trail.id}`}
+        onClick={(event) => event.stopPropagation()}
         className="btn-industrial-primary w-full text-center text-xs"
       >
         <Navigation className="w-3.5 h-3.5" />
@@ -331,6 +344,7 @@ function MapLegend() {
 function TrailPath({
   trail,
   outcome,
+  liveStatus,
   vehicleName,
   isHovered,
   onHover,
@@ -338,6 +352,7 @@ function TrailPath({
 }: {
   trail: TrailWithData & { pathCoordinates: LatLng[] };
   outcome: VehicleOutcome;
+  liveStatus: LiveTrailStatus;
   vehicleName: string | null;
   isHovered: boolean;
   onHover: () => void;
@@ -387,6 +402,7 @@ function TrailPath({
           <FieldIntelPopup
             trail={trail}
             outcome={outcome}
+            liveStatus={liveStatus}
             vehicleName={vehicleName}
             pathLength={pathLength}
           />
@@ -406,6 +422,7 @@ function TrailPath({
           <FieldIntelPopup
             trail={trail}
             outcome={outcome}
+            liveStatus={liveStatus}
             vehicleName={vehicleName}
             pathLength={pathLength}
           />
@@ -576,6 +593,8 @@ export function DiscoveryMap({
         {/* Trail Paths with Red-Zoning */}
         {trailsWithPaths.map((trail) => {
           const outcome = getTrailOutcome(trail);
+          const reports = trailReports[trail.id] || [];
+          const liveStatus = getLiveTrailStatus(trail, reports);
           const isHovered = hoveredTrailId === trail.id;
 
           return (
@@ -583,6 +602,7 @@ export function DiscoveryMap({
               key={trail.id}
               trail={trail}
               outcome={outcome}
+              liveStatus={liveStatus}
               vehicleName={currentCategory?.shortName || null}
               isHovered={isHovered}
               onHover={() => setHoveredTrailId(trail.id)}

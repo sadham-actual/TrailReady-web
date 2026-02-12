@@ -4,7 +4,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { trailService } from '@/services/trailService';
+import { trailService, TrailPhoto } from '@/services/trailService';
+import { PhotoGallery, GalleryPhoto } from '@/components/PhotoGallery';
+import { toast } from 'sonner';
 import {
   Trail,
   ConditionReport,
@@ -59,12 +61,14 @@ export default function TrailDetailPage() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const trailId = params.id as string;
+  const trailParam = params.id;
+  const trailId = Array.isArray(trailParam) ? trailParam[0] : String(trailParam);
   const refreshKey = searchParams.get('refresh');
   const { selectedVehicle, setSelectedVehicle } = useVehicle();
 
   const [trail, setTrail] = useState<TrailWithMeta | null>(null);
   const [reports, setReports] = useState<ConditionReport[]>([]);
+  const [photos, setPhotos] = useState<TrailPhoto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
@@ -74,23 +78,30 @@ export default function TrailDetailPage() {
     loadTrailData();
   }, [trailId, refreshKey]);
 
+  const handleTrailUnavailable = () => {
+    toast.error('Trail Intel Unavailable');
+    router.replace('/map');
+  };
+
   async function loadTrailData() {
     setIsLoading(true);
     try {
-      const [trailData, reportsData] = await Promise.all([
+      const [trailData, reportsData, photosData] = await Promise.all([
         trailService.getTrail(trailId),
         trailService.getConditionReports(trailId),
+        trailService.getTrailPhotos(trailId),
       ]);
 
       if (!trailData) {
-        router.push('/trails');
+        handleTrailUnavailable();
         return;
       }
 
       setTrail(trailData as TrailWithMeta);
       setReports(reportsData);
-    } catch (error) {
-      console.error('Failed to load trail:', error);
+      setPhotos(photosData);
+    } catch {
+      handleTrailUnavailable();
     } finally {
       setIsLoading(false);
     }
@@ -133,6 +144,19 @@ export default function TrailDetailPage() {
   const weightedStatus = useMemo(() => {
     return calculateWeightedStatus(reports);
   }, [reports]);
+
+  const galleryPhotos = useMemo<GalleryPhoto[]>(
+    () =>
+      photos.map((photo) => ({
+        id: photo.id,
+        url: photo.url,
+        vehicleType: photo.report?.vehicleType ?? 'UNKNOWN',
+        timestamp: photo.report?.createdAt ?? photo.createdAt,
+        fieldNotes: photo.report?.notes ?? undefined,
+        confidence: photo.report?.confidence,
+      })),
+    [photos]
+  );
 
   if (isLoading) {
     return <LoadingSkeleton />;
@@ -239,6 +263,19 @@ export default function TrailDetailPage() {
             }}
             recentHighConfidenceVehicles={weightedStatus.recentHighConfidenceVehicles}
           />
+        </motion.div>
+
+        {/* Photo Intel Gallery */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="mb-6"
+        >
+          <h2 className="text-lg font-semibold font-mono uppercase tracking-wider text-stone-900 mb-4">
+            Photo Intel
+          </h2>
+          <PhotoGallery photos={galleryPhotos} />
         </motion.div>
 
         {/* Recent Reports Section */}

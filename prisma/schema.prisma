@@ -77,13 +77,16 @@ model Photo {
   url       String
   caption   String?
   trailId   String
+  reportId  String?
   createdAt DateTime @default(now())
 
   // Relations
-  trail Trail @relation(fields: [trailId], references: [id], onDelete: Cascade)
+  trail  Trail            @relation(fields: [trailId], references: [id], onDelete: Cascade)
+  report ConditionReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
 
   // Indexes
   @@index([trailId, createdAt(sort: Desc)])
+  @@index([reportId])
   @@map("photo")
 }
 
@@ -100,8 +103,9 @@ model ConditionReport {
   createdAt   DateTime    @default(now())
 
   // Relations
-  trail Trail @relation(fields: [trailId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trail  Trail   @relation(fields: [trailId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos Photo[]
 
   // Indexes for common queries (reports by trail, sorted newest first)
   @@index([trailId, timestamp(sort: Desc)])
