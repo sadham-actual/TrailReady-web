@@ -54,7 +54,8 @@
       "Bash(npx prisma db push:*)",
       "Bash(export:*)",
       "Bash(npm run db:seed:decision-test:*)",
-      "Bash(pgrep:*)"
+      "Bash(pgrep:*)",
+      "Bash(find:*)"
     ]
   }
 }

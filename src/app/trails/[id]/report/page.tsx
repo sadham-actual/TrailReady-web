@@ -11,6 +11,7 @@ import { trailService } from '@/services/trailService';
 import { Trail, Status, Confidence, VEHICLE_CATEGORIES, VehicleCategoryInfo } from '@/types';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { toast } from 'sonner';
+import { useUploadThing } from '@/lib/uploadthing';
 
 // Viewfinder corners for tactical aesthetic
 function ViewfinderCorners({ color = 'border-action-orange' }: { color?: string }) {
@@ -122,6 +123,8 @@ export default function FieldReportPage() {
     setImages(newImages);
   }, []);
 
+  const { startUpload } = useUploadThing('trailPhoto');
+
   const handleSubmit = async () => {
     // Validate required fields
     if (!status) {
@@ -140,34 +143,33 @@ export default function FieldReportPage() {
     setIsSubmitting(true);
     setError(null);
 
-    // Update image statuses to uploading if any
-    if (images.length > 0) {
-      setImages(prev => prev.map(img => ({ ...img, status: 'uploading' as const, progress: 0 })));
-    }
-
     try {
-      // Simulate upload progress for each image
+      // Upload images via UploadThing if any are attached
+      let photoData: { url: string; caption: string | null }[] = [];
+
       if (images.length > 0) {
-        for (let i = 0; i < images.length; i++) {
-          for (let progress = 0; progress <= 100; progress += 25) {
-            setImages(prev => prev.map((img, idx) =>
-              idx === i ? { ...img, progress } : img
-            ));
-            await new Promise(resolve => setTimeout(resolve, 100));
-          }
-          setImages(prev => prev.map((img, idx) =>
-            idx === i ? { ...img, status: 'complete' as const, progress: 100 } : img
-          ));
+        setImages(prev => prev.map(img => ({ ...img, status: 'uploading' as const, progress: 0 })));
+
+        const filesToUpload = images.map(img => img.file);
+        const uploadResults = await startUpload(filesToUpload);
+
+        if (!uploadResults) {
+          setError('PHOTO UPLOAD FAILED — TRY AGAIN');
+          setImages(prev => prev.map(img => ({ ...img, status: 'error' as const })));
+          setIsSubmitting(false);
+          return;
         }
+
+        // Map uploaded URLs back to their captions
+        photoData = uploadResults.map((result, idx) => ({
+          url: result.ufsUrl,
+          caption: images[idx]?.caption || null,
+        }));
+
+        setImages(prev => prev.map(img => ({ ...img, status: 'complete' as const, progress: 100 })));
       }
 
-      // Prepare photo data (placeholder URLs for now)
-      const photoData = images.map(img => ({
-        url: `placeholder://${img.file.name}`,
-        caption: img.caption || null,
-      }));
-
-      // Submit to server action
+      // Submit report + photo URLs to server action
       const result: ReportState = await submitFieldReport({
         trailId,
         status,

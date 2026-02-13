@@ -44,12 +44,24 @@ export function ImageUpload({
 
   const validateFile = useCallback(
     (file: File): string | null => {
+      // Reject zero-byte files
+      if (file.size === 0) {
+        return 'INVALID FILE - 0KB FILES NOT ALLOWED';
+      }
+
+      // Reject files under 1KB (likely corrupted)
+      if (file.size < 1024) {
+        return 'FILE TOO SMALL - MINIMUM 1KB REQUIRED';
+      }
+
       if (!file.type.startsWith('image/')) {
         return 'INVALID FILE TYPE - IMAGES ONLY';
       }
+
       if (file.size > maxSizeMB * 1024 * 1024) {
         return `FILE TOO LARGE - MAX ${maxSizeMB}MB`;
       }
+
       return null;
     },
     [maxSizeMB]

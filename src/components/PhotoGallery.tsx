@@ -47,6 +47,11 @@ function confidenceLabel(confidence?: ConfidenceLevel): string {
 
 export function PhotoGallery({ photos, className = '' }: PhotoGalleryProps) {
   const [expandedPhoto, setExpandedPhoto] = useState<GalleryPhoto | null>(null);
+  const [brokenImages, setBrokenImages] = useState<Set<string>>(new Set());
+
+  const handleImageError = (photoId: string) => {
+    setBrokenImages(prev => new Set(prev).add(photoId));
+  };
 
   useEffect(() => {
     if (!expandedPhoto) return;
@@ -84,13 +89,28 @@ export function PhotoGallery({ photos, className = '' }: PhotoGalleryProps) {
               aria-label={`Expand photo ${index + 1}`}
             >
               <div className="relative aspect-square">
-                <Image
-                  src={photo.url}
-                  alt={`Trail photo ${index + 1}`}
-                  fill
-                  sizes="(max-width: 768px) 50vw, 33vw"
-                  className="object-cover"
-                />
+                {brokenImages.has(photo.id) ? (
+                  // Fallback UI for broken images
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-200">
+                    <div className="text-stone-600">
+                      <svg className="h-12 w-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <p className="font-mono text-[10px] uppercase tracking-wider text-center">
+                        IMAGE UNAVAILABLE
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <Image
+                    src={photo.url}
+                    alt={`Trail photo ${index + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 33vw"
+                    className="object-cover"
+                    onError={() => handleImageError(photo.id)}
+                  />
+                )}
 
                 <div className="pointer-events-none absolute inset-0">
                   <span className="absolute left-0 top-0 h-4 w-4 border-l border-t border-amber-600 opacity-0 transition-all duration-200 group-hover:left-1 group-hover:top-1 group-hover:opacity-100" />
@@ -122,13 +142,28 @@ export function PhotoGallery({ photos, className = '' }: PhotoGalleryProps) {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="relative bg-black">
-              <Image
-                src={expandedPhoto.url}
-                alt="Expanded trail intel"
-                fill
-                sizes="100vw"
-                className="object-contain"
-              />
+              {brokenImages.has(expandedPhoto.id) ? (
+                // Fallback UI for broken expanded image
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-900">
+                  <div className="text-stone-400">
+                    <svg className="h-16 w-16 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <p className="font-mono text-xs uppercase tracking-wider text-center">
+                      IMAGE UNAVAILABLE
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <Image
+                  src={expandedPhoto.url}
+                  alt="Expanded trail intel"
+                  fill
+                  sizes="100vw"
+                  className="object-contain"
+                  onError={() => handleImageError(expandedPhoto.id)}
+                />
+              )}
               <button
                 type="button"
                 onClick={() => setExpandedPhoto(null)}

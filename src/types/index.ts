@@ -24,6 +24,7 @@ export interface Trail {
   latitude: number;
   longitude: number;
   description?: string;
+  baseDifficulty?: number; // 1-4 scale: 1=easy, 2=moderate, 3=difficult, 4=extreme
   latestStatus?: Status;
   lastReportAt?: string; // ISO-8601 timestamp
   pathCoordinates?: LatLng[]; // GPS path for trail polyline rendering

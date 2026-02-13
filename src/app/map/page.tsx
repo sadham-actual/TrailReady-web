@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ChevronLeft, ChevronRight, List, Map, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Trail } from '@/types';
@@ -48,6 +48,7 @@ function MapContent({
 }
 
 export default function MapPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q');
   const idParam = searchParams.get('id');
@@ -60,6 +61,15 @@ export default function MapPage() {
   useEffect(() => {
     setFocusTrailId(idParam);
   }, [idParam]);
+
+  // BROWSE: clear all filters and reset to default map view
+  const handleBrowse = () => {
+    setFocusTrailId(null);
+    // If we have query params, navigate to clean /map URL
+    if (searchQuery || idParam) {
+      router.push('/map');
+    }
+  };
 
   const trailCountLabel = useMemo(() => {
     return `${filteredTrails.length} Trail${filteredTrails.length === 1 ? '' : 's'}`;
@@ -98,12 +108,13 @@ export default function MapPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link
-            href="/map"
+          <button
+            type="button"
+            onClick={handleBrowse}
             className="px-3 py-2 border border-stone-800 bg-stone-100 font-mono text-[10px] uppercase tracking-wider text-stone-900 rounded-none transition-colors hover:text-orange-600 hover:border-orange-600"
           >
             Browse
-          </Link>
+          </button>
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
@@ -199,7 +210,14 @@ export default function MapPage() {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="truncate">{trail.name}</span>
-                      <span className="text-[10px] text-stone-700 truncate">{trail.region}</span>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {trail.baseDifficulty && (
+                          <span className="text-[10px] text-stone-500">
+                            D{trail.baseDifficulty}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-stone-700 truncate">{trail.region}</span>
+                      </div>
                     </div>
                   </button>
                 ))
@@ -241,7 +259,14 @@ export default function MapPage() {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span className="truncate">{trail.name}</span>
-                    <span className="text-[10px] text-stone-700 truncate">{trail.region}</span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {trail.baseDifficulty && (
+                        <span className="text-[10px] text-stone-500">
+                          D{trail.baseDifficulty}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-stone-700 truncate">{trail.region}</span>
+                    </div>
                   </div>
                 </button>
               ))

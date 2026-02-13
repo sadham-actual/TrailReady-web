@@ -117,8 +117,30 @@ export async function submitFieldReport(input: FieldReportInput): Promise<Report
       // Create photo records if provided
       let photoIds: string[] = [];
       if (photos && photos.length > 0) {
+        // Validate URLs before storing
+        const validPhotos = photos.filter((photo) => {
+          try {
+            const url = new URL(photo.url);
+
+            // Ensure URL is from UploadThing CDN
+            if (!url.hostname.includes('uploadthing.com') && !url.hostname.includes('utfs.io')) {
+              console.warn(`Invalid photo URL host: ${url.hostname}`);
+              return false;
+            }
+
+            return true;
+          } catch (err) {
+            console.warn(`Malformed photo URL: ${photo.url}`);
+            return false;
+          }
+        });
+
+        if (validPhotos.length === 0) {
+          throw new Error('No valid photo URLs provided');
+        }
+
         const createdPhotos = await Promise.all(
-          photos.map((photo) =>
+          validPhotos.map((photo) =>
             tx.photo.create({
               data: {
                 url: photo.url,

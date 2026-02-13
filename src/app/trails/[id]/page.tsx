@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trailService, TrailPhoto } from '@/services/trailService';
 import { PhotoGallery, GalleryPhoto } from '@/components/PhotoGallery';
+import { ReliabilityBadge } from '@/components/ReliabilityBadge';
 import { toast } from 'sonner';
 import {
   Trail,
@@ -23,6 +24,7 @@ import {
   calculateWeightedStatus,
   WeightedStatusResult
 } from '@/lib/trailOutcome';
+import { calculateGlobalStatus, type GlobalStatusResult } from '@/lib/intel-utils';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -145,6 +147,11 @@ export default function TrailDetailPage() {
     return calculateWeightedStatus(reports);
   }, [reports]);
 
+  // Global status calculation (single source of truth for status labels)
+  const globalStatus = useMemo(() => {
+    return calculateGlobalStatus(reports);
+  }, [reports]);
+
   const galleryPhotos = useMemo<GalleryPhoto[]>(
     () =>
       photos.map((photo) => ({
@@ -224,6 +231,7 @@ export default function TrailDetailPage() {
         >
           <OverallStatusCard
             weightedStatus={weightedStatus}
+            globalStatus={globalStatus}
             reportCount={reports.length}
           />
         </motion.div>
@@ -240,6 +248,7 @@ export default function TrailDetailPage() {
             vehicle={currentCategory}
             successRatio={successRatio}
             reportFreshness={reportFreshness}
+            globalStatus={globalStatus}
             onSelectVehicle={() => setVehicleModalOpen(true)}
           />
         </motion.div>
@@ -338,12 +347,14 @@ function VerdictHeroCard({
   vehicle,
   successRatio,
   reportFreshness,
+  globalStatus,
   onSelectVehicle
 }: {
   outcome: VehicleOutcome | null;
   vehicle: VehicleCategoryInfo | undefined;
   successRatio: { successful: number; total: number } | null;
   reportFreshness: { isFresh: boolean; isStale: boolean; ageInDays: number } | null;
+  globalStatus: GlobalStatusResult;
   onSelectVehicle: () => void;
 }) {
   // No vehicle selected
@@ -378,8 +389,8 @@ function VerdictHeroCard({
     <div className="relative overflow-hidden rounded-none bg-stone-100 border border-stone-800 p-6 md:p-8">
 
       <div className="relative z-10">
-        {/* Top row: Vehicle + Freshness */}
-        <div className="flex items-start justify-between mb-6">
+        {/* Top row: Vehicle selector */}
+        <div className="flex items-start justify-between mb-4">
           <button
             onClick={onSelectVehicle}
             className="flex items-center gap-2 bg-stone-50 hover:bg-stone-100 border border-stone-800 px-3 py-1.5 rounded-none transition-colors"
@@ -394,6 +405,11 @@ function VerdictHeroCard({
           {reportFreshness && (
             <FreshnessBadge freshness={reportFreshness} />
           )}
+        </div>
+
+        {/* Reliability Badge */}
+        <div className="mb-6">
+          <ReliabilityBadge score={globalStatus.reliabilityScore} />
         </div>
 
         {/* Main verdict display */}
@@ -501,12 +517,14 @@ function FreshnessBadge({ freshness }: { freshness: { isFresh: boolean; isStale:
   );
 }
 
-// Overall Trail Status Component - Weighted Algorithm
+// Overall Trail Status Component - Global Intel Algorithm
 function OverallStatusCard({
   weightedStatus,
+  globalStatus,
   reportCount
 }: {
   weightedStatus: WeightedStatusResult;
+  globalStatus: GlobalStatusResult;
   reportCount: number;
 }) {
   // No reports
@@ -530,9 +548,9 @@ function OverallStatusCard({
     );
   }
 
-  // Get status-specific styles
+  // Get status-specific styles from the global status engine
   const getStatusStyles = () => {
-    switch (weightedStatus.status) {
+    switch (globalStatus.internalStatus) {
       case 'passable':
         return {
           bgClass: 'bg-emerald-500/10',
@@ -576,7 +594,7 @@ function OverallStatusCard({
         </div>
         <div className="flex-1">
           <h2 className={`text-3xl md:text-4xl font-black font-mono uppercase tracking-wider ${styles.textClass}`}>
-            {weightedStatus.label}
+            {globalStatus.status}
           </h2>
           <p className="text-stone-600 text-sm font-mono uppercase tracking-wider">
             Based on {reportCount} report{reportCount !== 1 ? 's' : ''} • Weighted by confidence & recency
@@ -585,70 +603,70 @@ function OverallStatusCard({
       </div>
 
       {/* Conflicting Intel Warning */}
-      {weightedStatus.hasMixedReports && (
+      {globalStatus.hasMixedReports && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-start gap-3 bg-amber-500/20 border border-amber-500 rounded-none p-4"
+          className="flex items-start gap-3 bg-amber-500/20 border-2 border-amber-600 rounded-none p-4"
         >
-          <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5 animate-pulse" />
           <div>
             <p className="text-amber-700 text-sm font-mono uppercase tracking-wider font-semibold mb-1">
-              CAUTION: CONFLICTING INTEL
+              ALERT: CONFLICTING FIELD REPORTS DETECTED
             </p>
             <p className="text-amber-700 text-xs leading-relaxed">
-              {weightedStatus.mixedReportReason || 'Recent reports show conflicting conditions. Exercise extra caution.'}
+              {globalStatus.mixedReportReason || 'Recent reports show conflicting conditions. Exercise extra caution.'}
             </p>
           </div>
         </motion.div>
       )}
 
       {/* Weight Distribution Bar */}
-      {weightedStatus.totalWeight > 0 && (
+      {globalStatus.totalWeight > 0 && (
         <div className="mt-4">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-xs font-mono uppercase tracking-wider text-stone-600">Status Distribution</span>
           </div>
           <div className="h-3 bg-stone-200 border border-stone-300 rounded-none overflow-hidden flex">
-            {weightedStatus.statusWeights.clear > 0 && (
+            {globalStatus.statusWeights.clear > 0 && (
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${(weightedStatus.statusWeights.clear / weightedStatus.totalWeight) * 100}%` }}
+                animate={{ width: `${(globalStatus.statusWeights.clear / globalStatus.totalWeight) * 100}%` }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="h-full bg-emerald-500"
               />
             )}
-            {weightedStatus.statusWeights.rough > 0 && (
+            {globalStatus.statusWeights.rough > 0 && (
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${(weightedStatus.statusWeights.rough / weightedStatus.totalWeight) * 100}%` }}
+                animate={{ width: `${(globalStatus.statusWeights.rough / globalStatus.totalWeight) * 100}%` }}
                 transition={{ duration: 0.6, delay: 0.3 }}
                 className="h-full bg-amber-500"
               />
             )}
-            {weightedStatus.statusWeights.impassable > 0 && (
+            {globalStatus.statusWeights.impassable > 0 && (
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${(weightedStatus.statusWeights.impassable / weightedStatus.totalWeight) * 100}%` }}
+                animate={{ width: `${(globalStatus.statusWeights.impassable / globalStatus.totalWeight) * 100}%` }}
                 transition={{ duration: 0.6, delay: 0.4 }}
                 className="h-full bg-rose-500"
               />
             )}
           </div>
           <div className="flex items-center gap-4 mt-2 text-[10px] font-mono uppercase tracking-wider font-semibold">
-            {weightedStatus.statusWeights.clear > 0 && (
+            {globalStatus.statusWeights.clear > 0 && (
               <span className="flex items-center gap-1.5 text-emerald-600">
                 <span className="w-2 h-2 bg-emerald-500" />
                 Passable
               </span>
             )}
-            {weightedStatus.statusWeights.rough > 0 && (
+            {globalStatus.statusWeights.rough > 0 && (
               <span className="flex items-center gap-1.5 text-amber-600">
                 <span className="w-2 h-2 bg-amber-500" />
                 Challenging
               </span>
             )}
-            {weightedStatus.statusWeights.impassable > 0 && (
+            {globalStatus.statusWeights.impassable > 0 && (
               <span className="flex items-center gap-1.5 text-rose-600">
                 <span className="w-2 h-2 bg-rose-500" />
                 Not Passable

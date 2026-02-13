@@ -4,7 +4,7 @@ import { FormEvent, KeyboardEvent, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, ArrowRight } from 'lucide-react';
 
-type TrailStatus = 'PASSABLE' | 'CHALLENGING' | 'NOT PASSABLE';
+type TrailStatus = 'PASSABLE' | 'CHALLENGING' | 'NOT PASSABLE' | 'NO DATA';
 
 interface TrailSearchItem {
   id: string;
@@ -16,6 +16,7 @@ const statusClasses: Record<TrailStatus, string> = {
   PASSABLE: 'border-emerald-700 text-emerald-700 bg-emerald-50',
   CHALLENGING: 'border-amber-700 text-amber-700 bg-amber-50',
   'NOT PASSABLE': 'border-rose-700 text-rose-700 bg-rose-50',
+  'NO DATA': 'border-stone-400 text-stone-500 bg-stone-100',
 };
 
 async function fetchTrailSearchResults(query: string): Promise<TrailSearchItem[]> {

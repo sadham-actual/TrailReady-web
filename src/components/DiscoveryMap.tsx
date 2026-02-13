@@ -9,7 +9,8 @@ import { Crosshair, Navigation, ExternalLink, Loader2 } from 'lucide-react';
 import { Trail, LatLng, VEHICLE_CATEGORIES, ConditionReport } from '@/types';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { trailService } from '@/services/trailService';
-import { calculateWeightedStatus, getVehicleOutcomeWithFallback, VehicleOutcome, OutcomeStatus } from '@/lib/trailOutcome';
+import { getVehicleOutcomeWithFallback, VehicleOutcome, OutcomeStatus } from '@/lib/trailOutcome';
+import { calculateGlobalStatus } from '@/lib/intel-utils';
 import { ensureTrailPath, getPathCenter, getPathLengthKm } from '@/lib/trailPaths';
 
 // Extended trail with baseDifficulty and reports
@@ -84,10 +85,10 @@ function getDifficultyLabel(baseDifficulty?: number): string {
 
 function getLiveTrailStatus(trail: TrailWithData, reports: ConditionReport[]): LiveTrailStatus {
   if (reports.length > 0) {
-    const weighted = calculateWeightedStatus(reports);
-    if (weighted.label === 'PASSABLE') return 'CLEAR';
-    if (weighted.label === 'CHALLENGING') return 'CHALLENGING';
-    if (weighted.label === 'NOT PASSABLE') return 'NOT PASSABLE';
+    const global = calculateGlobalStatus(reports);
+    if (global.status === 'PASSABLE') return 'CLEAR';
+    if (global.status === 'CHALLENGING') return 'CHALLENGING';
+    if (global.status === 'NOT PASSABLE') return 'NOT PASSABLE';
   }
 
   if (trail.latestStatus === 'clear') return 'CLEAR';
@@ -293,20 +294,28 @@ function FieldIntelPopup({
 // Legend Component with path styles
 function MapLegend() {
   const items = [
-    { status: 'passable' as const, label: 'Clear' },
-    { status: 'high-risk' as const, label: 'Caution' },
-    { status: 'impassable' as const, label: 'Blocked' },
-    { status: 'unknown' as const, label: 'Unknown' },
+    { status: 'passable' as const, label: 'Clear', description: 'Passable' },
+    { status: 'high-risk' as const, label: 'Caution', description: 'Challenging' },
+    { status: 'impassable' as const, label: 'Blocked', description: 'Not Passable' },
+    { status: 'unknown' as const, label: 'Unknown', description: 'No Data' },
+  ];
+
+  const difficultyItems = [
+    { level: 1, label: 'Easy', color: 'text-emerald-600' },
+    { level: 2, label: 'Moderate', color: 'text-amber-500' },
+    { level: 3, label: 'Difficult', color: 'text-amber-600' },
+    { level: 4, label: 'Extreme', color: 'text-rose-600' },
   ];
 
   return (
     <div className="absolute top-4 right-4 z-[1000]">
       <div className="bg-stone-100/90 border border-stone-800 px-3 py-2.5 rounded-sm shadow-[2px_2px_0_0_var(--color-stone-800)]">
+        {/* Trail Status Section */}
         <p className="text-[9px] font-mono uppercase tracking-wider text-stone-800 font-bold mb-2">
-          Red-Zone Intel
+          Trail Status
         </p>
-        <div className="space-y-1.5">
-          {items.map(({ status, label }) => {
+        <div className="space-y-1.5 mb-3">
+          {items.map(({ status, label, description }) => {
             const style = PATH_STYLES[status];
             return (
               <div key={status} className="flex items-center gap-2">
@@ -330,10 +339,32 @@ function MapLegend() {
                     />
                   )}
                 </div>
-                <span className="text-[10px] font-mono font-medium text-stone-800">{label}</span>
+                <span className="text-[10px] font-mono font-medium text-stone-800">
+                  {label} <span className="text-stone-500">({description})</span>
+                </span>
               </div>
             );
           })}
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-stone-300 my-2" />
+
+        {/* Difficulty Section */}
+        <p className="text-[9px] font-mono uppercase tracking-wider text-stone-800 font-bold mb-2">
+          Difficulty Rating
+        </p>
+        <div className="space-y-1.5">
+          {difficultyItems.map(({ level, label, color }) => (
+            <div key={level} className="flex items-center gap-2">
+              <div className={`text-[10px] font-mono font-bold ${color} w-6`}>
+                D{level}
+              </div>
+              <span className="text-[10px] font-mono font-medium text-stone-800">
+                {label}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
