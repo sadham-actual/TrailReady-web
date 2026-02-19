@@ -60,4 +60,7 @@ export const errors = {
 
   methodNotAllowed: () =>
     errorResponse('METHOD_NOT_ALLOWED', 'Method not allowed', 405),
+
+  unauthorized: (message = 'Authentication required') =>
+    errorResponse('UNAUTHORIZED', message, 401),
 };

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { errors, successResponse } from '@/lib/api/response';
+import { requireSoftAuth } from '@/lib/auth/softAuth';
 
 async function getPrisma() {
   if (process.env.USE_MOCK_DATA === 'true') return null;
@@ -26,6 +27,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = requireSoftAuth(request);
+  if (auth instanceof Response) return auth;
+
   const body = await request.json();
   const {
     userId,
@@ -40,6 +44,10 @@ export async function POST(request: NextRequest) {
 
   if (!userId || !make || !model || !experience_level) {
     return errors.badRequest('userId, make, model, and experience_level are required');
+  }
+
+  if (userId !== auth.userId) {
+    return errors.unauthorized('Authenticated user does not match requested userId');
   }
 
   const prisma = await getPrisma();

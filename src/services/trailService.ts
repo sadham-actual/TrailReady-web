@@ -77,10 +77,17 @@ class TrailService {
       confidence: ConditionReport['confidence'];
       vehicleType: ConditionReport['vehicleType'];
       notes?: string;
-    }
+    },
+    auth?: { isAuthenticated: boolean }
   ): Promise<{ id: string; timestamp: string }> {
     return this.fetchAPI<{ id: string; timestamp: string }>('/api/reports', {
       method: 'POST',
+      headers: auth?.isAuthenticated
+        ? {
+            'x-trailready-user-id': userId,
+            'x-trailready-authenticated': 'true',
+          }
+        : undefined,
       body: JSON.stringify({
         trailId,
         userId,

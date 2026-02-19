@@ -33,6 +33,7 @@ function toRequirementProfile(trail: Trail): TrailRequirementProfile {
 
 export default function PlannerPage() {
   const [userId, setUserId] = useState<string>('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [vehicle, setVehicle] = useState<UserVehicle>(defaultVehicle);
   const [trails, setTrails] = useState<Trail[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -43,11 +44,17 @@ export default function PlannerPage() {
   useEffect(() => {
     const boot = async () => {
       try {
-        const [uid, liveTrails] = await Promise.all([
-          trailService.getAnonymousUserId(),
-          trailService.getTrails(),
-        ]);
-        setUserId(uid);
+        const accountId = localStorage.getItem('trailready_account_user_id');
+        if (accountId) {
+          setUserId(accountId);
+          setIsAuthenticated(true);
+        } else {
+          const uid = await trailService.getAnonymousUserId();
+          setUserId(uid);
+          setIsAuthenticated(false);
+        }
+
+        const liveTrails = await trailService.getTrails();
         setTrails(liveTrails);
         await cache.cacheTrailMetadata(liveTrails);
       } catch {
@@ -132,10 +139,14 @@ export default function PlannerPage() {
   };
 
   const saveVehicleProfile = async () => {
-    if (!userId) return;
+    if (!userId || !isAuthenticated) return;
     await fetch('/api/planner/vehicles', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-trailready-user-id': userId,
+        'x-trailready-authenticated': 'true',
+      },
       body: JSON.stringify({
         userId,
         ...vehicle,
@@ -144,12 +155,16 @@ export default function PlannerPage() {
   };
 
   const saveBundle = async () => {
-    if (!userId || selectedTrails.length !== 3) return;
+    if (!userId || !isAuthenticated || selectedTrails.length !== 3) return;
     setIsSaving(true);
     try {
       const res = await fetch('/api/planner/trip-bundles', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-trailready-user-id': userId,
+          'x-trailready-authenticated': 'true',
+        },
         body: JSON.stringify({
           user_id: userId,
           trail_ids: selectedTrails.map((t) => t.id),
@@ -180,7 +195,35 @@ export default function PlannerPage() {
   return (
     <div className="min-h-screen p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">Trail Planner (MVP)</h1>
-      <p className="text-sm text-stone-600 mb-6">Select exactly 3 trails, compare fit side-by-side, and save reusable bundles.</p>
+      <p className="text-sm text-stone-600 mb-3">Select exactly 3 trails, compare fit side-by-side, and save reusable bundles.</p>
+      <div className="mb-6 flex items-center justify-between border rounded px-3 py-2 bg-stone-50">
+        <p className="text-sm text-stone-700">
+          {isAuthenticated ? `Signed in as ${userId}` : 'Read-only mode. Sign in required for save/report actions.'}
+        </p>
+        {isAuthenticated ? (
+          <button
+            onClick={() => {
+              localStorage.removeItem('trailready_account_user_id');
+              setIsAuthenticated(false);
+            }}
+            className="text-sm px-3 py-1 border rounded"
+          >
+            Sign out
+          </button>
+        ) : (
+          <button
+            onClick={() => {
+              const demoId = `acct_${Math.random().toString(36).slice(2, 10)}`;
+              localStorage.setItem('trailready_account_user_id', demoId);
+              setUserId(demoId);
+              setIsAuthenticated(true);
+            }}
+            className="text-sm px-3 py-1 bg-stone-900 text-white rounded"
+          >
+            Sign in (demo)
+          </button>
+        )}
+      </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         <section className="border rounded p-4 lg:col-span-1">
@@ -197,7 +240,9 @@ export default function PlannerPage() {
             </select>
             <label className="flex items-center gap-2"><input type="checkbox" checked={vehicle.has_low_range} onChange={(e) => setVehicle({ ...vehicle, has_low_range: e.target.checked })} /> Low range</label>
             <label className="flex items-center gap-2"><input type="checkbox" checked={vehicle.has_winch} onChange={(e) => setVehicle({ ...vehicle, has_winch: e.target.checked })} /> Winch</label>
-            <button onClick={() => void saveVehicleProfile()} className="w-full bg-stone-900 text-white rounded px-3 py-2">Save Vehicle</button>
+            <button disabled={!isAuthenticated} onClick={() => void saveVehicleProfile()} className="w-full bg-stone-900 disabled:bg-stone-400 text-white rounded px-3 py-2">
+              {isAuthenticated ? 'Save Vehicle' : 'Sign in to Save Vehicle'}
+            </button>
           </div>
         </section>
 
@@ -241,11 +286,11 @@ export default function PlannerPage() {
           />
 
           <button
-            disabled={selectedTrails.length !== 3 || isSaving}
+            disabled={!isAuthenticated || selectedTrails.length !== 3 || isSaving}
             onClick={() => void saveBundle()}
             className="w-full mt-3 bg-emerald-700 disabled:bg-stone-400 text-white rounded px-3 py-2"
           >
-            {isSaving ? 'Saving...' : 'Save Trip Bundle'}
+            {isSaving ? 'Saving...' : isAuthenticated ? 'Save Trip Bundle' : 'Sign in to Save Bundle'}
           </button>
 
           {shareJson && (

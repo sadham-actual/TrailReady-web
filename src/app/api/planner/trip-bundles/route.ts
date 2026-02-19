@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { errors, successResponse } from '@/lib/api/response';
+import { requireSoftAuth } from '@/lib/auth/softAuth';
 
 async function getPrisma() {
   if (process.env.USE_MOCK_DATA === 'true') return null;
@@ -32,11 +33,18 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = requireSoftAuth(request);
+  if (auth instanceof Response) return auth;
+
   const body = await request.json();
   const { user_id, trail_ids, scheduled_date, notes, is_offline_cached } = body ?? {};
 
   if (!user_id || !Array.isArray(trail_ids) || trail_ids.length !== 3) {
     return errors.badRequest('user_id and exactly 3 trail_ids are required');
+  }
+
+  if (user_id !== auth.userId) {
+    return errors.unauthorized('Authenticated user does not match requested user_id');
   }
 
   const prisma = await getPrisma();

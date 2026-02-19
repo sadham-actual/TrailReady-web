@@ -3,6 +3,7 @@ import { successResponse, errors } from '@/lib/api/response';
 import { submitReportSchema } from '@/lib/validations/report';
 import { ZodError } from 'zod';
 import { getMockTrail } from '@/data/sampleTrails';
+import { requireSoftAuth } from '@/lib/auth/softAuth';
 
 async function tryPrismaSubmit(validatedData: {
   trailId: string;
@@ -39,8 +40,15 @@ async function tryPrismaSubmit(validatedData: {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = requireSoftAuth(request);
+    if (auth instanceof Response) return auth;
+
     const body = await request.json();
     const validatedData = submitReportSchema.parse(body);
+
+    if (validatedData.userId !== auth.userId) {
+      return errors.unauthorized('Authenticated user does not match requested userId');
+    }
 
     const dbResult = await tryPrismaSubmit(validatedData);
     if (dbResult === 'trail_not_found') return errors.notFound('Trail');
