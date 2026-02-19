@@ -44,6 +44,11 @@ async function tryPrismaTrails(search?: string, region?: string) {
       baseDifficulty: trail.baseDifficulty ?? undefined,
       latestStatus: trail.reports[0]?.status,
       lastReportAt: trail.reports[0]?.timestamp.toISOString(),
+      difficultyScore: trail.difficultyScore ?? undefined,
+      terrainType: (trail.terrainType as 'Rock' | 'Sand' | 'Mud' | null) ?? undefined,
+      minTireSize: trail.minTireSize ?? undefined,
+      requiredGear: Array.isArray(trail.requiredGear) ? (trail.requiredGear as string[]) : undefined,
+      currentStatus: (trail.currentStatus as 'Open' | 'Closed' | null) ?? undefined,
     }));
   } catch {
     return null;
