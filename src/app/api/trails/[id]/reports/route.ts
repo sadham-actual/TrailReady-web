@@ -1,7 +1,32 @@
 import { NextRequest } from 'next/server';
-import prisma from '@/lib/prisma';
 import { successResponse, errors } from '@/lib/api/response';
 import { ConditionReport } from '@/types';
+import { getMockReports, getMockTrail } from '@/data/sampleTrails';
+
+async function tryPrismaReports(trailId: string): Promise<ConditionReport[] | null | 'not_found'> {
+  try {
+    if (process.env.USE_MOCK_DATA === 'true') return null;
+    const prisma = (await import('@/lib/prisma')).default;
+    const trail = await prisma.trail.findUnique({ where: { id: trailId }, select: { id: true } });
+    if (!trail) return 'not_found';
+    const reports = await prisma.conditionReport.findMany({
+      where: { trailId },
+      orderBy: { timestamp: 'desc' },
+    });
+    return reports.map((r) => ({
+      id: r.id,
+      trailId: r.trailId,
+      userId: r.userId,
+      status: r.status,
+      confidence: r.confidence,
+      vehicleType: r.vehicleType,
+      notes: r.notes ?? undefined,
+      timestamp: r.timestamp.toISOString(),
+    }));
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(
   request: NextRequest,
@@ -10,35 +35,26 @@ export async function GET(
   try {
     const { id: trailId } = await params;
 
-    // Verify trail exists
-    const trail = await prisma.trail.findUnique({
-      where: { id: trailId },
-      select: { id: true },
-    });
+    const dbReports = await tryPrismaReports(trailId);
+    if (dbReports === 'not_found') return errors.notFound('Trail');
+    if (dbReports !== null) return successResponse(dbReports);
 
-    if (!trail) {
-      return errors.notFound('Trail');
-    }
+    // Fallback: mock data
+    const mockTrail = getMockTrail(trailId);
+    if (!mockTrail) return errors.notFound('Trail');
 
-    // Fetch all reports for the trail, sorted newest first
-    const reports = await prisma.conditionReport.findMany({
-      where: { trailId },
-      orderBy: { timestamp: 'desc' },
-    });
-
-    // Transform to match frontend ConditionReport type
-    const conditionReports: ConditionReport[] = reports.map((report) => ({
-      id: report.id,
-      trailId: report.trailId,
-      userId: report.userId,
-      status: report.status,
-      confidence: report.confidence,
-      vehicleType: report.vehicleType,
-      notes: report.notes ?? undefined,
-      timestamp: report.timestamp.toISOString(),
+    const mockReports = getMockReports(trailId).map((r) => ({
+      id: r.id,
+      trailId: r.trailId,
+      userId: r.userId,
+      status: r.status,
+      confidence: r.confidence,
+      vehicleType: r.vehicleType,
+      notes: r.notes,
+      timestamp: r.timestamp,
     }));
 
-    return successResponse(conditionReports);
+    return successResponse(mockReports);
   } catch (error) {
     console.error('Error fetching reports:', error);
     return errors.internalError('Failed to fetch reports');

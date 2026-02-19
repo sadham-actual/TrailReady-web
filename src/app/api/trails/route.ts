@@ -1,35 +1,28 @@
 import { NextRequest } from 'next/server';
-import prisma from '@/lib/prisma';
 import { successResponse, errors } from '@/lib/api/response';
-import { Trail } from '@/types';
+import { searchMockTrails } from '@/data/sampleTrails';
 
-export async function GET(request: NextRequest) {
+// Lazy import prisma to avoid crashing when DB is unavailable
+async function tryPrismaTrails(search?: string, region?: string) {
   try {
-    const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search');
-    const region = searchParams.get('region');
-
-    // Build where clause for filtering
-    const whereClause: any = {};
-
+    if (process.env.USE_MOCK_DATA === 'true') return null;
+    const prisma = (await import('@/lib/prisma')).default;
+    const whereClause: Record<string, unknown> = {};
     if (search || region) {
       whereClause.AND = [];
-
+      const and = whereClause.AND as unknown[];
       if (search) {
-        whereClause.AND.push({
+        and.push({
           OR: [
             { name: { contains: search, mode: 'insensitive' } },
             { region: { contains: search, mode: 'insensitive' } },
           ],
         });
       }
-
       if (region) {
-        whereClause.AND.push({ region });
+        and.push({ region });
       }
     }
-
-    // Fetch trails with their latest report
     const trails = await prisma.trail.findMany({
       where: whereClause,
       include: {
@@ -41,9 +34,7 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { name: 'asc' },
     });
-
-    // Transform to match frontend Trail type (with baseDifficulty for matching)
-    const trailsWithStatus = trails.map((trail) => ({
+    return trails.map((trail) => ({
       id: trail.id,
       name: trail.name,
       region: trail.region,
@@ -54,8 +45,25 @@ export async function GET(request: NextRequest) {
       latestStatus: trail.reports[0]?.status,
       lastReportAt: trail.reports[0]?.timestamp.toISOString(),
     }));
+  } catch {
+    return null;
+  }
+}
 
-    return successResponse(trailsWithStatus);
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get('search') ?? undefined;
+    const region = searchParams.get('region') ?? undefined;
+
+    const dbTrails = await tryPrismaTrails(search, region);
+    if (dbTrails !== null) {
+      return successResponse(dbTrails);
+    }
+
+    // Fallback: rich mock data
+    const mockTrails = searchMockTrails(search, region);
+    return successResponse(mockTrails);
   } catch (error) {
     console.error('Error fetching trails:', error);
     return errors.internalError('Failed to fetch trails');
