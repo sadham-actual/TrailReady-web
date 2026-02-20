@@ -33,11 +33,13 @@ export default function SignupPage() {
     }
 
     setLoading(true);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}${next}`,
+        emailRedirectTo: `${appUrl}${next}`,
       },
     });
     setLoading(false);
