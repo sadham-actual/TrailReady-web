@@ -28,6 +28,13 @@ export interface Trail {
   latestStatus?: Status;
   lastReportAt?: string; // ISO-8601 timestamp
   pathCoordinates?: LatLng[]; // GPS path for trail polyline rendering
+
+  // Planning-first additive fields
+  difficultyScore?: number; // 1-10
+  terrainType?: 'Rock' | 'Sand' | 'Mud';
+  minTireSize?: number;
+  requiredGear?: string[];
+  currentStatus?: 'Open' | 'Closed';
 }
 
 export interface ConditionReport {

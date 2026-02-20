@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trailService } from '@/services/trailService';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Trail, Status, Confidence, VEHICLE_CATEGORIES, VehicleCategoryInfo } from '@/types';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
@@ -150,6 +151,7 @@ function SuccessAnimation({ onComplete }: { onComplete: () => void }) {
 export default function SubmitReportPage() {
   const params = useParams();
   const router = useRouter();
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const trailId = params.id as string;
   const { selectedVehicle, setSelectedVehicle } = useVehicle();
   const { triggerRefresh } = useTrailRefresh();
@@ -157,6 +159,8 @@ export default function SubmitReportPage() {
   // State
   const [trail, setTrail] = useState<Trail | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string>('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -178,9 +182,16 @@ export default function SubmitReportPage() {
     async function initialize() {
       setIsLoading(true);
       try {
-        // Initialize auth
-        const id = await trailService.getAnonymousUserId();
-        setUserId(id);
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user?.id) {
+          setUserId(sessionData.session.user.id);
+          setAuthToken(sessionData.session.access_token);
+          setIsAuthenticated(true);
+        } else {
+          setUserId(null);
+          setAuthToken('');
+          setIsAuthenticated(false);
+        }
 
         // Load trail
         const trailData = await trailService.getTrail(trailId);
@@ -197,12 +208,12 @@ export default function SubmitReportPage() {
     }
 
     initialize();
-  }, [trailId, router]);
+  }, [trailId, router, supabase]);
 
   // Handle form submission
   async function handleSubmit() {
-    if (!userId) {
-      setError('Authentication required. Please refresh the page.');
+    if (!userId || !isAuthenticated) {
+      router.push(`/auth/login?next=${encodeURIComponent(`/trails/${trailId}/submit`)}`);
       return;
     }
 
@@ -225,6 +236,8 @@ export default function SubmitReportPage() {
         confidence,
         vehicleType: selectedVehicle,
         notes: notes || undefined,
+      }, {
+        authToken,
       });
 
       setShowSuccess(true);
@@ -298,6 +311,18 @@ export default function SubmitReportPage() {
               <p className="text-slate-400">{trail.name}</p>
             )}
           </motion.div>
+
+          {!isAuthenticated && (
+            <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl">
+              <p className="text-sm text-amber-300 mb-2">You need an account to submit trail reports.</p>
+              <button
+                onClick={() => router.push(`/auth/login?next=${encodeURIComponent(`/trails/${trailId}/submit`)}`)}
+                className="px-3 py-1 bg-amber-400 text-slate-900 rounded text-sm font-medium"
+              >
+                Sign in
+              </button>
+            </div>
+          )}
 
           {/* Error Message */}
           <AnimatePresence>
@@ -494,7 +519,7 @@ export default function SubmitReportPage() {
         >
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || !status}
+            disabled={isSubmitting || !status || !isAuthenticated}
             className={`w-full py-5 rounded-2xl font-bold text-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3 ${
               status && !isSubmitting
                 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-[0_0_40px_-10px_rgba(16,185,129,0.5)]'
@@ -507,7 +532,7 @@ export default function SubmitReportPage() {
                 <span>Submitting...</span>
               </>
             ) : (
-              <span>Submit Report</span>
+              <span>{isAuthenticated ? 'Submit Report' : 'Sign in to Submit Report'}</span>
             )}
           </button>
           <div className="h-safe-bottom" />

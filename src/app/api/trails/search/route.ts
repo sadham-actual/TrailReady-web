@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { errors, successResponse } from '@/lib/api/response';
 import { calculateGlobalStatus, statusToGlobalLabel, type GlobalTrailStatus } from '@/lib/intel-utils';
 import { searchMockTrails, getMockReports } from '@/data/sampleTrails';
+import { createSupabaseServiceClient } from '@/lib/supabase/server';
 
 interface SearchTrailResult {
   id: string;
@@ -9,35 +10,40 @@ interface SearchTrailResult {
   status: GlobalTrailStatus;
 }
 
-async function tryPrismaSearch(query: string): Promise<SearchTrailResult[] | null> {
+async function trySupabaseSearch(query: string): Promise<SearchTrailResult[] | null> {
   try {
     if (process.env.USE_MOCK_DATA === 'true') return null;
-    const prisma = (await import('@/lib/prisma')).default;
-    const trails = await prisma.trail.findMany({
-      where: {
-        OR: [
-          { name: { contains: query, mode: 'insensitive' } },
-          { region: { contains: query, mode: 'insensitive' } },
-        ],
-      },
-      include: {
-        reports: {
-          take: 5,
-          orderBy: { timestamp: 'desc' },
-          select: { status: true, confidence: true, timestamp: true },
-        },
-      },
-      orderBy: { name: 'asc' },
-      take: 8,
-    });
+    const supabase = createSupabaseServiceClient();
+
+    const { data: trails, error } = await supabase
+      .from('trails')
+      .select('id,name,region')
+      .or(`name.ilike.%${query}%,region.ilike.%${query}%`)
+      .order('name', { ascending: true })
+      .limit(8);
+
+    if (error) return null;
+    if (!trails || trails.length === 0) return [];
+
+    const trailIds = trails.map((t) => t.id);
+    const { data: reports } = await supabase
+      .from('condition_reports')
+      .select('trail_id,status,confidence,timestamp')
+      .in('trail_id', trailIds)
+      .order('timestamp', { ascending: false });
+
     return trails.map((trail) => {
-      if (trail.reports.length > 0) {
-        const intelReports = trail.reports.map((r) => ({
+      const trailReports = (reports ?? [])
+        .filter((r) => r.trail_id === trail.id)
+        .slice(0, 5)
+        .map((r) => ({
           status: r.status,
           confidence: r.confidence,
-          timestamp: r.timestamp.toISOString(),
+          timestamp: r.timestamp,
         }));
-        const globalResult = calculateGlobalStatus(intelReports);
+
+      if (trailReports.length > 0) {
+        const globalResult = calculateGlobalStatus(trailReports as any);
         return { id: trail.id, name: trail.name.toUpperCase(), status: globalResult.status };
       }
       return { id: trail.id, name: trail.name.toUpperCase(), status: statusToGlobalLabel(undefined) };
@@ -54,10 +60,9 @@ export async function GET(request: NextRequest) {
 
     if (!query) return successResponse<SearchTrailResult[]>([]);
 
-    const dbResults = await tryPrismaSearch(query);
-    if (dbResults !== null) return successResponse(dbResults);
+    const dbResults = await trySupabaseSearch(query);
+    if (dbResults !== null && dbResults.length > 0) return successResponse(dbResults);
 
-    // Fallback: mock search
     const mockTrails = searchMockTrails(query).slice(0, 8);
     const results: SearchTrailResult[] = mockTrails.map((trail) => {
       const reports = getMockReports(trail.id);

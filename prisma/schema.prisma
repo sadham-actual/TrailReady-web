@@ -45,7 +45,9 @@ model User {
   // passwordHash String?
   // name         String?
 
-  reports ConditionReport[]
+  reports     ConditionReport[]
+  vehicles    UserVehicle[]
+  tripBundles TripBundle[]
 
   @@map("users")
 }
@@ -59,11 +61,20 @@ model Trail {
   longitude      Float
   description    String?
   baseDifficulty Int?     // 1-4 scale: 1=easy, 2=moderate, 3=difficult, 4=extreme. Used as fallback when no recent reports.
+
+  // Planning-first additive fields (MVP v0.1)
+  difficultyScore Int?    // 1-10 planning difficulty score
+  terrainType     String? // Rock | Sand | Mud (kept string for additive/non-breaking migration)
+  minTireSize     Float?
+  requiredGear    Json?
+  currentStatus   String? // Open | Closed
+
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   reports ConditionReport[]
   photos  Photo[]
+  tripBundleTrails TripBundleTrail[]
 
   // Indexes for common queries
   @@index([region])
@@ -111,6 +122,55 @@ model ConditionReport {
   @@index([trailId, timestamp(sort: Desc)])
   @@index([userId])
   @@map("condition_reports")
+}
+
+model UserVehicle {
+  id               String   @id @default(cuid())
+  userId           String
+  make             String
+  model            String
+  clearanceInches  Float
+  tireSize         Float
+  hasLowRange      Boolean  @default(false)
+  hasWinch         Boolean  @default(false)
+  experienceLevel  String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_vehicles")
+}
+
+model TripBundle {
+  id              String   @id @default(cuid())
+  userId          String
+  scheduledDate   DateTime
+  notes           String?  @db.Text
+  isOfflineCached Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trails TripBundleTrail[]
+
+  @@index([userId, scheduledDate])
+  @@map("trip_bundles")
+}
+
+model TripBundleTrail {
+  id           String @id @default(cuid())
+  tripBundleId String
+  trailId      String
+  sortOrder    Int
+
+  tripBundle TripBundle @relation(fields: [tripBundleId], references: [id], onDelete: Cascade)
+  trail      Trail      @relation(fields: [trailId], references: [id], onDelete: Cascade)
+
+  @@unique([tripBundleId, trailId])
+  @@index([tripBundleId, sortOrder])
+  @@map("trip_bundle_trails")
 }
 
 // Waitlist model - 

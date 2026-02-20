@@ -77,10 +77,12 @@ class TrailService {
       confidence: ConditionReport['confidence'];
       vehicleType: ConditionReport['vehicleType'];
       notes?: string;
-    }
+    },
+    options?: { authToken?: string }
   ): Promise<{ id: string; timestamp: string }> {
     return this.fetchAPI<{ id: string; timestamp: string }>('/api/reports', {
       method: 'POST',
+      headers: options?.authToken ? { Authorization: `Bearer ${options.authToken}` } : undefined,
       body: JSON.stringify({
         trailId,
         userId,

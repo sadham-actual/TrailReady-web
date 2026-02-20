@@ -107,6 +107,15 @@ export function HudNav({ onOpenVehicleModal, onOpenMobileMenu, onOpenSearch }: H
             <Car className="h-4 w-4" />
             <span>{vehicleLabel || 'Set Rig'}</span>
           </button>
+
+          {/* Menu Button */}
+          <button
+            onClick={onOpenMobileMenu}
+            className="p-2.5 rounded-sm border border-stone-border bg-white hover:bg-stone-light shadow-[2px_2px_0_0_var(--color-stone-border)] active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-px active:translate-y-px transition-all"
+            aria-label="Open menu"
+          >
+            <Menu className="h-4 w-4 text-deep-stone" />
+          </button>
         </div>
       </motion.nav>
 

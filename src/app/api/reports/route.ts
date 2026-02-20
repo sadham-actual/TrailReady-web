@@ -3,58 +3,74 @@ import { successResponse, errors } from '@/lib/api/response';
 import { submitReportSchema } from '@/lib/validations/report';
 import { ZodError } from 'zod';
 import { getMockTrail } from '@/data/sampleTrails';
-
-async function tryPrismaSubmit(validatedData: {
-  trailId: string;
-  userId: string;
-  status: 'clear' | 'rough' | 'impassable';
-  confidence: 'low' | 'medium' | 'high';
-  vehicleType: string;
-  notes?: string;
-}) {
-  try {
-    if (process.env.USE_MOCK_DATA === 'true') return null;
-    const prisma = (await import('@/lib/prisma')).default;
-    const [trail, user] = await Promise.all([
-      prisma.trail.findUnique({ where: { id: validatedData.trailId }, select: { id: true } }),
-      prisma.user.findUnique({ where: { id: validatedData.userId }, select: { id: true } }),
-    ]);
-    if (!trail) return 'trail_not_found';
-    if (!user) return 'user_not_found';
-    const report = await prisma.conditionReport.create({
-      data: {
-        trailId: validatedData.trailId,
-        userId: validatedData.userId,
-        status: validatedData.status,
-        confidence: validatedData.confidence,
-        vehicleType: validatedData.vehicleType as never,
-        notes: validatedData.notes,
-      },
-    });
-    return { id: report.id, timestamp: report.timestamp.toISOString() };
-  } catch {
-    return null;
-  }
-}
+import { createSupabaseServiceClient, getSupabaseUserIdFromRequestAuthHeader } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
+    const authUserId = await getSupabaseUserIdFromRequestAuthHeader(request.headers.get('authorization'));
+    if (!authUserId) {
+      return errors.unauthorized('Authentication required for this action. Sign in to continue.');
+    }
+
     const body = await request.json();
     const validatedData = submitReportSchema.parse(body);
 
-    const dbResult = await tryPrismaSubmit(validatedData);
-    if (dbResult === 'trail_not_found') return errors.notFound('Trail');
-    if (dbResult === 'user_not_found') return errors.badRequest('Invalid user ID.');
-    if (dbResult !== null) return successResponse(dbResult, 201);
+    if (validatedData.userId !== authUserId) {
+      return errors.unauthorized('Authenticated user does not match requested userId');
+    }
 
-    // Fallback: accept in mock mode (no persistence, but return success)
-    const mockTrail = getMockTrail(validatedData.trailId);
-    if (!mockTrail) return errors.notFound('Trail');
+    const supabase = createSupabaseServiceClient();
+
+    await supabase.from('users').upsert({ id: validatedData.userId, is_anonymous: false });
+
+    const { data: trail, error: trailErr } = await supabase
+      .from('trails')
+      .select('id')
+      .eq('id', validatedData.trailId)
+      .maybeSingle();
+
+    if (trailErr) return errors.internalError(trailErr.message);
+
+    if (!trail) {
+      const mockTrail = getMockTrail(validatedData.trailId);
+      if (!mockTrail) return errors.notFound('Trail');
+
+      // If trail doesn't exist in Supabase but exists in mock data, create it on-demand.
+      const { error: seedErr } = await supabase.from('trails').insert({
+        id: mockTrail.id,
+        name: mockTrail.name,
+        region: mockTrail.region,
+        latitude: mockTrail.latitude,
+        longitude: mockTrail.longitude,
+        description: mockTrail.description ?? null,
+        base_difficulty: mockTrail.baseDifficulty ?? null,
+      });
+      if (seedErr) return errors.internalError(seedErr.message);
+    }
+
+    const reportId = crypto.randomUUID();
+    const nowIso = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('condition_reports')
+      .insert({
+        id: reportId,
+        trail_id: validatedData.trailId,
+        user_id: validatedData.userId,
+        status: validatedData.status,
+        confidence: validatedData.confidence,
+        vehicle_type: validatedData.vehicleType,
+        notes: validatedData.notes ?? null,
+        timestamp: nowIso,
+      })
+      .select('id,timestamp')
+      .single();
+
+    if (error) return errors.internalError(error.message);
 
     return successResponse(
       {
-        id: `mock-report-${Date.now()}`,
-        timestamp: new Date().toISOString(),
+        id: data.id,
+        timestamp: data.timestamp,
       },
       201
     );

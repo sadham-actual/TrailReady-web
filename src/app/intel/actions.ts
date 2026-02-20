@@ -1,7 +1,8 @@
 'use server';
 
-import prisma from '@/lib/prisma';
 import { Status, Confidence, VehicleType } from '@/types';
+import { createSupabaseServiceClient } from '@/lib/supabase/server';
+import { getMockTrail } from '@/data/sampleTrails';
 
 export type ReportState = {
   status: 'idle' | 'success' | 'error';
@@ -24,229 +25,155 @@ export interface FieldReportInput {
   photos?: PhotoInput[];
 }
 
-/**
- * Submit a complete field report for a trail
- * Creates ConditionReport and optional Photo records in a single transaction
- */
+async function ensureTrailExists(trailId: string) {
+  const supabase = createSupabaseServiceClient();
+  const { data: existing } = await supabase.from('trails').select('id').eq('id', trailId).maybeSingle();
+  if (existing) return true;
+
+  const mockTrail = getMockTrail(trailId);
+  if (!mockTrail) return false;
+
+  const { error } = await supabase.from('trails').insert({
+    id: mockTrail.id,
+    name: mockTrail.name,
+    region: mockTrail.region,
+    latitude: mockTrail.latitude,
+    longitude: mockTrail.longitude,
+    description: mockTrail.description ?? null,
+    base_difficulty: mockTrail.baseDifficulty ?? null,
+  });
+
+  return !error;
+}
+
 export async function submitFieldReport(input: FieldReportInput): Promise<ReportState> {
   const { trailId, status, vehicleType, confidence, notes, photos } = input;
 
-  // Validate trail ID
   if (!trailId || typeof trailId !== 'string') {
-    return {
-      status: 'error',
-      message: 'INVALID TRAIL IDENTIFIER',
-    };
+    return { status: 'error', message: 'INVALID TRAIL IDENTIFIER' };
   }
-
-  // Validate status
   if (!['clear', 'rough', 'impassable'].includes(status)) {
-    return {
-      status: 'error',
-      message: 'INVALID STATUS VALUE',
-    };
+    return { status: 'error', message: 'INVALID STATUS VALUE' };
   }
-
-  // Validate confidence
   if (!['low', 'medium', 'high'].includes(confidence)) {
-    return {
-      status: 'error',
-      message: 'INVALID CONFIDENCE VALUE',
-    };
+    return { status: 'error', message: 'INVALID CONFIDENCE VALUE' };
   }
-
-  // Validate photos if provided
   if (photos && photos.length > 5) {
-    return {
-      status: 'error',
-      message: 'MAX 5 PHOTOS PER SUBMISSION',
-    };
+    return { status: 'error', message: 'MAX 5 PHOTOS PER SUBMISSION' };
   }
-
-  // Validate notes length
   if (notes && notes.length > 500) {
-    return {
-      status: 'error',
-      message: 'NOTES EXCEED 500 CHARACTER LIMIT',
-    };
+    return { status: 'error', message: 'NOTES EXCEED 500 CHARACTER LIMIT' };
   }
 
   try {
-    // Verify trail exists
-    const trail = await prisma.trail.findUnique({
-      where: { id: trailId },
-      select: { id: true },
+    const trailOk = await ensureTrailExists(trailId);
+    if (!trailOk) return { status: 'error', message: 'TRAIL NOT FOUND IN DATABASE' };
+
+    const supabase = createSupabaseServiceClient();
+    const userId = crypto.randomUUID();
+    await supabase.from('users').upsert({ id: userId, is_anonymous: true });
+
+    const reportId = crypto.randomUUID();
+    const nowIso = new Date().toISOString();
+
+    const { error: reportErr } = await supabase.from('condition_reports').insert({
+      id: reportId,
+      trail_id: trailId,
+      user_id: userId,
+      status,
+      confidence,
+      vehicle_type: vehicleType,
+      notes: notes || null,
+      timestamp: nowIso,
     });
 
-    if (!trail) {
-      return {
-        status: 'error',
-        message: 'TRAIL NOT FOUND IN DATABASE',
-      };
-    }
+    if (reportErr) throw reportErr;
 
-    // Get or create anonymous user for now
-    // In the future, this would use authenticated user ID
-    let user = await prisma.user.findFirst({
-      where: { isAnonymous: true },
-      select: { id: true },
-    });
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: { isAnonymous: true },
-        select: { id: true },
-      });
-    }
-
-    // Create report and photos in a single transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Create the condition report
-      const report = await tx.conditionReport.create({
-        data: {
-          trailId,
-          userId: user.id,
-          status,
-          confidence,
-          vehicleType,
-          notes: notes || null,
-        },
-        select: { id: true },
-      });
-
-      // Create photo records if provided
-      let photoIds: string[] = [];
-      if (photos && photos.length > 0) {
-        // Validate URLs before storing
-        const validPhotos = photos.filter((photo) => {
-          try {
-            const url = new URL(photo.url);
-
-            // Ensure URL is from UploadThing CDN
-            if (!url.hostname.includes('uploadthing.com') && !url.hostname.includes('utfs.io')) {
-              console.warn(`Invalid photo URL host: ${url.hostname}`);
-              return false;
-            }
-
-            return true;
-          } catch (err) {
-            console.warn(`Malformed photo URL: ${photo.url}`);
-            return false;
-          }
-        });
-
-        if (validPhotos.length === 0) {
-          throw new Error('No valid photo URLs provided');
-        }
-
-        const createdPhotos = await Promise.all(
-          validPhotos.map((photo) =>
-            tx.photo.create({
-              data: {
-                url: photo.url,
-                caption: photo.caption,
-                trailId,
-                reportId: report.id,
-              },
-              select: { id: true },
-            })
-          )
-        );
-        photoIds = createdPhotos.map((p) => p.id);
+    const validPhotos = (photos ?? []).filter((photo) => {
+      try {
+        const url = new URL(photo.url);
+        return url.hostname.includes('uploadthing.com') || url.hostname.includes('utfs.io');
+      } catch {
+        return false;
       }
-
-      return { reportId: report.id, photoIds };
     });
 
-    // Build success message
-    const photoCount = result.photoIds.length;
-    const message = photoCount > 0
-      ? `CONDITION LOGGED + ${photoCount} PHOTO${photoCount > 1 ? 'S' : ''} ATTACHED`
+    let photoIds: string[] = [];
+    if (validPhotos.length > 0) {
+      const rows = validPhotos.map((p) => ({
+        id: crypto.randomUUID(),
+        trail_id: trailId,
+        url: p.url,
+        created_at: nowIso,
+        vehicle_type: vehicleType,
+        notes: p.caption,
+        confidence,
+      }));
+
+      const { data: createdPhotos, error: photoErr } = await supabase
+        .from('photos')
+        .insert(rows)
+        .select('id');
+      if (photoErr) throw photoErr;
+      photoIds = (createdPhotos ?? []).map((p) => p.id);
+    }
+
+    const msg = photoIds.length > 0
+      ? `CONDITION LOGGED + ${photoIds.length} PHOTO${photoIds.length > 1 ? 'S' : ''} ATTACHED`
       : 'CONDITION REPORT LOGGED';
 
     return {
       status: 'success',
-      message,
-      reportId: result.reportId,
-      photoIds: result.photoIds.length > 0 ? result.photoIds : undefined,
+      message: msg,
+      reportId,
+      photoIds: photoIds.length > 0 ? photoIds : undefined,
     };
   } catch (error) {
     console.error('Field report submission failed:', error);
-    return {
-      status: 'error',
-      message: 'DATABASE TRANSMISSION FAILED',
-    };
+    return { status: 'error', message: 'DATABASE TRANSMISSION FAILED' };
   }
 }
 
-// Keep the old function for backwards compatibility (photo-only submissions)
 export type IntelState = ReportState;
 
 export async function submitPhotoIntel(
   trailId: string,
   photos: PhotoInput[]
 ): Promise<IntelState> {
-  // Validate trail ID
   if (!trailId || typeof trailId !== 'string') {
-    return {
-      status: 'error',
-      message: 'INVALID TRAIL IDENTIFIER',
-    };
+    return { status: 'error', message: 'INVALID TRAIL IDENTIFIER' };
   }
-
-  // Validate photos array
   if (!Array.isArray(photos) || photos.length === 0) {
-    return {
-      status: 'error',
-      message: 'NO PHOTO INTEL PROVIDED',
-    };
+    return { status: 'error', message: 'NO PHOTO INTEL PROVIDED' };
   }
-
   if (photos.length > 5) {
-    return {
-      status: 'error',
-      message: 'MAX 5 PHOTOS PER SUBMISSION',
-    };
+    return { status: 'error', message: 'MAX 5 PHOTOS PER SUBMISSION' };
   }
 
   try {
-    // Verify trail exists
-    const trail = await prisma.trail.findUnique({
-      where: { id: trailId },
-      select: { id: true },
-    });
+    const trailOk = await ensureTrailExists(trailId);
+    if (!trailOk) return { status: 'error', message: 'TRAIL NOT FOUND IN DATABASE' };
 
-    if (!trail) {
-      return {
-        status: 'error',
-        message: 'TRAIL NOT FOUND IN DATABASE',
-      };
-    }
+    const nowIso = new Date().toISOString();
+    const rows = photos.map((photo) => ({
+      id: crypto.randomUUID(),
+      trail_id: trailId,
+      url: photo.url,
+      created_at: nowIso,
+      notes: photo.caption,
+    }));
 
-    // Create photo records
-    const createdPhotos = await prisma.$transaction(
-      photos.map((photo) =>
-        prisma.photo.create({
-          data: {
-            url: photo.url,
-            caption: photo.caption,
-            trailId: trailId,
-          },
-          select: { id: true },
-        })
-      )
-    );
+    const supabase = createSupabaseServiceClient();
+    const { data, error } = await supabase.from('photos').insert(rows).select('id');
+    if (error) throw error;
 
     return {
       status: 'success',
-      message: `${createdPhotos.length} PHOTO${createdPhotos.length > 1 ? 'S' : ''} LOGGED`,
-      photoIds: createdPhotos.map((p) => p.id),
+      message: `${(data ?? []).length} PHOTO${(data ?? []).length > 1 ? 'S' : ''} LOGGED`,
+      photoIds: (data ?? []).map((p) => p.id),
     };
   } catch (error) {
     console.error('Photo intel submission failed:', error);
-    return {
-      status: 'error',
-      message: 'DATABASE TRANSMISSION FAILED',
-    };
+    return { status: 'error', message: 'DATABASE TRANSMISSION FAILED' };
   }
 }
