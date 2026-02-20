@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { evaluateTrailFit, TrailRequirementProfile, TripBundle, UserVehicle } from '@/domain/planning';
 import { trailService } from '@/services/trailService';
 import { Trail } from '@/types';
@@ -33,6 +34,7 @@ function toRequirementProfile(trail: Trail): TrailRequirementProfile {
 }
 
 export default function PlannerPage() {
+  const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [userId, setUserId] = useState<string>('');
   const [authToken, setAuthToken] = useState<string>('');
@@ -168,17 +170,6 @@ export default function PlannerPage() {
     });
   };
 
-  const signInWithEmail = async () => {
-    const email = window.prompt('Enter your email for a sign-in link:');
-    if (!email) return;
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin + '/planner' },
-    });
-    if (error) window.alert(`Sign-in failed: ${error.message}`);
-    else window.alert('Check your email for the sign-in link.');
-  };
-
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -246,7 +237,7 @@ export default function PlannerPage() {
         {isAuthenticated ? (
           <button onClick={() => void signOut()} className="text-sm px-3 py-1 border rounded">Sign out</button>
         ) : (
-          <button onClick={() => void signInWithEmail()} className="text-sm px-3 py-1 bg-stone-900 text-white rounded">Sign in</button>
+          <button onClick={() => router.push('/auth/login?next=/planner')} className="text-sm px-3 py-1 bg-stone-900 text-white rounded">Sign in</button>
         )}
       </div>
 

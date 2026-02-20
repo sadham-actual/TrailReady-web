@@ -213,7 +213,7 @@ export default function SubmitReportPage() {
   // Handle form submission
   async function handleSubmit() {
     if (!userId || !isAuthenticated) {
-      setError('Sign in is required to submit reports.');
+      router.push(`/auth/login?next=${encodeURIComponent(`/trails/${trailId}/submit`)}`);
       return;
     }
 
@@ -316,16 +316,7 @@ export default function SubmitReportPage() {
             <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl">
               <p className="text-sm text-amber-300 mb-2">You need an account to submit trail reports.</p>
               <button
-                onClick={async () => {
-                  const email = window.prompt('Enter your email for a sign-in link:');
-                  if (!email) return;
-                  const { error } = await supabase.auth.signInWithOtp({
-                    email,
-                    options: { emailRedirectTo: window.location.origin + `/trails/${trailId}/submit` },
-                  });
-                  if (error) setError(error.message);
-                  else setError('Check your email for the sign-in link.');
-                }}
+                onClick={() => router.push(`/auth/login?next=${encodeURIComponent(`/trails/${trailId}/submit`)}`)}
                 className="px-3 py-1 bg-amber-400 text-slate-900 rounded text-sm font-medium"
               >
                 Sign in
