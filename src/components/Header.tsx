@@ -43,8 +43,6 @@ export function Header() {
     return () => sub.subscription.unsubscribe();
   }, [supabase]);
 
-  if (pathname === '/' || pathname.startsWith('/map')) return null;
-
   const isActivePath = (path: string) => {
     if (path === '/map') return pathname.startsWith('/map');
     return pathname === path;
@@ -70,28 +68,27 @@ export function Header() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-6">
-          <Link
-            href="/map"
-            className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors ${
-              isActivePath('/map') ? 'text-orange-600' : 'text-muted-stone hover:text-orange-600'
-            }`}
-          >
+          <Link href="/" className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors ${isActivePath('/') ? 'text-orange-600' : 'text-muted-stone hover:text-orange-600'}`}>
+            Home
+          </Link>
+          <Link href="/map" className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors ${isActivePath('/map') ? 'text-orange-600' : 'text-muted-stone hover:text-orange-600'}`}>
             Browse
           </Link>
-          <button
-            type="button"
-            onClick={() => setSearchOpen(true)}
-            className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors ${
-              searchOpen ? 'text-orange-600' : 'text-muted-stone hover:text-orange-600'
-            }`}
-          >
-            Search
-          </button>
+          <Link href="/planner" className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors ${isActivePath('/planner') ? 'text-orange-600' : 'text-muted-stone hover:text-orange-600'}`}>
+            Planner
+          </Link>
           {isAuthenticated && (
-            <Link href="/profile" className="font-mono text-xs font-medium uppercase tracking-wider text-muted-stone hover:text-orange-600">
+            <Link href="/profile" className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors ${isActivePath('/profile') ? 'text-orange-600' : 'text-muted-stone hover:text-orange-600'}`}>
               Profile
             </Link>
           )}
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className={`font-mono text-xs font-medium uppercase tracking-wider transition-colors ${searchOpen ? 'text-orange-600' : 'text-muted-stone hover:text-orange-600'}`}
+          >
+            Search
+          </button>
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
@@ -150,8 +147,14 @@ export function Header() {
       {isMobileMenuOpen && (
         <div className="md:hidden bg-bone border-t border-stone-border">
           <nav className="container mx-auto px-4 py-4 space-y-2">
+            <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-sm font-mono text-xs font-medium uppercase tracking-wider transition-all ${isActivePath('/') ? 'bg-action-orange/10 text-action-orange border border-action-orange/20' : 'text-deep-stone hover:bg-stone-light border border-transparent'}`}>
+              Home
+            </Link>
             <Link href="/map" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-sm font-mono text-xs font-medium uppercase tracking-wider transition-all ${isActivePath('/map') ? 'bg-action-orange/10 text-action-orange border border-action-orange/20' : 'text-deep-stone hover:bg-stone-light border border-transparent'}`}>
               Browse Trails
+            </Link>
+            <Link href="/planner" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-sm font-mono text-xs font-medium uppercase tracking-wider transition-all ${isActivePath('/planner') ? 'bg-action-orange/10 text-action-orange border border-action-orange/20' : 'text-deep-stone hover:bg-stone-light border border-transparent'}`}>
+              Planner
             </Link>
             <button
               type="button"
@@ -165,7 +168,7 @@ export function Header() {
             </button>
 
             {isAuthenticated && (
-              <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-3 rounded-sm font-mono text-xs font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light border border-transparent">
+              <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-sm font-mono text-xs font-medium uppercase tracking-wider transition-all ${isActivePath('/profile') ? 'bg-action-orange/10 text-action-orange border border-action-orange/20' : 'text-deep-stone hover:bg-stone-light border border-transparent'}`}>
                 Profile
               </Link>
             )}
