@@ -10,7 +10,7 @@ export default function SignupPage() {
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
-  const next = searchParams.get('next') || '/planner';
+  const next = searchParams.get('next') || '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -39,7 +39,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${appUrl}${next}`,
+        emailRedirectTo: `${appUrl}/`,
       },
     });
     setLoading(false);
