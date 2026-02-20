@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     if (!query) return successResponse<SearchTrailResult[]>([]);
 
     const dbResults = await trySupabaseSearch(query);
-    if (dbResults !== null) return successResponse(dbResults);
+    if (dbResults !== null && dbResults.length > 0) return successResponse(dbResults);
 
     const mockTrails = searchMockTrails(query).slice(0, 8);
     const results: SearchTrailResult[] = mockTrails.map((trail) => {

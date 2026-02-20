@@ -63,8 +63,7 @@ export async function GET(
     const { id } = await params;
 
     const dbTrail = await trySupabaseTrail(id);
-    if (dbTrail === 'not_found') return errors.notFound('Trail');
-    if (dbTrail !== null) return successResponse(dbTrail);
+    if (dbTrail !== null && dbTrail !== 'not_found') return successResponse(dbTrail);
 
     const mockTrail = getMockTrail(id);
     if (!mockTrail) return errors.notFound('Trail');

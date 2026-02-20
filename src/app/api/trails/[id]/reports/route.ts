@@ -49,8 +49,9 @@ export async function GET(
     const { id: trailId } = await params;
 
     const dbReports = await trySupabaseReports(trailId);
-    if (dbReports === 'not_found') return errors.notFound('Trail');
-    if (dbReports !== null) return successResponse(dbReports);
+    if (dbReports !== null && dbReports !== 'not_found' && dbReports.length > 0) {
+      return successResponse(dbReports);
+    }
 
     const mockTrail = getMockTrail(trailId);
     if (!mockTrail) return errors.notFound('Trail');

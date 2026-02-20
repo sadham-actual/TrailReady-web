@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     const region = searchParams.get('region') ?? undefined;
 
     const dbTrails = await trySupabaseTrails(search, region);
-    if (dbTrails !== null) {
+    if (dbTrails !== null && dbTrails.length > 0) {
       return successResponse(dbTrails);
     }
 
