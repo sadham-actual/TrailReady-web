@@ -67,6 +67,16 @@ create table if not exists public.trip_bundle_trails (
   sort_order int not null
 );
 
+create table if not exists public.photos (
+  id text primary key,
+  trail_id text not null references public.trails(id) on delete cascade,
+  url text not null,
+  created_at timestamptz not null default now(),
+  vehicle_type text,
+  notes text,
+  confidence text
+);
+
 create index if not exists idx_trails_region on public.trails(region);
 create index if not exists idx_reports_trail_ts on public.condition_reports(trail_id, timestamp desc);
 create index if not exists idx_vehicles_user on public.user_vehicles(user_id);
@@ -78,8 +88,31 @@ alter table public.user_vehicles enable row level security;
 alter table public.trip_bundles enable row level security;
 alter table public.trip_bundle_trails enable row level security;
 alter table public.condition_reports enable row level security;
+alter table public.photos enable row level security;
+alter table public.trails enable row level security;
 
--- Service role bypasses RLS. These permissive policies are for authenticated client access if needed.
+-- Public read access for discovery pages
+do $$ begin
+  create policy "trails_read_all" on public.trails for select to anon, authenticated using (true);
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create policy "reports_read_all" on public.condition_reports for select to anon, authenticated using (true);
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create policy "photos_read_all" on public.photos for select to anon, authenticated using (true);
+exception when duplicate_object then null; end $$;
+
+-- User-owned write/read policies (if client-side table access is used later)
 do $$ begin
   create policy "users_select_self" on public.users for select to authenticated using (id = auth.uid()::text);
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create policy "user_vehicles_owner_all" on public.user_vehicles for all to authenticated using (user_id = auth.uid()::text) with check (user_id = auth.uid()::text);
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create policy "trip_bundles_owner_all" on public.trip_bundles for all to authenticated using (user_id = auth.uid()::text) with check (user_id = auth.uid()::text);
 exception when duplicate_object then null; end $$;
