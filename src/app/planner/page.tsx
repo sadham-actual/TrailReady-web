@@ -6,6 +6,7 @@ import { trailService } from '@/services/trailService';
 import { Trail } from '@/types';
 import { IndexedDbCacheAdapter } from '@/services/offline/indexedDbCache';
 import { PlannerSyncService } from '@/services/offline/plannerSyncService';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 const cache = new PlannerSyncService(new IndexedDbCacheAdapter());
 
@@ -32,7 +33,9 @@ function toRequirementProfile(trail: Trail): TrailRequirementProfile {
 }
 
 export default function PlannerPage() {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [userId, setUserId] = useState<string>('');
+  const [authToken, setAuthToken] = useState<string>('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [vehicle, setVehicle] = useState<UserVehicle>(defaultVehicle);
   const [trails, setTrails] = useState<Trail[]>([]);
@@ -44,19 +47,24 @@ export default function PlannerPage() {
   useEffect(() => {
     const boot = async () => {
       try {
-        const accountId = localStorage.getItem('trailready_account_user_id');
-        if (accountId) {
-          setUserId(accountId);
-          setIsAuthenticated(true);
-        } else {
-          const uid = await trailService.getAnonymousUserId();
-          setUserId(uid);
-          setIsAuthenticated(false);
-        }
+        const [{ data: sessionData }, liveTrails] = await Promise.all([
+          supabase.auth.getSession(),
+          trailService.getTrails(),
+        ]);
 
-        const liveTrails = await trailService.getTrails();
         setTrails(liveTrails);
         await cache.cacheTrailMetadata(liveTrails);
+
+        const session = sessionData.session;
+        if (session?.user?.id) {
+          setUserId(session.user.id);
+          setAuthToken(session.access_token);
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+          setUserId('');
+          setAuthToken('');
+        }
       } catch {
         const fallback = await cache.loadOfflineTrails();
         setTrails(fallback);
@@ -64,16 +72,34 @@ export default function PlannerPage() {
     };
 
     void boot();
-  }, []);
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user?.id) {
+        setUserId(session.user.id);
+        setAuthToken(session.access_token);
+        setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
+        setUserId('');
+        setAuthToken('');
+      }
+    });
+
+    return () => sub.subscription.unsubscribe();
+  }, [supabase]);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || !authToken) return;
 
     const loadPlannerState = async () => {
       try {
         const [vehiclesRes, bundlesRes] = await Promise.all([
-          fetch(`/api/planner/vehicles?userId=${encodeURIComponent(userId)}`),
-          fetch(`/api/planner/trip-bundles?userId=${encodeURIComponent(userId)}`),
+          fetch(`/api/planner/vehicles?userId=${encodeURIComponent(userId)}`, {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }),
+          fetch(`/api/planner/trip-bundles?userId=${encodeURIComponent(userId)}`, {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }),
         ]);
 
         const vehiclesJson = await vehiclesRes.json();
@@ -84,22 +110,22 @@ export default function PlannerPage() {
           setVehicle({
             make: v.make,
             model: v.model,
-            clearance_inches: Number(v.clearanceInches),
-            tire_size: Number(v.tireSize),
-            has_low_range: Boolean(v.hasLowRange),
-            has_winch: Boolean(v.hasWinch),
-            experience_level: v.experienceLevel,
+            clearance_inches: Number(v.clearance_inches),
+            tire_size: Number(v.tire_size),
+            has_low_range: Boolean(v.has_low_range),
+            has_winch: Boolean(v.has_winch),
+            experience_level: v.experience_level,
           });
         }
 
         if (bundlesJson?.success && Array.isArray(bundlesJson.data)) {
           const mapped: TripBundle[] = bundlesJson.data.map((b: any) => ({
             id: b.id,
-            user_id: b.userId,
-            trail_ids: (b.trails ?? []).map((t: any) => t.trailId),
-            scheduled_date: b.scheduledDate,
+            user_id: b.user_id,
+            trail_ids: (b.trails ?? []).map((t: any) => t.trail_id),
+            scheduled_date: b.scheduled_date,
             notes: b.notes ?? '',
-            is_offline_cached: Boolean(b.isOfflineCached),
+            is_offline_cached: Boolean(b.is_offline_cached),
           }));
           setSavedBundles(mapped);
           await cache.cacheTripBundles(mapped);
@@ -111,7 +137,7 @@ export default function PlannerPage() {
     };
 
     void loadPlannerState();
-  }, [userId]);
+  }, [userId, authToken]);
 
   const selectedTrails = useMemo(
     () => trails.filter((t) => selected.includes(t.id)).slice(0, 3),
@@ -120,14 +146,18 @@ export default function PlannerPage() {
 
   const shareJson = useMemo(() => {
     if (selectedTrails.length !== 3) return null;
-    return JSON.stringify({
-      id: `bundle-${selectedTrails.map((t) => t.id).join('-')}`,
-      user_id: userId || 'anonymous',
-      trail_ids: selectedTrails.map((t) => t.id),
-      scheduled_date: new Date().toISOString(),
-      notes,
-      is_offline_cached: false,
-    }, null, 2);
+    return JSON.stringify(
+      {
+        id: `bundle-${selectedTrails.map((t) => t.id).join('-')}`,
+        user_id: userId || 'anonymous',
+        trail_ids: selectedTrails.map((t) => t.id),
+        scheduled_date: new Date().toISOString(),
+        notes,
+        is_offline_cached: false,
+      },
+      null,
+      2
+    );
   }, [selectedTrails, notes, userId]);
 
   const toggleTrail = (trailId: string) => {
@@ -138,14 +168,28 @@ export default function PlannerPage() {
     });
   };
 
+  const signInWithEmail = async () => {
+    const email = window.prompt('Enter your email for a sign-in link:');
+    if (!email) return;
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin + '/planner' },
+    });
+    if (error) window.alert(`Sign-in failed: ${error.message}`);
+    else window.alert('Check your email for the sign-in link.');
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
   const saveVehicleProfile = async () => {
-    if (!userId || !isAuthenticated) return;
+    if (!userId || !isAuthenticated || !authToken) return;
     await fetch('/api/planner/vehicles', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-trailready-user-id': userId,
-        'x-trailready-authenticated': 'true',
+        Authorization: `Bearer ${authToken}`,
       },
       body: JSON.stringify({
         userId,
@@ -155,15 +199,14 @@ export default function PlannerPage() {
   };
 
   const saveBundle = async () => {
-    if (!userId || !isAuthenticated || selectedTrails.length !== 3) return;
+    if (!userId || !isAuthenticated || !authToken || selectedTrails.length !== 3) return;
     setIsSaving(true);
     try {
       const res = await fetch('/api/planner/trip-bundles', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-trailready-user-id': userId,
-          'x-trailready-authenticated': 'true',
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({
           user_id: userId,
@@ -179,9 +222,9 @@ export default function PlannerPage() {
           id: json.data.id,
           user_id: userId,
           trail_ids: selectedTrails.map((t) => t.id),
-          scheduled_date: json.data.scheduledDate ?? new Date().toISOString(),
+          scheduled_date: json.data.scheduled_date ?? new Date().toISOString(),
           notes,
-          is_offline_cached: Boolean(json.data.isOfflineCached),
+          is_offline_cached: Boolean(json.data.is_offline_cached),
         };
         const next = [created, ...savedBundles].slice(0, 10);
         setSavedBundles(next);
@@ -201,27 +244,9 @@ export default function PlannerPage() {
           {isAuthenticated ? `Signed in as ${userId}` : 'Read-only mode. Sign in required for save/report actions.'}
         </p>
         {isAuthenticated ? (
-          <button
-            onClick={() => {
-              localStorage.removeItem('trailready_account_user_id');
-              setIsAuthenticated(false);
-            }}
-            className="text-sm px-3 py-1 border rounded"
-          >
-            Sign out
-          </button>
+          <button onClick={() => void signOut()} className="text-sm px-3 py-1 border rounded">Sign out</button>
         ) : (
-          <button
-            onClick={() => {
-              const demoId = `acct_${Math.random().toString(36).slice(2, 10)}`;
-              localStorage.setItem('trailready_account_user_id', demoId);
-              setUserId(demoId);
-              setIsAuthenticated(true);
-            }}
-            className="text-sm px-3 py-1 bg-stone-900 text-white rounded"
-          >
-            Sign in (demo)
-          </button>
+          <button onClick={() => void signInWithEmail()} className="text-sm px-3 py-1 bg-stone-900 text-white rounded">Sign in</button>
         )}
       </div>
 

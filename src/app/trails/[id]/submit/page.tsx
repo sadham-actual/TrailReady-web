@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { trailService } from '@/services/trailService';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { Trail, Status, Confidence, VEHICLE_CATEGORIES, VehicleCategoryInfo } from '@/types';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
@@ -150,6 +151,7 @@ function SuccessAnimation({ onComplete }: { onComplete: () => void }) {
 export default function SubmitReportPage() {
   const params = useParams();
   const router = useRouter();
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const trailId = params.id as string;
   const { selectedVehicle, setSelectedVehicle } = useVehicle();
   const { triggerRefresh } = useTrailRefresh();
@@ -157,6 +159,7 @@ export default function SubmitReportPage() {
   // State
   const [trail, setTrail] = useState<Trail | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string>('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -179,14 +182,14 @@ export default function SubmitReportPage() {
     async function initialize() {
       setIsLoading(true);
       try {
-        // Initialize auth (write actions require account)
-        const accountId = localStorage.getItem('trailready_account_user_id');
-        if (accountId) {
-          setUserId(accountId);
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user?.id) {
+          setUserId(sessionData.session.user.id);
+          setAuthToken(sessionData.session.access_token);
           setIsAuthenticated(true);
         } else {
-          const id = await trailService.getAnonymousUserId();
-          setUserId(id);
+          setUserId(null);
+          setAuthToken('');
           setIsAuthenticated(false);
         }
 
@@ -205,7 +208,7 @@ export default function SubmitReportPage() {
     }
 
     initialize();
-  }, [trailId, router]);
+  }, [trailId, router, supabase]);
 
   // Handle form submission
   async function handleSubmit() {
@@ -234,7 +237,7 @@ export default function SubmitReportPage() {
         vehicleType: selectedVehicle,
         notes: notes || undefined,
       }, {
-        isAuthenticated: true,
+        authToken,
       });
 
       setShowSuccess(true);
@@ -313,15 +316,19 @@ export default function SubmitReportPage() {
             <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl">
               <p className="text-sm text-amber-300 mb-2">You need an account to submit trail reports.</p>
               <button
-                onClick={() => {
-                  const demoId = `acct_${Math.random().toString(36).slice(2, 10)}`;
-                  localStorage.setItem('trailready_account_user_id', demoId);
-                  setUserId(demoId);
-                  setIsAuthenticated(true);
+                onClick={async () => {
+                  const email = window.prompt('Enter your email for a sign-in link:');
+                  if (!email) return;
+                  const { error } = await supabase.auth.signInWithOtp({
+                    email,
+                    options: { emailRedirectTo: window.location.origin + `/trails/${trailId}/submit` },
+                  });
+                  if (error) setError(error.message);
+                  else setError('Check your email for the sign-in link.');
                 }}
                 className="px-3 py-1 bg-amber-400 text-slate-900 rounded text-sm font-medium"
               >
-                Sign in (demo)
+                Sign in
               </button>
             </div>
           )}

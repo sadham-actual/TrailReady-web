@@ -78,16 +78,11 @@ class TrailService {
       vehicleType: ConditionReport['vehicleType'];
       notes?: string;
     },
-    auth?: { isAuthenticated: boolean }
+    options?: { authToken?: string }
   ): Promise<{ id: string; timestamp: string }> {
     return this.fetchAPI<{ id: string; timestamp: string }>('/api/reports', {
       method: 'POST',
-      headers: auth?.isAuthenticated
-        ? {
-            'x-trailready-user-id': userId,
-            'x-trailready-authenticated': 'true',
-          }
-        : undefined,
+      headers: options?.authToken ? { Authorization: `Bearer ${options.authToken}` } : undefined,
       body: JSON.stringify({
         trailId,
         userId,

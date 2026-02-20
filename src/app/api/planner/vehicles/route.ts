@@ -1,34 +1,36 @@
 import { NextRequest } from 'next/server';
 import { errors, successResponse } from '@/lib/api/response';
-import { requireSoftAuth } from '@/lib/auth/softAuth';
+import { createSupabaseServiceClient, getSupabaseUserIdFromRequestAuthHeader } from '@/lib/supabase/server';
 
-async function getPrisma() {
-  if (process.env.USE_MOCK_DATA === 'true') return null;
-  try {
-    return (await import('@/lib/prisma')).default;
-  } catch {
-    return null;
-  }
+async function requireAuthUserId(request: NextRequest): Promise<string | null> {
+  return getSupabaseUserIdFromRequestAuthHeader(request.headers.get('authorization'));
 }
 
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get('userId');
   if (!userId) return errors.badRequest('userId is required');
 
-  const prisma = await getPrisma();
-  if (!prisma) return successResponse([]);
+  const authUserId = await requireAuthUserId(request);
+  if (!authUserId || authUserId !== userId) {
+    return errors.unauthorized('Authentication required for this action. Sign in to continue.');
+  }
 
-  const vehicles = await prisma.userVehicle.findMany({
-    where: { userId },
-    orderBy: { updatedAt: 'desc' },
-  });
+  const supabase = createSupabaseServiceClient();
+  const { data, error } = await supabase
+    .from('user_vehicles')
+    .select('*')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false });
 
-  return successResponse(vehicles);
+  if (error) return errors.internalError(error.message);
+  return successResponse(data ?? []);
 }
 
 export async function POST(request: NextRequest) {
-  const auth = requireSoftAuth(request);
-  if (auth instanceof Response) return auth;
+  const authUserId = await requireAuthUserId(request);
+  if (!authUserId) {
+    return errors.unauthorized('Authentication required for this action. Sign in to continue.');
+  }
 
   const body = await request.json();
   const {
@@ -46,27 +48,32 @@ export async function POST(request: NextRequest) {
     return errors.badRequest('userId, make, model, and experience_level are required');
   }
 
-  if (userId !== auth.userId) {
+  if (userId !== authUserId) {
     return errors.unauthorized('Authenticated user does not match requested userId');
   }
 
-  const prisma = await getPrisma();
-  if (!prisma) {
-    return successResponse({ id: `mock-${Date.now()}`, ...body }, 201);
-  }
+  const supabase = createSupabaseServiceClient();
 
-  const created = await prisma.userVehicle.create({
-    data: {
-      userId,
-      make,
-      model,
-      clearanceInches: Number(clearance_inches ?? 0),
-      tireSize: Number(tire_size ?? 0),
-      hasLowRange: Boolean(has_low_range),
-      hasWinch: Boolean(has_winch),
-      experienceLevel: experience_level,
-    },
-  });
+  await supabase.from('users').upsert({ id: userId, is_anonymous: false });
 
-  return successResponse(created, 201);
+  const payload = {
+    id: crypto.randomUUID(),
+    user_id: userId,
+    make,
+    model,
+    clearance_inches: Number(clearance_inches ?? 0),
+    tire_size: Number(tire_size ?? 0),
+    has_low_range: Boolean(has_low_range),
+    has_winch: Boolean(has_winch),
+    experience_level,
+  };
+
+  const { data, error } = await supabase
+    .from('user_vehicles')
+    .insert(payload)
+    .select('*')
+    .single();
+
+  if (error) return errors.internalError(error.message);
+  return successResponse(data, 201);
 }
