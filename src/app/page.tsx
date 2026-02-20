@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import Link from 'next/link';
@@ -8,12 +8,29 @@ import { useVehicle } from '@/contexts/VehicleContext';
 import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
 import { CommandBar, useCommandBar } from '@/components/CommandBar';
 import { HudNav, Hero, ActionGrid, NearbyTrails } from '@/components/landing';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export default function Home() {
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const { selectedVehicle, setSelectedVehicle } = useVehicle();
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { open: searchOpen, setOpen: setSearchOpen } = useCommandBar();
+
+  useEffect(() => {
+    const init = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(Boolean(data.session));
+    };
+    void init();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setIsAuthenticated(Boolean(session));
+    });
+
+    return () => sub.subscription.unsubscribe();
+  }, [supabase]);
 
   return (
     <div className="min-h-screen bg-bone text-deep-stone antialiased">
@@ -36,11 +53,10 @@ export default function Home() {
         <NearbyTrails />
       </main>
 
-      {/* Mobile Menu Overlay */}
+      {/* Landing Menu Sidebar */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -50,44 +66,44 @@ export default function Home() {
               onClick={() => setMobileMenuOpen(false)}
             />
 
-            {/* Menu Panel */}
-            <motion.div
-              initial={{ opacity: 0, y: 100 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 100 }}
-              transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] as const }}
-              className="fixed bottom-0 left-0 right-0 z-50 bg-bone border-t border-stone-border rounded-t-sm shadow-[0_-4px_20px_-4px_rgba(0,0,0,0.1)] safe-bottom"
+            <motion.aside
+              initial={{ opacity: 0, x: 280 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 280 }}
+              transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] as const }}
+              className="fixed top-0 right-0 h-full w-[86%] max-w-sm z-50 bg-bone border-l border-stone-border shadow-2xl"
             >
               <div className="p-6">
-                {/* Handle */}
-                <div className="w-10 h-1 bg-stone-medium rounded-sm mx-auto mb-6" />
-
-                {/* Close Button */}
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="absolute top-6 right-6 p-2 rounded-sm hover:bg-stone-light transition-colors"
-                  aria-label="Close menu"
-                >
-                  <X className="h-5 w-5 text-muted-stone" />
-                </button>
-
-                {/* Menu Links */}
-                <nav className="space-y-2">
-                  <Link
-                    href="/map"
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-mono text-xs font-bold uppercase tracking-wider text-deep-stone">Menu</h2>
+                  <button
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light transition-colors"
+                    className="p-2 rounded-sm hover:bg-stone-light transition-colors"
+                    aria-label="Close menu"
                   >
-                    Browse Trails
-                  </Link>
-                  <Link
-                    href="/map"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light transition-colors"
+                    <X className="h-5 w-5 text-muted-stone" />
+                  </button>
+                </div>
+
+                <nav className="space-y-2">
+                  <Link href="/" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light transition-colors">Home</Link>
+                  <Link href="/map" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light transition-colors">Browse Trails</Link>
+                  <Link href="/planner" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light transition-colors">Planner</Link>
+
+                  {isAuthenticated && (
+                    <Link href="/profile" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light transition-colors">Profile</Link>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setSearchOpen(true);
+                    }}
+                    className="w-full text-left px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light transition-colors"
                   >
                     Search Trails
-                  </Link>
-                  <div className="h-px bg-stone-border my-3" />
+                  </button>
+
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
@@ -97,9 +113,28 @@ export default function Home() {
                   >
                     {selectedVehicle ? 'Change Vehicle' : 'Set Up Vehicle'}
                   </button>
+
+                  <div className="h-px bg-stone-border my-3" />
+
+                  {isAuthenticated ? (
+                    <button
+                      onClick={async () => {
+                        await supabase.auth.signOut();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light transition-colors"
+                    >
+                      Sign out
+                    </button>
+                  ) : (
+                    <>
+                      <Link href="/auth/login" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light transition-colors">Log in</Link>
+                      <Link href="/auth/signup" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3.5 rounded-sm font-mono text-sm font-medium uppercase tracking-wider text-action-orange hover:bg-action-orange/10 transition-colors">Sign up</Link>
+                    </>
+                  )}
                 </nav>
               </div>
-            </motion.div>
+            </motion.aside>
           </>
         )}
       </AnimatePresence>

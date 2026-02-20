@@ -43,6 +43,8 @@ export function Header() {
     return () => sub.subscription.unsubscribe();
   }, [supabase]);
 
+  if (pathname === '/') return null;
+
   const isActivePath = (path: string) => {
     if (path === '/map') return pathname.startsWith('/map');
     return pathname === path;
