@@ -81,25 +81,76 @@ export default function ProfilePage() {
       <h1 className="text-2xl font-bold mb-1">Profile</h1>
       <p className="text-sm text-stone-600 mb-6">Manage your account and vehicle setup.</p>
 
-      <div className="border rounded p-4 bg-white space-y-3">
+      <div className="border rounded p-4 bg-white space-y-4">
         <h2 className="font-semibold">Vehicle profile</h2>
 
-        <input className="w-full border rounded px-3 py-2" placeholder="Make" value={vehicle.make} onChange={(e) => setVehicle({ ...vehicle, make: e.target.value })} />
-        <input className="w-full border rounded px-3 py-2" placeholder="Model" value={vehicle.model} onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })} />
-
-        <div className="grid md:grid-cols-2 gap-3">
-          <input className="w-full border rounded px-3 py-2" type="number" placeholder="Clearance (inches)" value={vehicle.clearance_inches} onChange={(e) => setVehicle({ ...vehicle, clearance_inches: Number(e.target.value) })} />
-          <input className="w-full border rounded px-3 py-2" type="number" placeholder="Tire size" value={vehicle.tire_size} onChange={(e) => setVehicle({ ...vehicle, tire_size: Number(e.target.value) })} />
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-1">Vehicle make</label>
+          <input
+            className="w-full border rounded px-3 py-2"
+            placeholder="Toyota"
+            value={vehicle.make}
+            onChange={(e) => setVehicle({ ...vehicle, make: e.target.value })}
+          />
         </div>
 
-        <select className="w-full border rounded px-3 py-2" value={vehicle.experience_level} onChange={(e) => setVehicle({ ...vehicle, experience_level: e.target.value as UserVehicle['experience_level'] })}>
-          <option>Beginner</option>
-          <option>Intermediate</option>
-          <option>Advanced</option>
-        </select>
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-1">Vehicle model</label>
+          <input
+            className="w-full border rounded px-3 py-2"
+            placeholder="4Runner"
+            value={vehicle.model}
+            onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })}
+          />
+        </div>
 
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={vehicle.has_low_range} onChange={(e) => setVehicle({ ...vehicle, has_low_range: e.target.checked })} /> Has low range</label>
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={vehicle.has_winch} onChange={(e) => setVehicle({ ...vehicle, has_winch: e.target.checked })} /> Has winch</label>
+        <div className="grid md:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-1">Ground clearance (inches)</label>
+            <input
+              className="w-full border rounded px-3 py-2"
+              type="number"
+              placeholder="10.0"
+              value={vehicle.clearance_inches}
+              onChange={(e) => setVehicle({ ...vehicle, clearance_inches: Number(e.target.value) })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-stone-700 mb-1">Tire size (inches)</label>
+            <input
+              className="w-full border rounded px-3 py-2"
+              type="number"
+              placeholder="33"
+              value={vehicle.tire_size}
+              onChange={(e) => setVehicle({ ...vehicle, tire_size: Number(e.target.value) })}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-stone-700 mb-1">Driver experience</label>
+          <select
+            className="w-full border rounded px-3 py-2"
+            value={vehicle.experience_level}
+            onChange={(e) => setVehicle({ ...vehicle, experience_level: e.target.value as UserVehicle['experience_level'] })}
+          >
+            <option>Beginner</option>
+            <option>Intermediate</option>
+            <option>Advanced</option>
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={vehicle.has_low_range} onChange={(e) => setVehicle({ ...vehicle, has_low_range: e.target.checked })} />
+            Has low-range gearing
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={vehicle.has_winch} onChange={(e) => setVehicle({ ...vehicle, has_winch: e.target.checked })} />
+            Has winch
+          </label>
+        </div>
 
         <button onClick={() => void saveVehicle()} disabled={saving} className="bg-stone-900 text-white px-4 py-2 rounded disabled:bg-stone-400">
           {saving ? 'Saving...' : 'Save profile'}
