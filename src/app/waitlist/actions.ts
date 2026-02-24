@@ -1,6 +1,6 @@
 'use server';
 
-import prisma from '@/lib/prisma';
+import { createSupabaseServiceClient } from '@/lib/supabase/server';
 
 export type WaitlistState = {
   status: 'idle' | 'success' | 'duplicate' | 'error';
@@ -23,23 +23,39 @@ export async function submitWaitlist(
     };
   }
 
-  const existing = await prisma.waitlist.findUnique({
-    where: { email },
-  });
+  try {
+    const supabase = createSupabaseServiceClient();
 
-  if (existing) {
+    const { data: existing, error: existingErr } = await supabase
+      .from('waitlist')
+      .select('id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (existingErr) {
+      return { status: 'error', message: 'DATABASE TRANSMISSION FAILED' };
+    }
+
+    if (existing) {
+      return {
+        status: 'duplicate',
+        message: 'RE-ENLISTMENT NOT REQUIRED',
+      };
+    }
+
+    const { error: insertErr } = await supabase
+      .from('waitlist')
+      .insert({ id: crypto.randomUUID(), email, status: 'PENDING' });
+
+    if (insertErr) {
+      return { status: 'error', message: 'DATABASE TRANSMISSION FAILED' };
+    }
+
     return {
-      status: 'duplicate',
-      message: 'RE-ENLISTMENT NOT REQUIRED',
+      status: 'success',
+      message: 'COMMUNICATION RECEIVED',
     };
+  } catch {
+    return { status: 'error', message: 'DATABASE TRANSMISSION FAILED' };
   }
-
-  await prisma.waitlist.create({
-    data: { email },
-  });
-
-  return {
-    status: 'success',
-    message: 'COMMUNICATION RECEIVED',
-  };
 }

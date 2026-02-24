@@ -67,6 +67,13 @@ create table if not exists public.trip_bundle_trails (
   sort_order int not null
 );
 
+create table if not exists public.waitlist (
+  id text primary key,
+  email text not null unique,
+  status text not null default 'PENDING',
+  created_at timestamptz not null default now()
+);
+
 create table if not exists public.photos (
   id text primary key,
   trail_id text not null references public.trails(id) on delete cascade,
