@@ -48,6 +48,7 @@ async function trySupabaseTrails(search?: string, region?: string) {
         minTireSize: trail.min_tire_size ?? undefined,
         requiredGear: Array.isArray(trail.required_gear) ? (trail.required_gear as string[]) : undefined,
         currentStatus: (trail.current_status as 'Open' | 'Closed' | null) ?? undefined,
+        gpxUrl: trail.gpx_url ?? undefined,
       };
     });
   } catch {

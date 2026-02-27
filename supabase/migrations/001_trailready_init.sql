@@ -20,6 +20,7 @@ create table if not exists public.trails (
   min_tire_size double precision,
   required_gear jsonb,
   current_status text,
+  gpx_url text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

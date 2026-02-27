@@ -35,6 +35,7 @@ export interface Trail {
   minTireSize?: number;
   requiredGear?: string[];
   currentStatus?: 'Open' | 'Closed';
+  gpxUrl?: string;
 }
 
 export interface ConditionReport {

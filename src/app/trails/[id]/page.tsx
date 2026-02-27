@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,6 +25,7 @@ import {
   calculateWeightedStatus,
   WeightedStatusResult
 } from '@/lib/trailOutcome';
+import { GpxPoint, parseGpxToPoints } from '@/lib/gpx';
 import { calculateGlobalStatus, type GlobalStatusResult } from '@/lib/intel-utils';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { Button } from '@/components/ui/button';
@@ -46,7 +48,8 @@ import {
   AlertCircle,
   ExternalLink,
   ChevronDown,
-  Zap
+  Zap,
+  Upload
 } from 'lucide-react';
 
 // Extended trail type with API response fields
@@ -58,6 +61,11 @@ interface TrailWithMeta extends Trail {
     ageInDays: number;
   };
 }
+
+const TrailGpxMap = dynamic(
+  () => import('@/components/TrailGpxMap').then((m) => m.TrailGpxMap),
+  { ssr: false }
+);
 
 export default function TrailDetailPage() {
   const params = useParams();
@@ -74,6 +82,9 @@ export default function TrailDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
   const [navMenuOpen, setNavMenuOpen] = useState(false);
+  const [gpxPoints, setGpxPoints] = useState<GpxPoint[]>([]);
+  const [gpxSource, setGpxSource] = useState<string>('No GPX loaded');
+  const [gpxError, setGpxError] = useState<string>('');
 
   // Re-fetch data when trailId changes or when returning from report submission
   useEffect(() => {
@@ -108,6 +119,50 @@ export default function TrailDetailPage() {
       setIsLoading(false);
     }
   }
+
+  async function handleGpxImport(file: File) {
+    try {
+      const text = await file.text();
+      const parsed = parseGpxToPoints(text);
+      if (parsed.length === 0) {
+        setGpxError('Unable to parse GPX track from file.');
+        return;
+      }
+      setGpxPoints(parsed);
+      setGpxSource(`Imported: ${file.name}`);
+      setGpxError('');
+    } catch {
+      setGpxError('Failed to import GPX file.');
+    }
+  }
+
+  useEffect(() => {
+    const loadGpxFromTrail = async () => {
+      if (!trail?.gpxUrl) {
+        setGpxPoints([]);
+        setGpxSource('No GPX attached to this trail');
+        return;
+      }
+
+      try {
+        const res = await fetch(trail.gpxUrl);
+        const text = await res.text();
+        const parsed = parseGpxToPoints(text);
+        if (parsed.length > 0) {
+          setGpxPoints(parsed);
+          setGpxSource('Trail GPX loaded');
+          setGpxError('');
+        } else {
+          setGpxPoints([]);
+          setGpxSource('No GPX attached to this trail');
+        }
+      } catch {
+        setGpxError('Could not load trail GPX file. You can import one manually.');
+      }
+    };
+
+    void loadGpxFromTrail();
+  }, [trail?.gpxUrl]);
 
   // Calculate outcome for selected vehicle
   const selectedOutcome = useMemo(() => {
@@ -219,6 +274,46 @@ export default function TrailDetailPage() {
                 <span>Difficulty {trail.baseDifficulty}/4</span>
               </>
             )}
+          </div>
+        </motion.div>
+
+        {/* GPX Track Map */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.12 }}
+          className="mb-6"
+        >
+          <div className="bg-stone-100 border border-stone-800 p-4">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <h2 className="text-lg font-semibold font-mono uppercase tracking-wider text-stone-900">
+                Trail Track
+              </h2>
+              <label className="inline-flex items-center gap-2 px-3 py-2 bg-stone-50 border border-stone-800 text-xs font-mono uppercase tracking-wider cursor-pointer hover:bg-stone-100">
+                <Upload className="h-3.5 w-3.5" />
+                Import GPX
+                <input
+                  type="file"
+                  accept=".gpx,application/gpx+xml"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) void handleGpxImport(file);
+                  }}
+                />
+              </label>
+            </div>
+
+            {gpxPoints.length > 0 ? (
+              <TrailGpxMap points={gpxPoints} />
+            ) : (
+              <div className="h-48 border border-dashed border-stone-400 flex items-center justify-center text-sm text-stone-600">
+                No GPX track available. Import a GPX file to view the route.
+              </div>
+            )}
+
+            <p className="mt-2 text-xs text-stone-700">{gpxSource}</p>
+            {gpxError && <p className="mt-1 text-xs text-rose-600">{gpxError}</p>}
           </div>
         </motion.div>
 
