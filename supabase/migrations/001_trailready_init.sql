@@ -40,6 +40,7 @@ create table if not exists public.condition_reports (
 create table if not exists public.user_vehicles (
   id text primary key,
   user_id text not null references public.users(id) on delete cascade,
+  rig_tier text not null,
   make text not null,
   model text not null,
   clearance_inches double precision not null,

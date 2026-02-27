@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const {
     userId,
+    rig_tier,
     make,
     model,
     clearance_inches,
@@ -44,8 +45,8 @@ export async function POST(request: NextRequest) {
     experience_level,
   } = body ?? {};
 
-  if (!userId || !make || !model || !experience_level) {
-    return errors.badRequest('userId, make, model, and experience_level are required');
+  if (!userId || !rig_tier) {
+    return errors.badRequest('userId and rig_tier are required');
   }
 
   if (userId !== authUserId) {
@@ -59,8 +60,9 @@ export async function POST(request: NextRequest) {
   const payload = {
     id: crypto.randomUUID(),
     user_id: userId,
-    make,
-    model,
+    rig_tier,
+    make: make ?? '',
+    model: model ?? '',
     clearance_inches: Number(clearance_inches ?? 0),
     tire_size: Number(tire_size ?? 0),
     has_low_range: Boolean(has_low_range),

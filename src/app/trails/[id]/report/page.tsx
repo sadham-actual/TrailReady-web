@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -12,6 +12,7 @@ import { Trail, Status, Confidence, VEHICLE_CATEGORIES, VehicleCategoryInfo } fr
 import { useVehicle } from '@/contexts/VehicleContext';
 import { toast } from 'sonner';
 import { useUploadThing } from '@/lib/uploadthing';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 // Viewfinder corners for tactical aesthetic
 function ViewfinderCorners({ color = 'border-action-orange' }: { color?: string }) {
@@ -72,9 +73,17 @@ const CONFIDENCE_OPTIONS: { value: Confidence; label: string; description: strin
   },
 ];
 
+function rigTierToVehicleType(tier?: string) {
+  if (tier === 'highClearance4x4') return 'stockSUV_IFS';
+  if (tier === 'modified4x4') return 'lifted4x4_solidAxle';
+  if (tier === 'extremeBuild') return 'lifted4x4_IFS';
+  return 'stockSUV_solidAxle';
+}
+
 export default function FieldReportPage() {
   const params = useParams();
   const router = useRouter();
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const trailId = params.id as string;
   const { selectedVehicle } = useVehicle();
 
@@ -109,15 +118,33 @@ export default function FieldReportPage() {
     loadTrail();
   }, [trailId, router]);
 
-  // Pre-select vehicle from context if available
+  // Pre-select vehicle from context/profile if available
   useEffect(() => {
-    if (selectedVehicle && !vehicleCategory) {
-      const category = VEHICLE_CATEGORIES.find(c => c.mappedType === selectedVehicle);
-      if (category) {
-        setVehicleCategory(category);
+    const hydrateVehicle = async () => {
+      if (selectedVehicle && !vehicleCategory) {
+        const category = VEHICLE_CATEGORIES.find(c => c.mappedType === selectedVehicle);
+        if (category) {
+          setVehicleCategory(category);
+          return;
+        }
       }
-    }
-  }, [selectedVehicle, vehicleCategory]);
+
+      const { data } = await supabase.auth.getSession();
+      const session = data.session;
+      if (!session?.user?.id) return;
+
+      const res = await fetch(`/api/planner/vehicles?userId=${session.user.id}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const json = await res.json();
+      const rigTier = json?.data?.[0]?.rig_tier as string | undefined;
+      const mappedType = rigTierToVehicleType(rigTier);
+      const category = VEHICLE_CATEGORIES.find(c => c.mappedType === mappedType);
+      if (category) setVehicleCategory(category);
+    };
+
+    void hydrateVehicle();
+  }, [selectedVehicle, vehicleCategory, supabase]);
 
   const handleImagesChange = useCallback((newImages: ImageFile[]) => {
     setImages(newImages);

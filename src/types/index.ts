@@ -136,3 +136,15 @@ export const VEHICLE_CATEGORIES: VehicleCategoryInfo[] = [
     capabilityLevel: 4,
   },
 ];
+
+export function getRigTierLabel(vehicleType: VehicleType): string {
+  if (vehicleType.startsWith('stockSUV')) {
+    return vehicleType === 'stockSUV_IFS' ? 'High Clearance 4x4' : 'Stock AWD';
+  }
+  if (vehicleType.startsWith('lifted4x4')) {
+    return vehicleType === 'lifted4x4_IFS' ? 'Extreme Build' : 'Modified 4x4';
+  }
+  if (vehicleType === 'sideBySide') return 'Modified 4x4';
+  if (vehicleType === 'dirtBike') return 'Extreme Build';
+  return 'Stock AWD';
+}

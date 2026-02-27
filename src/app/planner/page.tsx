@@ -12,6 +12,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 const cache = new PlannerSyncService(new IndexedDbCacheAdapter());
 
 const defaultVehicle: UserVehicle = {
+  rig_tier: 'highClearance4x4',
   make: 'Jeep',
   model: 'Wrangler',
   clearance_inches: 10.8,
@@ -110,6 +111,7 @@ export default function PlannerPage() {
         if (vehiclesJson?.success && vehiclesJson.data?.length > 0) {
           const v = vehiclesJson.data[0];
           setVehicle({
+            rig_tier: v.rig_tier ?? 'stockAWD',
             make: v.make,
             model: v.model,
             clearance_inches: Number(v.clearance_inches),
@@ -245,7 +247,14 @@ export default function PlannerPage() {
         <section className="border rounded p-4 lg:col-span-1">
           <h2 className="font-semibold mb-3">My Vehicle</h2>
           <div className="space-y-2 text-sm">
-            <input className="w-full border rounded px-2 py-1" value={vehicle.make} onChange={(e) => setVehicle({ ...vehicle, make: e.target.value })} placeholder="Make" />
+            <label className="block text-xs uppercase tracking-wide text-stone-600">Rig tier</label>
+            <select className="w-full border rounded px-2 py-1" value={vehicle.rig_tier} onChange={(e) => setVehicle({ ...vehicle, rig_tier: e.target.value as UserVehicle['rig_tier'] })}>
+              <option value="stockAWD">Stock AWD</option>
+              <option value="highClearance4x4">High Clearance 4x4</option>
+              <option value="modified4x4">Modified 4x4</option>
+              <option value="extremeBuild">Extreme Build</option>
+            </select>
+            <input className="w-full border rounded px-2 py-1" value={vehicle.make} onChange={(e) => setVehicle({ ...vehicle, make: e.target.value })} placeholder="Make (optional)" />
             <input className="w-full border rounded px-2 py-1" value={vehicle.model} onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })} placeholder="Model" />
             <input className="w-full border rounded px-2 py-1" type="number" value={vehicle.clearance_inches} onChange={(e) => setVehicle({ ...vehicle, clearance_inches: Number(e.target.value) })} placeholder="Clearance (in)" />
             <input className="w-full border rounded px-2 py-1" type="number" value={vehicle.tire_size} onChange={(e) => setVehicle({ ...vehicle, tire_size: Number(e.target.value) })} placeholder="Tire size" />

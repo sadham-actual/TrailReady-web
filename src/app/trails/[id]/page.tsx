@@ -15,7 +15,8 @@ import {
   VEHICLE_CATEGORIES,
   VehicleCategoryInfo,
   VehicleType,
-  VEHICLE_TYPE_LABELS
+  VEHICLE_TYPE_LABELS,
+  getRigTierLabel
 } from '@/types';
 import {
   getVehicleOutcomeWithFallback,
@@ -918,7 +919,10 @@ function ReportsList({ reports }: { reports: ConditionReport[] }) {
                 <Icon className={`h-4 w-4 ${statusColor}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="text-[10px] px-2 py-0.5 border border-action-orange text-action-orange font-mono uppercase tracking-wider font-semibold">
+                    {getRigTierLabel(report.vehicleType)}
+                  </span>
                   <span className={`text-sm font-semibold font-mono uppercase tracking-wider ${
                     report.status === 'clear' ? 'text-emerald-600' :
                     report.status === 'rough' ? 'text-amber-600' : 'text-rose-600'

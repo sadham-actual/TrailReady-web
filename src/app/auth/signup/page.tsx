@@ -10,7 +10,7 @@ export default function SignupPage() {
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
-  const next = searchParams.get('next') || '/';
+  const next = searchParams.get('next') || '/profile';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
