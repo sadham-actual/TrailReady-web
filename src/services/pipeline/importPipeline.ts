@@ -9,6 +9,18 @@ import { BBox, ImportSegmentCandidate, ImportSummary } from './importers/types';
 import { lineStringToWkt } from './importers/normalize';
 import { SOURCE_CATALOG } from './sourceCatalog';
 
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.openstreetmap.ru/api/interpreter',
+];
+
+const OSM_IMPORT_HEADERS = {
+  'Content-Type': 'application/x-www-form-urlencoded',
+  'User-Agent': 'TrailReady/0.1 (+https://trailready.sadham.org)',
+  Accept: 'application/json,text/plain,*/*',
+};
+
 async function ensureSource(sourceSlug: string) {
   const supabase = createSupabaseServiceClient();
   const catalog = SOURCE_CATALOG[sourceSlug] ?? {
@@ -20,24 +32,77 @@ async function ensureSource(sourceSlug: string) {
     shareAlike: false,
   };
 
-  await supabase.from('sources').upsert({
-    slug: catalog.slug,
-    name: catalog.name,
-    url: catalog.url,
-    license: catalog.license,
-    description: catalog.termsNotes,
-    properties: {
-      attribution_text: catalog.attributionText,
-      attribution_required: catalog.attributionRequired,
-      share_alike: catalog.shareAlike,
-    },
-  }, { onConflict: 'slug' });
+  await supabase
+    .from('sources')
+    .upsert(
+      {
+        slug: catalog.slug,
+        name: catalog.name,
+        url: catalog.url,
+        license: catalog.license,
+        description: catalog.termsNotes,
+        properties: {
+          attribution_text: catalog.attributionText,
+          attribution_required: catalog.attributionRequired,
+          share_alike: catalog.shareAlike,
+        },
+      },
+      { onConflict: 'slug' }
+    );
 
   const { data } = await supabase.from('sources').select('id').eq('slug', sourceSlug).single();
   return data?.id as string;
 }
 
-async function parseInput(sourceName: string, inputPathOrUrl: string, bbox?: BBox): Promise<ImportSegmentCandidate[]> {
+async function parseJsonResponseOrThrow(res: Response, endpointLabel: string) {
+  const contentType = res.headers.get('content-type') || '';
+  const text = await res.text();
+
+  if (!res.ok) {
+    throw new Error(
+      `[OSM Import] ${endpointLabel} returned HTTP ${res.status}. Body: ${text.slice(0, 240)}`
+    );
+  }
+
+  if (!contentType.includes('json')) {
+    throw new Error(
+      `[OSM Import] ${endpointLabel} returned non-JSON response (${contentType || 'unknown'}). Body: ${text.slice(0, 240)}`
+    );
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(
+      `[OSM Import] ${endpointLabel} returned invalid JSON. Body: ${text.slice(0, 240)}`
+    );
+  }
+}
+
+async function fetchOverpassWithFallback(query: string) {
+  const errors: string[] = [];
+
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: OSM_IMPORT_HEADERS,
+        body: `data=${encodeURIComponent(query)}`,
+      });
+      return await parseJsonResponseOrThrow(res, endpoint);
+    } catch (e) {
+      errors.push(`${endpoint}: ${(e as Error).message}`);
+    }
+  }
+
+  throw new Error(`[OSM Import] All Overpass endpoints failed. ${errors.join(' | ')}`);
+}
+
+async function parseInput(
+  sourceName: string,
+  inputPathOrUrl: string,
+  bbox?: BBox
+): Promise<ImportSegmentCandidate[]> {
   if (sourceName === 'geojson') {
     const raw = await fs.readFile(inputPathOrUrl, 'utf-8');
     return parseGeoJsonSegments(JSON.parse(raw), 'mvum');
@@ -49,18 +114,15 @@ async function parseInput(sourceName: string, inputPathOrUrl: string, bbox?: BBo
 
   if (sourceName === 'osm') {
     if (inputPathOrUrl.startsWith('http')) {
-      const res = await fetch(inputPathOrUrl);
-      return parseOverpassSegments(await res.json());
+      const res = await fetch(inputPathOrUrl, { headers: { Accept: 'application/json,text/plain,*/*' } });
+      const json = await parseJsonResponseOrThrow(res, inputPathOrUrl);
+      return parseOverpassSegments(json);
     }
 
     if (!bbox) throw new Error('bbox is required for OSM import without URL');
     const query = buildOverpassQuery(bbox);
-    const res = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encodeURIComponent(query)}`,
-    });
-    return parseOverpassSegments(await res.json());
+    const json = await fetchOverpassWithFallback(query);
+    return parseOverpassSegments(json);
   }
 
   throw new Error(`Unsupported source_name: ${sourceName}`);
