@@ -26,6 +26,7 @@ import {
   WeightedStatusResult
 } from '@/lib/trailOutcome';
 import { GpxPoint, parseGpxToPoints } from '@/lib/gpx';
+import { ElevationProfile } from '@/components/ElevationProfile';
 import { calculateGlobalStatus, type GlobalStatusResult } from '@/lib/intel-utils';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { Button } from '@/components/ui/button';
@@ -314,6 +315,21 @@ export default function TrailDetailPage() {
 
             <p className="mt-2 text-xs text-stone-700">{gpxSource}</p>
             {gpxError && <p className="mt-1 text-xs text-rose-600">{gpxError}</p>}
+          </div>
+        </motion.div>
+
+        {/* Elevation Profile */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.14 }}
+          className="mb-6"
+        >
+          <div className="bg-stone-100 border border-stone-800 p-4">
+            <h2 className="text-lg font-semibold font-mono uppercase tracking-wider text-stone-900 mb-3">
+              Elevation Profile
+            </h2>
+            <ElevationProfile points={gpxPoints} />
           </div>
         </motion.div>
 
