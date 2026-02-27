@@ -108,6 +108,44 @@ docker compose down -v
 
 ---
 
+## Stage 5 — Import Job Runner
+
+A lightweight idempotent job runner is included for scheduled imports.
+
+### Commands
+
+```bash
+# DFW-first seed (recommended for quick validation)
+npm run import:dfw
+
+# Texas-first seed
+npm run import:texas
+
+# Generic job runner (preset: dfw|texas)
+npm run import:jobs -- texas
+```
+
+All commands print structured JSON summaries:
+- `scanned`
+- `inserted`
+- `updated`
+- `skipped`
+- `errors`
+
+### Cron-friendly wrapper
+
+Use `scripts/cron-import.sh` to run imports and write timestamped logs:
+
+```bash
+# run once
+scripts/cron-import.sh dfw
+
+# example cron (every day at 03:15 local)
+15 3 * * * cd /Users/axis/.openclaw/workspace/trailready-web && scripts/cron-import.sh texas
+```
+
+Logs are written to `logs/import-jobs/`.
+
 ## Supabase Hosted
 
 Run the same migration files in the **Supabase SQL Editor** or via the Supabase CLI:

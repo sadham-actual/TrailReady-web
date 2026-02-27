@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "import:source": "tsx scripts/import-source.ts"
+    "import:source": "tsx scripts/import-source.ts",
+    "import:jobs": "tsx scripts/run-import-jobs.ts",
+    "import:texas": "tsx scripts/run-import-jobs.ts texas",
+    "import:dfw": "tsx scripts/run-import-jobs.ts dfw"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
