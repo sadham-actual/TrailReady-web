@@ -8,6 +8,7 @@ import { parseShapefileSegments } from './importers/shapefile';
 import { BBox, ImportSegmentCandidate, ImportSummary } from './importers/types';
 import { lineStringToWkt } from './importers/normalize';
 import { SOURCE_CATALOG } from './sourceCatalog';
+import { splitBBox } from './importers/tiling';
 
 const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
@@ -20,6 +21,9 @@ const OSM_IMPORT_HEADERS = {
   'User-Agent': 'TrailReady/0.1 (+https://trailready.sadham.org)',
   Accept: 'application/json,text/plain,*/*',
 };
+
+const OVERPASS_TIMEOUT_MS = 45000;
+const OVERPASS_RETRIES = 2;
 
 async function ensureSource(sourceSlug: string) {
   const supabase = createSupabaseServiceClient();
@@ -79,23 +83,60 @@ async function parseJsonResponseOrThrow(res: Response, endpointLabel: string) {
   }
 }
 
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = OVERPASS_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function fetchOverpassEndpoint(endpoint: string, query: string) {
+  let lastErr: Error | null = null;
+
+  for (let attempt = 1; attempt <= OVERPASS_RETRIES + 1; attempt++) {
+    try {
+      const res = await fetchWithTimeout(endpoint, {
+        method: 'POST',
+        headers: OSM_IMPORT_HEADERS,
+        body: `data=${encodeURIComponent(query)}`,
+      });
+      return await parseJsonResponseOrThrow(res, `${endpoint} (attempt ${attempt})`);
+    } catch (e) {
+      lastErr = e as Error;
+      if (attempt <= OVERPASS_RETRIES) {
+        const delay = 500 * attempt;
+        await new Promise((r) => setTimeout(r, delay));
+      }
+    }
+  }
+
+  throw lastErr ?? new Error('Unknown Overpass error');
+}
+
 async function fetchOverpassWithFallback(query: string) {
   const errors: string[] = [];
 
   for (const endpoint of OVERPASS_ENDPOINTS) {
     try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: OSM_IMPORT_HEADERS,
-        body: `data=${encodeURIComponent(query)}`,
-      });
-      return await parseJsonResponseOrThrow(res, endpoint);
+      return await fetchOverpassEndpoint(endpoint, query);
     } catch (e) {
       errors.push(`${endpoint}: ${(e as Error).message}`);
     }
   }
 
   throw new Error(`[OSM Import] All Overpass endpoints failed. ${errors.join(' | ')}`);
+}
+
+function dedupeCandidates(candidates: ImportSegmentCandidate[]) {
+  const map = new Map<string, ImportSegmentCandidate>();
+  for (const c of candidates) {
+    const key = `${c.sourceSlug}:${c.sourceFeatureId}`;
+    if (!map.has(key)) map.set(key, c);
+  }
+  return [...map.values()];
 }
 
 async function parseInput(
@@ -114,15 +155,27 @@ async function parseInput(
 
   if (sourceName === 'osm') {
     if (inputPathOrUrl.startsWith('http')) {
-      const res = await fetch(inputPathOrUrl, { headers: { Accept: 'application/json,text/plain,*/*' } });
+      const res = await fetchWithTimeout(inputPathOrUrl, {
+        headers: { Accept: 'application/json,text/plain,*/*' },
+      });
       const json = await parseJsonResponseOrThrow(res, inputPathOrUrl);
       return parseOverpassSegments(json);
     }
 
     if (!bbox) throw new Error('bbox is required for OSM import without URL');
-    const query = buildOverpassQuery(bbox);
-    const json = await fetchOverpassWithFallback(query);
-    return parseOverpassSegments(json);
+
+    // Tile large bounding boxes to improve reliability and reduce timeouts.
+    const totalArea = Math.abs((bbox.maxLng - bbox.minLng) * (bbox.maxLat - bbox.minLat));
+    const tiles = totalArea > 1.0 ? splitBBox(bbox, 3, 3) : splitBBox(bbox, 2, 2);
+
+    const all: ImportSegmentCandidate[] = [];
+    for (const tile of tiles) {
+      const query = buildOverpassQuery(tile);
+      const json = await fetchOverpassWithFallback(query);
+      all.push(...parseOverpassSegments(json));
+    }
+
+    return dedupeCandidates(all);
   }
 
   throw new Error(`Unsupported source_name: ${sourceName}`);

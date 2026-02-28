@@ -11,7 +11,8 @@
     "import:source": "tsx scripts/import-source.ts",
     "import:jobs": "tsx scripts/run-import-jobs.ts",
     "import:texas": "tsx scripts/run-import-jobs.ts texas",
-    "import:dfw": "tsx scripts/run-import-jobs.ts dfw"
+    "import:dfw": "tsx scripts/run-import-jobs.ts dfw",
+    "import:file": "tsx scripts/import-file.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

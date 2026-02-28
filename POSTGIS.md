@@ -123,6 +123,10 @@ npm run import:texas
 
 # Generic job runner (preset: dfw|texas)
 npm run import:jobs -- texas
+
+# Import from local file (reliable, no Overpass throttling)
+npm run import:file -- ./data/trails.geojson
+npm run import:file -- ./data/trails.shp shapefile
 ```
 
 All commands print structured JSON summaries:
