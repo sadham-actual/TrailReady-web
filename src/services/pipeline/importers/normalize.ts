@@ -2,8 +2,8 @@ import { Coordinate } from '@/lib/pipeline/types';
 import { ImportSegmentCandidate } from './types';
 
 export function lineStringToWkt(coords: Coordinate[]): string {
-  const pairs = coords.map((c) => `${c[0]} ${c[1]}`).join(', ');
-  return `SRID=4326;LINESTRING()`;
+ const pairs = coords.map((c) => `${c[0]} ${c[1]}`).join(', ');
+ return `SRID=4326;LINESTRING(${pairs})`;
 }
 
 export function normalizeStatus(input?: unknown): ImportSegmentCandidate['status'] {
