@@ -247,7 +247,7 @@ export async function import_source(
       } else {
         summary.skipped++;
       }
-    } catch {
+    } catch (e) {
       summary.errors++;
  console.error('[import_source row error]', {
  source: source_name,
