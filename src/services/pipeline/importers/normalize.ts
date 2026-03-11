@@ -3,7 +3,7 @@ import { ImportSegmentCandidate } from './types';
 
 export function lineStringToWkt(coords: Coordinate[]): string {
   const pairs = coords.map((c) => `${c[0]} ${c[1]}`).join(', ');
-  return `LINESTRING(${pairs})`;
+  return `SRID=4326;LINESTRING()`;
 }
 
 export function normalizeStatus(input?: unknown): ImportSegmentCandidate['status'] {
