@@ -172,7 +172,9 @@ async function parseInput(
     for (const tile of tiles) {
       const query = buildOverpassQuery(tile);
       const json = await fetchOverpassWithFallback(query);
-      all.push(...parseOverpassSegments(json));
+      const parsed = parseOverpassSegments(json);
+      // Avoid spread on very large arrays (can throw "Maximum call stack size exceeded")
+      for (const seg of parsed) all.push(seg);
     }
 
     return dedupeCandidates(all);
