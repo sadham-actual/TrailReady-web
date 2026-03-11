@@ -249,6 +249,12 @@ export async function import_source(
       }
     } catch {
       summary.errors++;
+ console.error('[import_source row error]', {
+ source: source_name,
+ feature: c.sourceFeatureId,
+ message: e instanceof Error ? e.message : String(e),
+ details: e
+ });
     }
   }
 
