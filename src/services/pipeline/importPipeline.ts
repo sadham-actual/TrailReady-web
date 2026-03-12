@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { createSupabaseServiceClient } from '@/lib/supabase/server';
 import { computeGeomHash } from '@/lib/pipeline/geometry';
+import { Coordinate } from '@/lib/pipeline/types';
 import { parseGeoJsonSegments } from './importers/geojson';
 import { parseOverpassSegments, buildOverpassQuery } from './importers/osm';
 import { parseShapefileSegments } from './importers/shapefile';
@@ -189,6 +190,157 @@ function buildCanonicalHash(candidate: ImportSegmentCandidate): string {
   return createHash('sha256').update(JSON.stringify(candidate.coordinates)).digest('hex');
 }
 
+function computeBBox(coords: Coordinate[]) {
+  let minLng = Infinity;
+  let minLat = Infinity;
+  let maxLng = -Infinity;
+  let maxLat = -Infinity;
+
+  for (const [lng, lat] of coords) {
+    minLng = Math.min(minLng, lng);
+    minLat = Math.min(minLat, lat);
+    maxLng = Math.max(maxLng, lng);
+    maxLat = Math.max(maxLat, lat);
+  }
+
+  if (!Number.isFinite(minLng) || !Number.isFinite(minLat) || !Number.isFinite(maxLng) || !Number.isFinite(maxLat)) {
+    return null;
+  }
+
+  return { minLng, minLat, maxLng, maxLat };
+}
+
+function bboxPolygonToWkt(coords: Coordinate[]) {
+  const bbox = computeBBox(coords);
+  if (!bbox) return null;
+  const { minLng, minLat, maxLng, maxLat } = bbox;
+  return `SRID=4326;POLYGON((${minLng} ${minLat}, ${maxLng} ${minLat}, ${maxLng} ${maxLat}, ${minLng} ${maxLat}, ${minLng} ${minLat}))`;
+}
+
+function deriveTrailName(candidate: ImportSegmentCandidate) {
+  const explicit = candidate.name?.trim();
+  if (explicit) return explicit;
+  return `${candidate.sourceSlug.toUpperCase()} ${candidate.sourceFeatureId}`;
+}
+
+function slugify(input: string) {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+}
+
+function buildTrailSlug(candidate: ImportSegmentCandidate) {
+  const base = slugify(candidate.name || candidate.sourceFeatureId || candidate.sourceSlug);
+  const feature = slugify(candidate.sourceFeatureId || 'trail');
+  return [base, feature].filter(Boolean).join('-').slice(0, 120) || `trail-${Date.now()}`;
+}
+
+function deriveTrailProperties(candidate: ImportSegmentCandidate) {
+  return {
+    imported_via: 'stage6-materialization',
+    source_slug: candidate.sourceSlug,
+    source_feature_id: candidate.sourceFeatureId,
+    source_properties: candidate.properties ?? {},
+  };
+}
+
+async function upsertSegment(supabase: ReturnType<typeof createSupabaseServiceClient>, sourceId: string, candidate: ImportSegmentCandidate, geomHash: string) {
+  const payload = {
+    source_id: sourceId,
+    source_feature_id: candidate.sourceFeatureId,
+    name: candidate.name ?? null,
+    geom: lineStringToWkt(candidate.coordinates),
+    geom_hash: geomHash,
+    allowed_uses: candidate.allowedUses ?? {},
+    status: candidate.status ?? 'unknown',
+    surface: candidate.surface ?? null,
+    difficulty: candidate.difficulty ?? null,
+    properties: candidate.properties ?? {},
+  };
+
+  const { data: existing, error: selErr } = await supabase
+    .from('trail_segments')
+    .select('id,geom_hash')
+    .eq('source_id', sourceId)
+    .eq('source_feature_id', candidate.sourceFeatureId)
+    .maybeSingle();
+
+  if (selErr) throw selErr;
+
+  if (!existing) {
+    const { data, error } = await supabase.from('trail_segments').insert(payload).select('id').single();
+    if (error) throw error;
+    return { segmentId: data.id as string, action: 'inserted' as const };
+  }
+
+  if (existing.geom_hash !== geomHash) {
+    const { error } = await supabase.from('trail_segments').update(payload).eq('id', existing.id);
+    if (error) throw error;
+    return { segmentId: existing.id as string, action: 'updated' as const };
+  }
+
+  return { segmentId: existing.id as string, action: 'skipped' as const };
+}
+
+async function materializeTrailForSegment(
+  supabase: ReturnType<typeof createSupabaseServiceClient>,
+  sourceId: string,
+  candidate: ImportSegmentCandidate,
+  segmentId: string,
+  geomHash: string
+) {
+  const trailPayload = {
+    name: deriveTrailName(candidate),
+    slug: buildTrailSlug(candidate),
+    region: (candidate.properties?.region as string | undefined) ?? null,
+    source_id: sourceId,
+    source_feature_id: candidate.sourceFeatureId,
+    geom_hash: geomHash,
+    bbox: bboxPolygonToWkt(candidate.coordinates),
+    difficulty: candidate.difficulty ?? null,
+    allowed_uses: candidate.allowedUses ?? {},
+    status: candidate.status ?? 'unknown',
+    surface: candidate.surface ?? null,
+    properties: deriveTrailProperties(candidate),
+    description: (candidate.properties?.description as string | undefined) ?? null,
+    tags: [],
+  };
+
+  const { data: existingTrail, error: trailSelectError } = await supabase
+    .from('geo_trails')
+    .select('id')
+    .eq('source_id', sourceId)
+    .eq('source_feature_id', candidate.sourceFeatureId)
+    .maybeSingle();
+
+  if (trailSelectError) throw trailSelectError;
+
+  let trailId: string;
+  if (!existingTrail) {
+    const { data, error } = await supabase.from('geo_trails').insert(trailPayload).select('id').single();
+    if (error) throw error;
+    trailId = data.id as string;
+  } else {
+    const { error } = await supabase.from('geo_trails').update(trailPayload).eq('id', existingTrail.id);
+    if (error) throw error;
+    trailId = existingTrail.id as string;
+  }
+
+  const { error: linkError } = await supabase.from('trail_trail_segments').upsert(
+    {
+      trail_id: trailId,
+      segment_id: segmentId,
+      sort_order: 0,
+      reversed: false,
+    },
+    { onConflict: 'trail_id,segment_id' }
+  );
+
+  if (linkError) throw linkError;
+}
+
 export async function import_source(
   source_name: string,
   input_path_or_url: string,
@@ -214,47 +366,20 @@ export async function import_source(
   for (const c of candidates) {
     try {
       const geom_hash = buildCanonicalHash(c);
-      const payload = {
-        source_id: sourceId,
-        source_feature_id: c.sourceFeatureId,
-        name: c.name ?? null,
-        geom: lineStringToWkt(c.coordinates),
-        geom_hash,
-        allowed_uses: c.allowedUses ?? {},
-        status: c.status ?? 'unknown',
-        surface: c.surface ?? null,
-        difficulty: c.difficulty ?? null,
-        properties: c.properties ?? {},
-      };
+      const { segmentId, action } = await upsertSegment(supabase, sourceId, c, geom_hash);
+      await materializeTrailForSegment(supabase, sourceId, c, segmentId, geom_hash);
 
-      const { data: existing, error: selErr } = await supabase
-        .from('trail_segments')
-        .select('id,geom_hash')
-        .eq('source_id', sourceId)
-        .eq('source_feature_id', c.sourceFeatureId)
-        .maybeSingle();
-
-      if (selErr) throw selErr;
-
-      if (!existing) {
-        const { error } = await supabase.from('trail_segments').insert(payload);
-        if (error) throw error;
-        summary.inserted++;
-      } else if (existing.geom_hash !== geom_hash) {
-        const { error } = await supabase.from('trail_segments').update(payload).eq('id', existing.id);
-        if (error) throw error;
-        summary.updated++;
-      } else {
-        summary.skipped++;
-      }
+      if (action === 'inserted') summary.inserted++;
+      else if (action === 'updated') summary.updated++;
+      else summary.skipped++;
     } catch (e) {
       summary.errors++;
- console.error('[import_source row error]', {
- source: source_name,
- feature: c.sourceFeatureId,
- message: e instanceof Error ? e.message : String(e),
- details: e
- });
+      console.error('[import_source row error]', {
+        source: source_name,
+        feature: c.sourceFeatureId,
+        message: e instanceof Error ? e.message : String(e),
+        details: e,
+      });
     }
   }
 
