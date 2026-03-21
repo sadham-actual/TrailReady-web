@@ -5,20 +5,19 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { GpxPoint } from '@/lib/gpx';
 
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
+const DEFAULT_MARKER_ICON = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';
+const DEFAULT_MARKER_ICON_2X = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png';
+const DEFAULT_MARKER_SHADOW = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png';
 
-const DefaultIcon = L.icon({
-  iconUrl: icon.src,
-  iconRetinaUrl: iconRetina.src,
-  shadowUrl: iconShadow.src,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-L.Marker.prototype.options.icon = DefaultIcon;
+if (typeof window !== 'undefined') {
+  delete (L.Icon.Default.prototype as L.Icon.Default & { _getIconUrl?: unknown })._getIconUrl;
+
+  L.Icon.Default.mergeOptions({
+    iconUrl: DEFAULT_MARKER_ICON,
+    iconRetinaUrl: DEFAULT_MARKER_ICON_2X,
+    shadowUrl: DEFAULT_MARKER_SHADOW,
+  });
+}
 
 export function TrailGpxMap({ points }: { points: GpxPoint[] }) {
   if (points.length === 0) return null;

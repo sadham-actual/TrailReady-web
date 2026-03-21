@@ -4,6 +4,7 @@ import { Trail } from '@/types';
 import { getReportFreshness } from '@/lib/trailOutcome';
 import { getMockTrail, getMockReports } from '@/data/sampleTrails';
 import { createSupabaseServiceClient } from '@/lib/supabase/server';
+import { mapGeoTrailDetailToTrail } from '@/lib/pipeline/geoTrailAdapters';
 
 interface TrailWithMeta extends Trail {
   baseDifficulty?: number;
@@ -56,6 +57,24 @@ async function trySupabaseTrail(id: string): Promise<TrailWithMeta | null | 'not
   }
 }
 
+async function trySupabaseGeoTrail(id: string): Promise<TrailWithMeta | null | 'not_found'> {
+  try {
+    const supabase = createSupabaseServiceClient();
+
+    const [{ data: trail, error: trailErr }, { data: segmentRows, error: segErr }] = await Promise.all([
+      supabase.from('geo_trails').select('*').eq('id', id).maybeSingle(),
+      supabase.rpc('geo_trail_segments', { p_trail_id: id }),
+    ]);
+
+    if (trailErr || segErr) return null;
+    if (!trail) return 'not_found';
+
+    return mapGeoTrailDetailToTrail(trail, segmentRows ?? []);
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -65,6 +84,9 @@ export async function GET(
 
     const dbTrail = await trySupabaseTrail(id);
     if (dbTrail !== null && dbTrail !== 'not_found') return successResponse(dbTrail);
+
+    const geoTrail = await trySupabaseGeoTrail(id);
+    if (geoTrail !== null && geoTrail !== 'not_found') return successResponse(geoTrail);
 
     const mockTrail = getMockTrail(id);
     if (!mockTrail) return errors.notFound('Trail');

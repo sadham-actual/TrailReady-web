@@ -6,7 +6,6 @@ import { createSupabaseServiceClient } from '@/lib/supabase/server';
 
 async function trySupabaseReports(trailId: string): Promise<ConditionReport[] | null | 'not_found'> {
   try {
-    if (process.env.USE_MOCK_DATA === 'true') return null;
     const supabase = createSupabaseServiceClient();
 
     const { data: trail, error: trailErr } = await supabase
@@ -16,7 +15,18 @@ async function trySupabaseReports(trailId: string): Promise<ConditionReport[] | 
       .maybeSingle();
 
     if (trailErr) return null;
-    if (!trail) return 'not_found';
+
+    if (!trail) {
+      const { data: geoTrail, error: geoTrailErr } = await supabase
+        .from('geo_trails')
+        .select('id')
+        .eq('id', trailId)
+        .maybeSingle();
+
+      if (geoTrailErr) return null;
+      if (!geoTrail) return 'not_found';
+      return [];
+    }
 
     const { data: reports, error } = await supabase
       .from('condition_reports')
@@ -49,7 +59,7 @@ export async function GET(
     const { id: trailId } = await params;
 
     const dbReports = await trySupabaseReports(trailId);
-    if (dbReports !== null && dbReports !== 'not_found' && dbReports.length > 0) {
+    if (dbReports !== null && dbReports !== 'not_found') {
       return successResponse(dbReports);
     }
 
