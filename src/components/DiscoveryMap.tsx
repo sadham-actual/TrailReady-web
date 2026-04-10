@@ -495,6 +495,7 @@ export function DiscoveryMap({
   const { selectedVehicle } = useVehicle();
   const [trails, setTrails] = useState<TrailWithData[]>([]);
   const [trailReports, setTrailReports] = useState<Record<string, ConditionReport[]>>({});
+  const [geoSegmentPaths, setGeoSegmentPaths] = useState<Map<string, LatLng[]>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [coords, setCoords] = useState({ lat: 39.8283, lng: -98.5795 });
   const [hoveredTrailId, setHoveredTrailId] = useState<string | null>(null);
@@ -526,11 +527,26 @@ export function DiscoveryMap({
     onFilteredTrailsChange?.(filteredTrails as Trail[]);
   }, [filteredTrails, onFilteredTrailsChange]);
 
-  // Fetch trails and their reports
+  // Fetch trails, their reports, and real segment geometry
   useEffect(() => {
     async function fetchData() {
       try {
-        const trailData = await trailService.getTrails();
+        const [trailData, segmentsRes] = await Promise.all([
+          trailService.getTrails(),
+          fetch('/api/geo/segments').then((r) => r.json()).catch(() => null),
+        ]);
+
+        // Build trailId → LatLng[] map from real segment geometry
+        if (segmentsRes?.success && Array.isArray(segmentsRes.data)) {
+          const pathMap = new Map<string, LatLng[]>();
+          for (const seg of segmentsRes.data) {
+            if (seg.trailId && Array.isArray(seg.coords) && seg.coords.length >= 2) {
+              pathMap.set(seg.trailId, seg.coords);
+            }
+          }
+          setGeoSegmentPaths(pathMap);
+        }
+
         setTrails(trailData as TrailWithData[]);
 
         const reportPromises = trailData.map((trail) =>
@@ -577,9 +593,15 @@ export function DiscoveryMap({
     setCoords({ lat, lng });
   }, []);
 
-  // Default center (Colorado - good for off-road trails)
-  const defaultCenter: [number, number] = [39.5501, -105.7821];
-  const defaultZoom = 9;
+  // Auto-center on the first geo trail with real segments, otherwise US center
+  const defaultCenter: [number, number] = (() => {
+    if (geoSegmentPaths.size > 0) {
+      const firstPath = geoSegmentPaths.values().next().value;
+      if (firstPath && firstPath.length > 0) return firstPath[0] as [number, number];
+    }
+    return [39.8283, -98.5795]; // geographic center of US
+  })();
+  const defaultZoom = geoSegmentPaths.size > 0 ? 13 : 5;
 
   // Loading state
   if (isLoading) {
@@ -596,10 +618,16 @@ export function DiscoveryMap({
     );
   }
 
-  // Enhance trails with generated paths
+  // Merge real segment geometry into trails, fall back to generated paths
   const trailsWithPaths = filteredTrails
     .filter((trail) => trail.latitude && trail.longitude)
-    .map((trail) => ensureTrailPath(trail));
+    .map((trail) => {
+      const realPath = geoSegmentPaths.get(trail.id);
+      const trailWithRealPath = realPath
+        ? { ...trail, pathCoordinates: realPath }
+        : trail;
+      return ensureTrailPath(trailWithRealPath);
+    });
 
   return (
     <div className="relative w-full h-full bg-bone touch-none">
