@@ -3,7 +3,7 @@ import { BBox, ImportSummary } from './importers/types';
 
 export interface ImportJob {
   name: string;
-  sourceName: 'osm' | 'geojson' | 'shapefile' | string;
+  sourceName: 'osm' | 'geojson' | 'shapefile' | 'geofabrik' | string;
   inputPathOrUrl: string;
   bbox?: BBox;
   enabled?: boolean;
@@ -71,4 +71,17 @@ export function texasBBoxPreset(): BBox {
 
 export function dfwBBoxPreset(): BBox {
   return { minLng: -98.10, minLat: 32.40, maxLng: -96.30, maxLat: 33.40 };
+}
+
+export function barnwellBBoxPreset(): BBox {
+  return { minLng: -94.90, minLat: 32.78, maxLng: -94.85, maxLat: 32.83 };
+}
+
+export function geofabrikJobForArea(
+  name: string,
+  stateUrl: string,
+  bbox: BBox,
+  enabled = true
+): ImportJob {
+  return { name, sourceName: 'geofabrik', inputPathOrUrl: stateUrl, bbox, enabled };
 }

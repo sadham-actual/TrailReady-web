@@ -1,8 +1,9 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Crosshair } from 'lucide-react';
+import { Crosshair, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { HeroSearch } from '@/components/landing/HeroSearch';
 
 // Topographic pattern SVG component with earth-tone strokes
@@ -123,13 +124,21 @@ export function Hero() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.35 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-3"
           >
-            <a
+            <Link
+              href="/trails"
+              className="inline-flex items-center justify-center gap-2 rounded-none bg-action-orange px-8 py-4 font-mono text-sm font-semibold uppercase tracking-wider text-white shadow-[3px_3px_0_0_var(--color-action-orange-dark)] hover:shadow-[1px_1px_0_0_var(--color-action-orange-dark)] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
+            >
+              Browse Trails
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+            <Link
               href="/waitlist"
-              className="inline-flex items-center justify-center rounded-none bg-orange-500 px-8 py-4 font-mono text-sm font-semibold uppercase tracking-wider text-stone-100 transition-colors hover:bg-orange-600"
+              className="inline-flex items-center justify-center gap-2 rounded-none bg-white border border-stone-border px-6 py-4 font-mono text-sm font-medium uppercase tracking-wider text-deep-stone shadow-[2px_2px_0_0_var(--color-stone-border)] hover:shadow-[1px_1px_0_0_var(--color-stone-border)] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
             >
               Join the Expedition
-            </a>
+            </Link>
           </motion.div>
         </motion.div>
 
@@ -163,20 +172,21 @@ export function Hero() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.7 }}
-          className="flex items-center justify-center gap-8 pt-8"
+          className="flex items-center justify-center gap-3 pt-8 flex-wrap"
         >
           {[
-            { value: '2,400+', label: 'Trails' },
-            { value: '12K+', label: 'Reports' },
-            { value: '98%', label: 'Accuracy' },
-          ].map((stat, idx) => (
-            <div key={idx} className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-deep-stone tracking-tight">
-                {stat.value}
-              </div>
-              <div className="font-mono text-xs uppercase tracking-wider text-muted-stone mt-1">
-                {stat.label}
-              </div>
+            { icon: '⬡', label: 'Vehicle-matched intel' },
+            { icon: '◈', label: 'GPX track data' },
+            { icon: '◎', label: 'Community reports' },
+          ].map((feat, idx) => (
+            <div
+              key={idx}
+              className="flex items-center gap-2 px-4 py-2 rounded-sm bg-white border border-stone-border shadow-[2px_2px_0_0_var(--color-stone-border)]"
+            >
+              <span className="text-action-orange text-sm">{feat.icon}</span>
+              <span className="font-mono text-xs font-medium uppercase tracking-wider text-deep-stone whitespace-nowrap">
+                {feat.label}
+              </span>
             </div>
           ))}
         </motion.div>

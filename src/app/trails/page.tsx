@@ -40,6 +40,10 @@ const STATUS_CONFIG = {
 
 type StatusKey = keyof typeof STATUS_CONFIG;
 
+function isGeoTrail(trail: Trail): boolean {
+  return typeof trail.gpxUrl === 'string' && trail.gpxUrl.startsWith('/api/geo/trails/');
+}
+
 function getStatusConfig(status?: string) {
   const key = (status ?? 'unknown') as StatusKey;
   return STATUS_CONFIG[key] ?? STATUS_CONFIG.unknown;
@@ -113,6 +117,13 @@ function TrailCard({ trail, index }: { trail: Trail; index: number }) {
               <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-sm border text-[10px] font-mono font-bold uppercase tracking-wider ${diffCfg.bg} ${diffCfg.color}`}>
                 <Mountain className="h-3 w-3" />
                 D{(trail as { baseDifficulty?: number }).baseDifficulty} · {diffCfg.label}
+              </div>
+            )}
+
+            {isGeoTrail(trail) && (
+              <div className="inline-flex items-center gap-1 px-2 py-1 rounded-sm border text-[10px] font-mono font-bold uppercase tracking-wider bg-sky-50 text-sky-700 border-sky-200">
+                <Map className="h-3 w-3" />
+                Geo Import
               </div>
             )}
 

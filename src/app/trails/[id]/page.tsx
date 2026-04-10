@@ -152,7 +152,11 @@ export default function TrailDetailPage() {
         const parsed = parseGpxToPoints(text);
         if (parsed.length > 0) {
           setGpxPoints(parsed);
-          setGpxSource('Trail GPX loaded');
+          setGpxSource(
+            trail.gpxUrl.startsWith('/api/geo/trails/')
+              ? 'Track data: © OpenStreetMap contributors (ODbL)'
+              : 'Trail GPX loaded'
+          );
           setGpxError('');
         } else {
           setGpxPoints([]);
@@ -278,6 +282,29 @@ export default function TrailDetailPage() {
             )}
           </div>
         </motion.div>
+
+        {/* Geo-only trail notice */}
+        {trail.gpxUrl?.startsWith('/api/geo/trails/') && reports.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.11 }}
+            className="mb-4"
+          >
+            <div className="flex items-start gap-3 bg-sky-50 border border-sky-200 p-4">
+              <Info className="h-4 w-4 text-sky-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sky-800 text-xs font-mono uppercase tracking-wider font-bold mb-0.5">
+                  Geo-Sourced Trail
+                </p>
+                <p className="text-sky-700 text-xs leading-relaxed">
+                  This trail was imported from OpenStreetMap and has no community reports yet.
+                  GPX track data is available. Be the first to report conditions.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* GPX Track Map */}
         <motion.div

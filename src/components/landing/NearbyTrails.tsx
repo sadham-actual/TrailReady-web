@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VEHICLE_CATEGORIES, Trail, Status } from '@/types';
 import { trailService } from '@/services/trailService';
+import { SAMPLE_TRAILS } from '@/data/sampleTrails';
 
 // Extended trail type with baseDifficulty from API
 interface TrailWithDifficulty extends Trail {
@@ -167,10 +168,12 @@ export function NearbyTrails() {
   const fetchTrails = useCallback(async () => {
     try {
       const data = await trailService.getTrails();
-      // Take first 5 trails for the carousel
-      setTrails((data as TrailWithDifficulty[]).slice(0, 5));
-    } catch (error) {
-      console.error('Failed to fetch trails:', error);
+      const result = (data as TrailWithDifficulty[]).slice(0, 5);
+      // Fall back to sample data if API returns nothing
+      setTrails(result.length > 0 ? result : (SAMPLE_TRAILS as TrailWithDifficulty[]).slice(0, 5));
+    } catch {
+      // API unavailable — show sample trails so carousel is never empty
+      setTrails((SAMPLE_TRAILS as TrailWithDifficulty[]).slice(0, 5));
     } finally {
       setIsLoading(false);
     }

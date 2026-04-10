@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { createSupabaseServiceClient } from '@/lib/supabase/server';
 import { computeGeomHash } from '@/lib/pipeline/geometry';
@@ -6,6 +7,7 @@ import { Coordinate } from '@/lib/pipeline/types';
 import { parseGeoJsonSegments } from './importers/geojson';
 import { parseOverpassSegments, buildOverpassQuery } from './importers/osm';
 import { parseShapefileSegments } from './importers/shapefile';
+import { parseGeofabrikSegments } from './importers/geofabrik';
 import { BBox, ImportSegmentCandidate, ImportSummary } from './importers/types';
 import { lineStringToWkt } from './importers/normalize';
 import { SOURCE_CATALOG } from './sourceCatalog';
@@ -163,6 +165,12 @@ async function parseInput(
       return parseOverpassSegments(json);
     }
 
+    // Local Overpass JSON file (e.g. exported from Overpass Turbo)
+    if (inputPathOrUrl.toLowerCase().endsWith('.json') && existsSync(inputPathOrUrl)) {
+      const raw = await fs.readFile(inputPathOrUrl, 'utf-8');
+      return parseOverpassSegments(JSON.parse(raw));
+    }
+
     if (!bbox) throw new Error('bbox is required for OSM import without URL');
 
     // Tile large bounding boxes to improve reliability and reduce timeouts.
@@ -179,6 +187,13 @@ async function parseInput(
     }
 
     return dedupeCandidates(all);
+  }
+
+  if (sourceName === 'geofabrik') {
+    if (!bbox) throw new Error('bbox is required for geofabrik import');
+    if (!inputPathOrUrl.startsWith('http'))
+      throw new Error('geofabrik source requires a Geofabrik zip URL as inputPathOrUrl');
+    return parseGeofabrikSegments(inputPathOrUrl, bbox);
   }
 
   throw new Error(`Unsupported source_name: ${sourceName}`);

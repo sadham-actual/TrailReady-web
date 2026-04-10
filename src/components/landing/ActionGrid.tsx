@@ -5,27 +5,41 @@ import { Map, Car, Radio, Clock, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VEHICLE_TYPE_LABELS } from '@/types';
+import { SAMPLE_TRAILS, SAMPLE_REPORTS } from '@/data/sampleTrails';
 
 interface ActionGridProps {
   onOpenVehicleModal: () => void;
 }
 
-// Mock intel data - would come from API in production
-const recentIntel = [
-  { trail: 'Rubicon Trail', status: 'impassable', timeAgo: '2h' },
-  { trail: 'Fordyce Creek', status: 'caution', timeAgo: '4h' },
-  { trail: 'Barrett Lake', status: 'clear', timeAgo: '6h' },
-];
+// Derive intel feed from sample data — most recent 3 reports with trail names
+const recentIntel = SAMPLE_REPORTS
+  .slice()
+  .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  .slice(0, 3)
+  .map((r) => {
+    const trail = SAMPLE_TRAILS.find((t) => t.id === r.trailId);
+    const hoursAgo = Math.round(
+      (Date.now() - new Date(r.timestamp).getTime()) / (1000 * 60 * 60)
+    );
+    const timeAgo = hoursAgo < 24 ? `${hoursAgo}h` : `${Math.round(hoursAgo / 24)}d`;
+    return {
+      trail: trail?.name ?? 'Unknown Trail',
+      status: r.status,
+      timeAgo,
+    };
+  });
 
 // High contrast solid status colors
-const statusBlockClasses = {
+const statusBlockClasses: Record<string, string> = {
   clear: 'bg-status-clear',
+  rough: 'bg-status-rough',
   caution: 'bg-status-rough',
   impassable: 'bg-status-impassable',
 };
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   clear: 'Clear',
+  rough: 'Caution',
   caution: 'Caution',
   impassable: 'Blocked',
 };
