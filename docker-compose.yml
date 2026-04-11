@@ -1,0 +1,32 @@
+version: "3.9"
+
+# TrailReady – local PostGIS development stack
+#
+# Quick start:
+#   docker compose up -d
+#   scripts/db-migrate.sh
+#
+# Connection string (matches .env.local.example below):
+#   postgresql://trailready:trailready@localhost:5432/trailready
+
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    container_name: trailready-postgis
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       trailready
+      POSTGRES_USER:     trailready
+      POSTGRES_PASSWORD: trailready
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trailready -d trailready"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgis_data:

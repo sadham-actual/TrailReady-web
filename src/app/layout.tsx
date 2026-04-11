@@ -1,12 +1,26 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Header } from "@/components/Header";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { VehicleProvider } from "@/contexts/VehicleContext";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "TrailReady - Know Before You Go",
-  description: "Real-time trail condition reports from the off-road community",
+  description: "Real-time trail condition reports from the off-road community. Plan smarter, explore further.",
 };
 
 export default function RootLayout({
@@ -15,8 +29,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" suppressHydrationWarning className={`${plusJakarta.variable} ${jetbrainsMono.variable}`}>
+      <head />
+      <body className="min-h-screen bg-bone antialiased font-sans">
+        <ThemeProvider>
+          <VehicleProvider>
+            <Header />
+            <main>{children}</main>
+            <Toaster position="top-center" />
+          </VehicleProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

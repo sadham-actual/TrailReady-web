@@ -1,131 +1,394 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
+import {
+  ArrowLeft,
+  Map,
+  List,
+  Search,
+  Filter,
+  Mountain,
+  MapPin,
+  Clock,
+  ChevronRight,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  HelpCircle,
+  Car,
+} from 'lucide-react';
+import { Trail, VEHICLE_CATEGORIES } from '@/types';
 import { trailService } from '@/services/trailService';
-import { Trail, STATUS_LABELS } from '@/types';
+import { useVehicle } from '@/contexts/VehicleContext';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
-export default function TrailsPage() {
-  const [trails, setTrails] = useState<Trail[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+// Difficulty config
+const DIFFICULTY = {
+  1: { label: 'Easy', color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-200' },
+  2: { label: 'Moderate', color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
+  3: { label: 'Difficult', color: 'text-orange-600', bg: 'bg-orange-50 border-orange-200' },
+  4: { label: 'Extreme', color: 'text-rose-600', bg: 'bg-rose-50 border-rose-200' },
+} as const;
 
-  useEffect(() => {
-    loadTrails();
-  }, []);
+const STATUS_CONFIG = {
+  clear: { label: 'Passable', Icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  rough: { label: 'Caution', Icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-50' },
+  impassable: { label: 'Blocked', Icon: XCircle, color: 'text-rose-600', bg: 'bg-rose-50' },
+  unknown: { label: 'No Data', Icon: HelpCircle, color: 'text-stone-500', bg: 'bg-stone-50' },
+} as const;
 
-  async function loadTrails() {
-    setIsLoading(true);
-    try {
-      const data = await trailService.getTrails();
-      setTrails(data);
-    } catch (error) {
-      console.error('Failed to load trails:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+type StatusKey = keyof typeof STATUS_CONFIG;
 
-  async function handleSearch() {
-    setIsLoading(true);
-    try {
-      const data = await trailService.getTrails(searchQuery);
-      setTrails(data);
-    } catch (error) {
-      console.error('Search failed:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }
+function isGeoTrail(trail: Trail): boolean {
+  return typeof trail.gpxUrl === 'string' && trail.gpxUrl.startsWith('/api/geo/trails/');
+}
 
-  function getStatusColor(status?: string) {
-    switch (status) {
-      case 'clear':
-        return 'bg-green-100 text-green-800';
-      case 'rough':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'impassable':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  }
+function getStatusConfig(status?: string) {
+  const key = (status ?? 'unknown') as StatusKey;
+  return STATUS_CONFIG[key] ?? STATUS_CONFIG.unknown;
+}
+
+function getDifficultyConfig(level?: number) {
+  const key = (level ?? 0) as keyof typeof DIFFICULTY;
+  return DIFFICULTY[key] ?? { label: 'Unknown', color: 'text-stone-500', bg: 'bg-stone-50 border-stone-200' };
+}
+
+type MatchBadge = {
+  label: string;
+  bg: string;
+  text: string;
+  border: string;
+  icon: React.ReactNode;
+} | null;
+
+function calculateMatchBadge(
+  baseDifficulty: number | undefined,
+  vehicleCapability: number | null
+): MatchBadge {
+  if (vehicleCapability === null || baseDifficulty === undefined) return null;
+  const diff = vehicleCapability - baseDifficulty;
+  if (diff >= 0) return {
+    label: 'Good Match',
+    bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200',
+    icon: <CheckCircle2 className="h-3 w-3" />,
+  };
+  if (diff === -1) return {
+    label: 'Caution',
+    bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200',
+    icon: <AlertTriangle className="h-3 w-3" />,
+  };
+  return {
+    label: 'High Risk',
+    bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200',
+    icon: <AlertTriangle className="h-3 w-3" />,
+  };
+}
+
+function formatRelativeTime(iso?: string): string {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const h = Math.floor(diff / 3_600_000);
+  const d = Math.floor(h / 24);
+  if (h < 1) return 'Just now';
+  if (h < 24) return `${h}h ago`;
+  if (d < 7) return `${d}d ago`;
+  return `${Math.floor(d / 7)}w ago`;
+}
+
+// TrailCard component
+function TrailCard({ trail, index, matchBadge }: { trail: Trail; index: number; matchBadge: MatchBadge }) {
+  const statusCfg = getStatusConfig(trail.latestStatus);
+  const diffCfg = getDifficultyConfig((trail as { baseDifficulty?: number }).baseDifficulty);
+  const StatusIcon = statusCfg.Icon;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">TrailReady</h1>
-          <p className="text-gray-600 mt-1">Know before you go.</p>
-        </div>
-      </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: index * 0.04 }}
+    >
+      <Link
+        href={`/trails/${trail.id}`}
+        className="block group bg-white border border-stone-200 hover:border-stone-400 hover:shadow-md transition-all duration-200 rounded-sm overflow-hidden"
+      >
+        {/* Status bar across top */}
+        <div className={`h-1 w-full ${
+          trail.latestStatus === 'clear' ? 'bg-emerald-500' :
+          trail.latestStatus === 'rough' ? 'bg-amber-500' :
+          trail.latestStatus === 'impassable' ? 'bg-rose-500' :
+          'bg-stone-200'
+        }`} />
 
-      {/* Search Bar */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Search trails by name or region..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            onClick={handleSearch}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            Search
-          </button>
-        </div>
-      </div>
-
-      {/* Trail List */}
-      <div className="max-w-7xl mx-auto px-4 pb-12">
-        {isLoading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-4 text-gray-600">Loading trails...</p>
+        <div className="p-4">
+          {/* Header row */}
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex-1 min-w-0">
+              <h2 className="font-mono font-bold uppercase tracking-wider text-stone-900 text-sm truncate group-hover:text-action-orange transition-colors">
+                {trail.name}
+              </h2>
+              <div className="flex items-center gap-1.5 mt-1">
+                <MapPin className="h-3 w-3 text-stone-400 flex-shrink-0" />
+                <span className="text-xs text-stone-500 font-mono uppercase tracking-wider truncate">
+                  {trail.region}
+                </span>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-stone-300 group-hover:text-action-orange flex-shrink-0 mt-0.5 transition-colors" />
           </div>
-        ) : trails.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600">No trails found.</p>
+
+          {/* Status + Difficulty + Match badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-sm border text-[10px] font-mono font-bold uppercase tracking-wider ${statusCfg.bg} ${statusCfg.color} border-current/20`}>
+              <StatusIcon className="h-3 w-3" />
+              {statusCfg.label}
+            </div>
+
+            {(trail as { baseDifficulty?: number }).baseDifficulty && (
+              <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-sm border text-[10px] font-mono font-bold uppercase tracking-wider ${diffCfg.bg} ${diffCfg.color}`}>
+                <Mountain className="h-3 w-3" />
+                D{(trail as { baseDifficulty?: number }).baseDifficulty} · {diffCfg.label}
+              </div>
+            )}
+
+            {matchBadge && (
+              <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-sm border text-[10px] font-mono font-bold uppercase tracking-wider ${matchBadge.bg} ${matchBadge.text} ${matchBadge.border}`}>
+                {matchBadge.icon}
+                {matchBadge.label}
+              </div>
+            )}
+
+            {trail.lastReportAt && (
+              <div className="ml-auto inline-flex items-center gap-1 text-[10px] text-stone-400 font-mono">
+                <Clock className="h-3 w-3" />
+                {formatRelativeTime(trail.lastReportAt)}
+              </div>
+            )}
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
+
+// Region filter pill
+function RegionPill({
+  region,
+  active,
+  onClick,
+}: {
+  region: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3 py-1.5 rounded-sm border font-mono text-[10px] uppercase tracking-wider font-medium transition-all ${
+        active
+          ? 'bg-stone-900 text-white border-stone-900'
+          : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400'
+      }`}
+    >
+      {region}
+    </button>
+  );
+}
+
+export default function TrailBrowsePage() {
+  const { selectedVehicle } = useVehicle();
+  const [trails, setTrails] = useState<Trail[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [activeRegion, setActiveRegion] = useState<string | null>(null);
+  const [activeStatus, setActiveStatus] = useState<string | null>(null);
+
+  const vehicleCapability = useMemo(() => {
+    const cat = VEHICLE_CATEGORIES.find((c) => c.mappedType === selectedVehicle);
+    return cat?.capabilityLevel ?? null;
+  }, [selectedVehicle]);
+
+  useEffect(() => {
+    trailService.getTrails().then((data) => {
+      setTrails(data);
+      setIsLoading(false);
+    }).catch(() => setIsLoading(false));
+  }, []);
+
+  // Unique regions from data
+  const regions = useMemo(
+    () => Array.from(new Set(trails.map((t) => t.region))).sort(),
+    [trails]
+  );
+
+  // Filtered + searched trails
+  const filtered = useMemo(() => {
+    let result = [...trails];
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (t) =>
+          t.name.toLowerCase().includes(q) ||
+          t.region.toLowerCase().includes(q)
+      );
+    }
+    if (activeRegion) {
+      result = result.filter((t) => t.region === activeRegion);
+    }
+    if (activeStatus) {
+      result = result.filter((t) => (t.latestStatus ?? 'unknown') === activeStatus);
+    }
+    return result;
+  }, [trails, search, activeRegion, activeStatus]);
+
+  return (
+    <div className="min-h-screen bg-bone">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="sticky top-0 z-40 bg-bone/95 backdrop-blur-sm border-b border-stone-200"
+      >
+        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-4">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-stone-500 hover:text-stone-900 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="font-mono text-xs uppercase tracking-wider hidden sm:inline">Back</span>
+          </Link>
+          <div className="h-4 w-px bg-stone-200" />
+          <div className="flex items-center gap-2">
+            <List className="h-4 w-4 text-action-orange" />
+            <h1 className="font-mono text-sm font-bold uppercase tracking-wider text-stone-900">
+              Trail Index
+            </h1>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <Link
+              href="/map"
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-stone-200 bg-white hover:border-action-orange hover:text-action-orange text-stone-700 font-mono text-[10px] uppercase tracking-wider rounded-sm transition-all"
+            >
+              <Map className="h-3.5 w-3.5" />
+              Map View
+            </Link>
+          </div>
+        </div>
+      </motion.div>
+
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        {/* Search + filter bar */}
+        <div className="mb-6 space-y-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-400" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search trails or regions..."
+              className="pl-9 font-mono text-sm border-stone-200 focus:border-action-orange rounded-sm"
+            />
+          </div>
+
+          {/* Region filters */}
+          {regions.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <Filter className="h-3.5 w-3.5 text-stone-400 flex-shrink-0" />
+              <RegionPill
+                region="All"
+                active={activeRegion === null}
+                onClick={() => setActiveRegion(null)}
+              />
+              {regions.map((r) => (
+                <RegionPill
+                  key={r}
+                  region={r}
+                  active={activeRegion === r}
+                  onClick={() => setActiveRegion(activeRegion === r ? null : r)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Status filter */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {['clear', 'rough', 'impassable'].map((s) => {
+              const cfg = getStatusConfig(s);
+              const Icon = cfg.Icon;
+              return (
+                <button
+                  key={s}
+                  onClick={() => setActiveStatus(activeStatus === s ? null : s)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm border font-mono text-[10px] uppercase tracking-wider font-medium transition-all ${
+                    activeStatus === s
+                      ? `${cfg.bg} ${cfg.color} border-current/30`
+                      : 'bg-white text-stone-500 border-stone-200 hover:border-stone-400'
+                  }`}
+                >
+                  <Icon className="h-3 w-3" />
+                  {cfg.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Vehicle match prompt */}
+        {!selectedVehicle && !isLoading && (
+          <Link
+            href="/"
+            className="flex items-center gap-3 mb-4 px-4 py-3 rounded-sm bg-action-orange/5 border border-action-orange/20 hover:bg-action-orange/10 transition-colors group"
+          >
+            <Car className="h-4 w-4 text-action-orange flex-shrink-0" />
+            <p className="font-mono text-xs uppercase tracking-wider text-deep-stone">
+              Set your vehicle to see which trails match your rig
+            </p>
+            <ChevronRight className="h-4 w-4 text-action-orange ml-auto group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        )}
+
+        {/* Stats bar */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="font-mono text-xs uppercase tracking-wider text-stone-500">
+            {isLoading ? 'Loading...' : `${filtered.length} trail${filtered.length !== 1 ? 's' : ''}`}
+            {(search || activeRegion || activeStatus) ? ' · filtered' : ''}
+          </p>
+          {(search || activeRegion || activeStatus) && (
+            <button
+              onClick={() => { setSearch(''); setActiveRegion(null); setActiveStatus(null); }}
+              className="font-mono text-[10px] uppercase tracking-wider text-action-orange hover:underline"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+
+        {/* Trail grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-24 bg-stone-100 border border-stone-200 rounded-sm animate-pulse" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16">
+            <Mountain className="h-12 w-12 text-stone-300 mx-auto mb-4" />
+            <p className="font-mono text-sm uppercase tracking-wider text-stone-500 mb-2">No trails found</p>
+            <p className="text-stone-400 text-sm">Try adjusting your search or filters</p>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {trails.map((trail) => (
-              <Link
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {filtered.map((trail, i) => (
+              <TrailCard
                 key={trail.id}
-                href={`/trails/${trail.id}`}
-                className="block bg-white rounded-lg shadow hover:shadow-md transition p-6"
-              >
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  {trail.name}
-                </h2>
-                <p className="text-gray-600 mb-4">{trail.region}</p>
-                
-                {trail.latestStatus && (
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                        trail.latestStatus
-                      )}`}
-                    >
-                      {STATUS_LABELS[trail.latestStatus]}
-                    </span>
-                    {trail.lastReportAt && (
-                      <span className="text-xs text-gray-500">
-                        {new Date(trail.lastReportAt).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
+                trail={trail}
+                index={i}
+                matchBadge={calculateMatchBadge(
+                  (trail as { baseDifficulty?: number }).baseDifficulty,
+                  vehicleCapability
                 )}
-                
-                {!trail.latestStatus && (
-                  <span className="text-sm text-gray-500">No recent reports</span>
-                )}
-              </Link>
+              />
             ))}
           </div>
         )}

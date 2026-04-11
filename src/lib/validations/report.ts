@@ -18,8 +18,8 @@ export const vehicleTypeSchema = z.enum([
 
 // Submit report validation schema
 export const submitReportSchema = z.object({
-  trailId: z.string().cuid('Invalid trail ID format'),
-  userId: z.string().cuid('Invalid user ID format'),
+  trailId: z.string().min(1, 'Trail ID is required'),
+  userId: z.string().uuid('Invalid user ID format'),
   status: statusSchema,
   confidence: confidenceSchema,
   vehicleType: vehicleTypeSchema,

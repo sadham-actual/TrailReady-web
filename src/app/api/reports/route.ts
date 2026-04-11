@@ -1,69 +1,86 @@
 import { NextRequest } from 'next/server';
-import { prisma } from '@/lib/prisma';
 import { successResponse, errors } from '@/lib/api/response';
 import { submitReportSchema } from '@/lib/validations/report';
 import { ZodError } from 'zod';
+import { getMockTrail } from '@/data/sampleTrails';
+import { createSupabaseServiceClient, getSupabaseUserIdFromRequestAuthHeader } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const authUserId = await getSupabaseUserIdFromRequestAuthHeader(request.headers.get('authorization'));
+    if (!authUserId) {
+      return errors.unauthorized('Authentication required for this action. Sign in to continue.');
+    }
 
-    // Validate input with Zod
+    const body = await request.json();
     const validatedData = submitReportSchema.parse(body);
 
-    // Verify trail exists
-    const trail = await prisma.trail.findUnique({
-      where: { id: validatedData.trailId },
-      select: { id: true },
-    });
+    if (validatedData.userId !== authUserId) {
+      return errors.unauthorized('Authenticated user does not match requested userId');
+    }
+
+    const supabase = createSupabaseServiceClient();
+
+    await supabase.from('users').upsert({ id: validatedData.userId, is_anonymous: false });
+
+    const { data: trail, error: trailErr } = await supabase
+      .from('trails')
+      .select('id')
+      .eq('id', validatedData.trailId)
+      .maybeSingle();
+
+    if (trailErr) return errors.internalError(trailErr.message);
 
     if (!trail) {
-      return errors.notFound('Trail');
+      const mockTrail = getMockTrail(validatedData.trailId);
+      if (!mockTrail) return errors.notFound('Trail');
+
+      // If trail doesn't exist in Supabase but exists in mock data, create it on-demand.
+      const { error: seedErr } = await supabase.from('trails').insert({
+        id: mockTrail.id,
+        name: mockTrail.name,
+        region: mockTrail.region,
+        latitude: mockTrail.latitude,
+        longitude: mockTrail.longitude,
+        description: mockTrail.description ?? null,
+        base_difficulty: mockTrail.baseDifficulty ?? null,
+      });
+      if (seedErr) return errors.internalError(seedErr.message);
     }
 
-    // Verify user exists
-    const user = await prisma.user.findUnique({
-      where: { id: validatedData.userId },
-      select: { id: true },
-    });
-
-    if (!user) {
-      return errors.badRequest('Invalid user ID. Please create an anonymous user first.');
-    }
-
-    // Create the condition report
-    const report = await prisma.conditionReport.create({
-      data: {
-        trailId: validatedData.trailId,
-        userId: validatedData.userId,
+    const reportId = crypto.randomUUID();
+    const nowIso = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('condition_reports')
+      .insert({
+        id: reportId,
+        trail_id: validatedData.trailId,
+        user_id: validatedData.userId,
         status: validatedData.status,
         confidence: validatedData.confidence,
-        vehicleType: validatedData.vehicleType,
-        notes: validatedData.notes,
-      },
-    });
+        vehicle_type: validatedData.vehicleType,
+        notes: validatedData.notes ?? null,
+        timestamp: nowIso,
+      })
+      .select('id,timestamp')
+      .single();
+
+    if (error) return errors.internalError(error.message);
 
     return successResponse(
       {
-        id: report.id,
-        timestamp: report.timestamp.toISOString(),
+        id: data.id,
+        timestamp: data.timestamp,
       },
       201
     );
   } catch (error) {
-    // Handle Zod validation errors
     if (error instanceof ZodError) {
-      const firstError = error.errors[0];
-      return errors.validationError(
-        firstError.message || 'Invalid request data'
-      );
+      return errors.validationError(error.errors[0]?.message || 'Invalid request data');
     }
-
-    // Handle JSON parsing errors
     if (error instanceof SyntaxError) {
       return errors.badRequest('Invalid JSON in request body');
     }
-
     console.error('Error creating report:', error);
     return errors.internalError('Failed to create report');
   }

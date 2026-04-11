@@ -1,6 +1,18 @@
 import { Trail, ConditionReport } from '@/types';
 import { ApiResponse } from '@/lib/api/response';
 
+export interface TrailPhoto {
+  id: string;
+  url: string;
+  createdAt: string;
+  report: {
+    vehicleType: string;
+    notes: string | null;
+    confidence: string;
+    createdAt: string;
+  } | null;
+}
+
 class TrailService {
   private async fetchAPI<T>(
     endpoint: string,
@@ -51,6 +63,11 @@ class TrailService {
     return this.fetchAPI<ConditionReport[]>(`/api/trails/${trailId}/reports`);
   }
 
+  // GET /api/trails/{id}/photos
+  async getTrailPhotos(id: string): Promise<TrailPhoto[]> {
+    return this.fetchAPI<TrailPhoto[]>(`/api/trails/${id}/photos`);
+  }
+
   // POST /api/reports
   async submitReport(
     trailId: string,
@@ -60,10 +77,12 @@ class TrailService {
       confidence: ConditionReport['confidence'];
       vehicleType: ConditionReport['vehicleType'];
       notes?: string;
-    }
+    },
+    options?: { authToken?: string }
   ): Promise<{ id: string; timestamp: string }> {
     return this.fetchAPI<{ id: string; timestamp: string }>('/api/reports', {
       method: 'POST',
+      headers: options?.authToken ? { Authorization: `Bearer ${options.authToken}` } : undefined,
       body: JSON.stringify({
         trailId,
         userId,

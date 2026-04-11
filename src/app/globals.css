@@ -1,3 +1,286 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* TrailReady Design System v3
+   Light Industrial Tactical - Solar Readable
+   Neobrutalism-lite with Hardware Details
+*/
+
+@theme {
+  /* Light Industrial Tactical Palette */
+  --color-bone: #F9F8F6;
+  --color-surface: #FFFFFF;
+  --color-stone-border: #E2E0DB;
+  --color-stone-light: #F0EEEA;
+  --color-stone-medium: #C8C5BD;
+  --color-deep-stone: #1C1917;
+  --color-charcoal: #292524;
+  --color-muted-stone: #78716C;
+
+  /* Action Orange - Safety/Primary */
+  --color-action-orange: #FF6B00;
+  --color-action-orange-dark: #E65A00;
+  --color-action-orange-light: #FF8533;
+
+  /* Status Colors - High Contrast Solid Blocks */
+  --color-status-clear: #16A34A;
+  --color-status-rough: #D97706;
+  --color-status-impassable: #DC2626;
+  --color-status-unknown: #78716C;
+
+  /* Font Families - Uses CSS variables from next/font */
+  --font-sans: var(--font-sans), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+}
+
+@layer base {
+  :root {
+    --background: 40 20% 97%;
+    --foreground: 20 14% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14% 10%;
+    --primary: 24 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 6% 90%;
+    --secondary-foreground: 20 14% 10%;
+    --muted: 30 6% 93%;
+    --muted-foreground: 24 6% 45%;
+    --accent: 24 100% 50%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --border: 35 10% 88%;
+    --input: 35 10% 88%;
+    --ring: 24 100% 50%;
+    --radius: 0.25rem;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body {
+    background-color: var(--color-bone);
+    color: var(--color-deep-stone);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Industrial Labels - Monospace Uppercase */
+  .label-industrial {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted-stone);
+  }
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+
+  /* Neobrutalism-lite Offset Shadow */
+  .shadow-offset {
+    box-shadow:
+      2px 2px 0 0 var(--color-stone-border),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .shadow-offset-lg {
+    box-shadow:
+      4px 4px 0 0 var(--color-stone-border),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+  }
+
+  .shadow-offset-orange {
+    box-shadow:
+      2px 2px 0 0 var(--color-action-orange),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.3);
+  }
+
+  /* Pressed State Shadow */
+  .shadow-pressed {
+    box-shadow:
+      1px 1px 0 0 var(--color-stone-border),
+      inset 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+    transform: translate(1px, 1px);
+  }
+
+  /* Hardware Plate Effect */
+  .plate {
+    background: var(--color-surface);
+    border: 1px solid var(--color-stone-border);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.8) inset,
+      0 -1px 0 0 rgba(0, 0, 0, 0.05) inset,
+      2px 2px 0 0 var(--color-stone-border);
+  }
+
+  .plate-floating {
+    background: var(--color-surface);
+    border: 1px solid var(--color-stone-border);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.8) inset,
+      0 4px 16px -4px rgba(0, 0, 0, 0.1),
+      0 0 0 1px rgba(0, 0, 0, 0.02);
+  }
+
+  /* Corner Markings for Hardware Feel */
+  .corner-marks::before,
+  .corner-marks::after {
+    content: '';
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border: 1px solid var(--color-stone-medium);
+  }
+
+  .corner-marks::before {
+    top: 6px;
+    left: 6px;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .corner-marks::after {
+    bottom: 6px;
+    right: 6px;
+    border-left: none;
+    border-top: none;
+  }
+
+  /* Screw Markers */
+  .screw::before {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-stone-light) 0%, var(--color-stone-medium) 100%);
+    border: 1px solid var(--color-stone-border);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  .screw-tl::before { top: 8px; left: 8px; }
+  .screw-tr::before { top: 8px; right: 8px; }
+  .screw-bl::before { bottom: 8px; left: 8px; }
+  .screw-br::before { bottom: 8px; right: 8px; }
+
+  /* Status Blocks - High Contrast */
+  .status-clear {
+    background: var(--color-status-clear);
+    color: white;
+  }
+
+  .status-rough {
+    background: var(--color-status-rough);
+    color: white;
+  }
+
+  .status-impassable {
+    background: var(--color-status-impassable);
+    color: white;
+  }
+
+  .status-unknown {
+    background: var(--color-muted-stone);
+    color: white;
+  }
+
+  /* Topographic Pattern Background */
+  .bg-topo {
+    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23E2E0DB' stroke-width='0.5'%3E%3Cpath d='M0 50 Q25 30 50 50 T100 50' /%3E%3Cpath d='M0 30 Q25 10 50 30 T100 30' /%3E%3Cpath d='M0 70 Q25 50 50 70 T100 70' /%3E%3Cpath d='M0 90 Q25 70 50 90 T100 90' /%3E%3Cpath d='M0 10 Q25 -10 50 10 T100 10' /%3E%3Ccircle cx='75' cy='25' r='8' /%3E%3Ccircle cx='75' cy='25' r='12' /%3E%3Ccircle cx='25' cy='75' r='6' /%3E%3Ccircle cx='25' cy='75' r='10' /%3E%3C/g%3E%3C/svg%3E");
+    background-size: 200px 200px;
+  }
+
+  /* Grid Pattern */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, var(--color-stone-border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-stone-border) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Dot Pattern */
+  .bg-dots {
+    background-image: radial-gradient(circle, var(--color-stone-border) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+}
+
+/* Industrial Button Base Styles */
+@layer components {
+  .btn-industrial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 0.25rem;
+    border: 1px solid var(--color-stone-border);
+    background: var(--color-surface);
+    color: var(--color-deep-stone);
+    box-shadow: 2px 2px 0 0 var(--color-stone-border);
+    transition: all 0.1s ease;
+    cursor: pointer;
+  }
+
+  .btn-industrial:hover {
+    background: var(--color-stone-light);
+  }
+
+  .btn-industrial:active {
+    box-shadow: 1px 1px 0 0 var(--color-stone-border);
+    transform: translate(1px, 1px);
+  }
+
+  .btn-industrial-primary {
+    background: var(--color-action-orange);
+    color: white;
+    border-color: var(--color-action-orange-dark);
+    box-shadow: 2px 2px 0 0 var(--color-action-orange-dark);
+  }
+
+  .btn-industrial-primary:hover {
+    background: var(--color-action-orange-light);
+  }
+
+  .btn-industrial-primary:active {
+    box-shadow: 1px 1px 0 0 var(--color-action-orange-dark);
+  }
+
+  /* Card Industrial Style */
+  .card-industrial {
+    background: var(--color-surface);
+    border: 1px solid var(--color-stone-border);
+    border-radius: 0.25rem;
+    box-shadow: 2px 2px 0 0 var(--color-stone-border);
+    transition: all 0.15s ease;
+  }
+
+  .card-industrial:hover {
+    box-shadow: 4px 4px 0 0 var(--color-stone-border);
+    transform: translate(-2px, -2px);
+  }
+}

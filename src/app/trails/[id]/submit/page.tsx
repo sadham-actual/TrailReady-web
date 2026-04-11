@@ -1,68 +1,229 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { trailService } from '@/services/trailService';
-import { Trail, Status, Confidence, VehicleType, STATUS_LABELS, CONFIDENCE_LABELS, VEHICLE_TYPE_LABELS } from '@/types';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { Trail, Status, Confidence, VEHICLE_CATEGORIES, VehicleCategoryInfo } from '@/types';
+import { useVehicle } from '@/contexts/VehicleContext';
+import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
+import { useTrailRefresh } from '@/components/landing';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  AlertTriangle,
+  XOctagon,
+  ChevronDown,
+  Loader2,
+  Check,
+  Car,
+  Truck,
+  Cog,
+  Mountain,
+} from 'lucide-react';
+
+// Status card configuration
+const STATUS_OPTIONS: {
+  value: Status;
+  label: string;
+  description: string;
+  colorClass: string;
+  borderClass: string;
+  glowClass: string;
+  bgClass: string;
+  icon: typeof CheckCircle2;
+}[] = [
+  {
+    value: 'clear',
+    label: 'Clear',
+    description: 'Passable for most vehicles',
+    colorClass: 'text-emerald-400',
+    borderClass: 'border-emerald-500/50',
+    glowClass: 'shadow-[0_0_40px_-10px_rgba(16,185,129,0.5)]',
+    bgClass: 'bg-emerald-500/10',
+    icon: CheckCircle2,
+  },
+  {
+    value: 'rough',
+    label: 'Rough',
+    description: 'Technical/Difficult, proceed with caution',
+    colorClass: 'text-amber-400',
+    borderClass: 'border-amber-500/50',
+    glowClass: 'shadow-[0_0_40px_-10px_rgba(245,158,11,0.5)]',
+    bgClass: 'bg-amber-500/10',
+    icon: AlertTriangle,
+  },
+  {
+    value: 'impassable',
+    label: 'Impassable',
+    description: 'Blocked, washed out, or high risk',
+    colorClass: 'text-rose-400',
+    borderClass: 'border-rose-500/50',
+    glowClass: 'shadow-[0_0_40px_-10px_rgba(244,63,94,0.5)]',
+    bgClass: 'bg-rose-500/10',
+    icon: XOctagon,
+  },
+];
+
+// Confidence toggle configuration
+const CONFIDENCE_OPTIONS: { value: Confidence; label: string }[] = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Med' },
+  { value: 'high', label: 'High' },
+];
+
+// Vehicle icon component
+function VehicleIcon({ icon, className }: { icon: VehicleCategoryInfo['icon']; className?: string }) {
+  const iconClass = className || 'h-5 w-5';
+  switch (icon) {
+    case 'crossover':
+      return <Car className={iconClass} />;
+    case 'truck':
+      return <Truck className={iconClass} />;
+    case 'lifted':
+      return <Cog className={iconClass} />;
+    case 'crawler':
+      return <Mountain className={iconClass} />;
+  }
+}
+
+// Success animation component
+function SuccessAnimation({ onComplete }: { onComplete: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onComplete, 2000);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-xl"
+    >
+      <motion.div
+        initial={{ scale: 0, rotate: -180 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{
+          type: 'spring',
+          stiffness: 200,
+          damping: 15,
+        }}
+        className="flex flex-col items-center gap-6"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: 'spring', stiffness: 300 }}
+          className="w-28 h-28 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-[0_0_60px_-10px_rgba(16,185,129,0.8)]"
+        >
+          <motion.div
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ delay: 0.4, duration: 0.4 }}
+          >
+            <Check className="w-14 h-14 text-slate-950" strokeWidth={3} />
+          </motion.div>
+        </motion.div>
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="text-2xl font-bold text-slate-50 tracking-tight"
+        >
+          Report Submitted!
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          className="text-sm text-slate-400"
+        >
+          Thank you for helping the community
+        </motion.p>
+      </motion.div>
+    </motion.div>
+  );
+}
 
 export default function SubmitReportPage() {
   const params = useParams();
   const router = useRouter();
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const trailId = params.id as string;
+  const { selectedVehicle, setSelectedVehicle } = useVehicle();
+  const { triggerRefresh } = useTrailRefresh();
 
+  // State
   const [trail, setTrail] = useState<Trail | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const [authToken, setAuthToken] = useState<string>('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
 
   // Form state
-  const [status, setStatus] = useState<Status | ''>('');
-  const [confidence, setConfidence] = useState<Confidence | ''>('');
-  const [vehicleType, setVehicleType] = useState<VehicleType | ''>('');
+  const [status, setStatus] = useState<Status | null>(null);
+  const [confidence, setConfidence] = useState<Confidence>('medium');
   const [notes, setNotes] = useState('');
 
+  // Get current vehicle category info
+  const currentVehicleCategory = VEHICLE_CATEGORIES.find(
+    (cat) => cat.mappedType === selectedVehicle
+  );
+
+  // Initialize auth and load trail
   useEffect(() => {
-    initializeAuth();
-    loadTrail();
-  }, [trailId]);
+    async function initialize() {
+      setIsLoading(true);
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.user?.id) {
+          setUserId(sessionData.session.user.id);
+          setAuthToken(sessionData.session.access_token);
+          setIsAuthenticated(true);
+        } else {
+          setUserId(null);
+          setAuthToken('');
+          setIsAuthenticated(false);
+        }
 
-  async function initializeAuth() {
-    setIsLoadingAuth(true);
-    try {
-      const id = await trailService.getAnonymousUserId();
-      setUserId(id);
-    } catch (err) {
-      setError('Failed to authenticate. Please refresh the page.');
-    } finally {
-      setIsLoadingAuth(false);
-    }
-  }
-
-  async function loadTrail() {
-    try {
-      const trailData = await trailService.getTrail(trailId);
-      if (!trailData) {
-        router.push('/trails');
-        return;
+        // Load trail
+        const trailData = await trailService.getTrail(trailId);
+        if (!trailData) {
+          router.push('/trails');
+          return;
+        }
+        setTrail(trailData);
+      } catch (err) {
+        setError('Failed to load. Please refresh the page.');
+      } finally {
+        setIsLoading(false);
       }
-      setTrail(trailData);
-    } catch (err) {
-      setError('Failed to load trail information.');
     }
-  }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    
-    if (!userId) {
-      setError('Authentication required. Please refresh the page.');
+    initialize();
+  }, [trailId, router, supabase]);
+
+  // Handle form submission
+  async function handleSubmit() {
+    if (!userId || !isAuthenticated) {
+      router.push(`/auth/login?next=${encodeURIComponent(`/trails/${trailId}/submit`)}`);
       return;
     }
 
-    if (!status || !confidence || !vehicleType) {
-      setError('Please fill in all required fields.');
+    if (!status) {
+      setError('Please select a trail status.');
+      return;
+    }
+
+    if (!selectedVehicle) {
+      setVehicleModalOpen(true);
       return;
     }
 
@@ -71,158 +232,320 @@ export default function SubmitReportPage() {
 
     try {
       await trailService.submitReport(trailId, userId, {
-        status: status as Status,
-        confidence: confidence as Confidence,
-        vehicleType: vehicleType as VehicleType,
+        status,
+        confidence,
+        vehicleType: selectedVehicle,
         notes: notes || undefined,
+      }, {
+        authToken,
       });
 
-      // Success! Redirect back to trail detail
-      router.push(`/trails/${trailId}`);
+      setShowSuccess(true);
     } catch (err) {
       setError('Failed to submit report. Please try again.');
       setIsSubmitting(false);
     }
   }
 
-  if (isLoadingAuth) {
+  // Handle success animation complete
+  const handleSuccessComplete = useCallback(() => {
+    // Trigger cross-tab/page refresh for landing page and other listeners
+    triggerRefresh();
+    // Navigate back and force a refresh by adding a cache-busting query
+    router.push(`/trails/${trailId}?refresh=${Date.now()}`);
+  }, [router, trailId, triggerRefresh]);
+
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Authenticating...</p>
-        </div>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        >
+          <Loader2 className="w-8 h-8 text-slate-500" />
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-3xl mx-auto px-4 py-6">
-          <Link href={`/trails/${trailId}`} className="text-blue-600 hover:text-blue-700 mb-2 inline-block">
-            ← Back to Trail
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Submit Condition Report</h1>
-          {trail && <p className="text-gray-600 mt-1">{trail.name} - {trail.region}</p>}
-        </div>
-      </div>
+    <>
+      {/* Success Animation Overlay */}
+      <AnimatePresence>
+        {showSuccess && <SuccessAnimation onComplete={handleSuccessComplete} />}
+      </AnimatePresence>
 
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-800">{error}</p>
+      {/* Main Content */}
+      <div className="min-h-screen bg-slate-950">
+        {/* Header with Back Button */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-white/5"
+        >
+          <div className="px-4 py-4">
+            <Link
+              href={`/trails/${trailId}`}
+              className="inline-flex items-center gap-3 px-5 py-3 bg-slate-800/60 hover:bg-slate-700/60 border border-white/10 rounded-2xl text-slate-200 font-medium transition-all active:scale-[0.98]"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Back to Trail</span>
+            </Link>
+          </div>
+        </motion.div>
+
+        {/* Content */}
+        <div className="px-4 pb-32">
+          {/* Page Title */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="py-6"
+          >
+            <h1 className="text-3xl font-bold text-slate-50 tracking-tight mb-1">
+              Report Condition
+            </h1>
+            {trail && (
+              <p className="text-slate-400">{trail.name}</p>
+            )}
+          </motion.div>
+
+          {!isAuthenticated && (
+            <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl">
+              <p className="text-sm text-amber-300 mb-2">You need an account to submit trail reports.</p>
+              <button
+                onClick={() => router.push(`/auth/login?next=${encodeURIComponent(`/trails/${trailId}/submit`)}`)}
+                className="px-3 py-1 bg-amber-400 text-slate-900 rounded text-sm font-medium"
+              >
+                Sign in
+              </button>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Status */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Trail Status <span className="text-red-500">*</span>
-              </label>
-              <div className="space-y-2">
-                {(['clear', 'rough', 'impassable'] as Status[]).map((s) => (
-                  <label key={s} className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="radio"
-                      name="status"
-                      value={s}
-                      checked={status === s}
-                      onChange={(e) => setStatus(e.target.value as Status)}
-                      className="mr-3"
+          {/* Error Message */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-6"
+              >
+                <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl">
+                  <p className="text-sm text-rose-400">{error}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Status Cards - The Big Three */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mb-8"
+          >
+            <p className="text-sm font-medium text-slate-400 mb-4 uppercase tracking-wider">
+              Trail Status
+            </p>
+            <div className="space-y-4">
+              {STATUS_OPTIONS.map((option, index) => {
+                const Icon = option.icon;
+                const isSelected = status === option.value;
+
+                return (
+                  <motion.button
+                    key={option.value}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.25 + index * 0.1 }}
+                    onClick={() => setStatus(option.value)}
+                    className={`w-full p-6 rounded-3xl border-2 text-left transition-all duration-300 active:scale-[0.98] ${
+                      isSelected
+                        ? `${option.borderClass} ${option.bgClass} ${option.glowClass}`
+                        : 'border-slate-700/50 bg-slate-900/50 hover:border-slate-600/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div
+                        className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors ${
+                          isSelected
+                            ? `${option.bgClass} ${option.colorClass}`
+                            : 'bg-slate-800/50 text-slate-500'
+                        }`}
+                      >
+                        <Icon className="w-8 h-8" />
+                      </div>
+                      <div className="flex-1">
+                        <p
+                          className={`text-xl font-bold transition-colors ${
+                            isSelected ? option.colorClass : 'text-slate-200'
+                          }`}
+                        >
+                          {option.label}
+                        </p>
+                        <p className="text-sm text-slate-400 mt-1">
+                          {option.description}
+                        </p>
+                      </div>
+                      {isSelected && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center ${option.bgClass}`}
+                        >
+                          <Check className={`w-5 h-5 ${option.colorClass}`} />
+                        </motion.div>
+                      )}
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          {/* Vehicle Selection */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mb-8"
+          >
+            <p className="text-sm font-medium text-slate-400 mb-4 uppercase tracking-wider">
+              Your Vehicle
+            </p>
+            <button
+              onClick={() => setVehicleModalOpen(true)}
+              className="w-full p-5 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl flex items-center justify-between hover:bg-slate-800/60 transition-all active:scale-[0.98]"
+            >
+              {currentVehicleCategory ? (
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                    <VehicleIcon
+                      icon={currentVehicleCategory.icon}
+                      className="w-6 h-6 text-emerald-400"
                     />
-                    <span className="font-medium">{STATUS_LABELS[s]}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
+                  </div>
+                  <div className="text-left">
+                    <p className="font-semibold text-slate-100">
+                      {currentVehicleCategory.name}
+                    </p>
+                    <p className="text-sm text-slate-400">
+                      {currentVehicleCategory.description}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center">
+                    <Car className="w-6 h-6 text-slate-500" />
+                  </div>
+                  <p className="font-medium text-slate-400">Select your vehicle</p>
+                </div>
+              )}
+              <ChevronDown className="w-5 h-5 text-slate-500" />
+            </button>
+          </motion.div>
 
-            {/* Confidence */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confidence Level <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={confidence}
-                onChange={(e) => setConfidence(e.target.value as Confidence)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select confidence level</option>
-                {(['low', 'medium', 'high'] as Confidence[]).map((c) => (
-                  <option key={c} value={c}>
-                    {CONFIDENCE_LABELS[c]}
-                  </option>
-                ))}
-              </select>
+          {/* Confidence Toggle */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mb-8"
+          >
+            <p className="text-sm font-medium text-slate-400 mb-4 uppercase tracking-wider">
+              Confidence
+            </p>
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-2 flex">
+              {CONFIDENCE_OPTIONS.map((option) => {
+                const isSelected = confidence === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    onClick={() => setConfidence(option.value)}
+                    className={`flex-1 py-4 rounded-xl font-semibold text-lg transition-all relative ${
+                      isSelected
+                        ? 'text-slate-50'
+                        : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                  >
+                    {isSelected && (
+                      <motion.div
+                        layoutId="confidence-bg"
+                        className="absolute inset-0 bg-slate-700/50 rounded-xl"
+                        transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                      />
+                    )}
+                    <span className="relative z-10">{option.label}</span>
+                  </button>
+                );
+              })}
             </div>
+          </motion.div>
 
-            {/* Vehicle Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Vehicle Type <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={vehicleType}
-                onChange={(e) => setVehicleType(e.target.value as VehicleType)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select your vehicle type</option>
-                {(Object.keys(VEHICLE_TYPE_LABELS) as VehicleType[]).map((vt) => (
-                  <option key={vt} value={vt}>
-                    {VEHICLE_TYPE_LABELS[vt]}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Notes */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Notes (Optional)
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add any additional details about trail conditions..."
-                rows={4}
-                maxLength={500}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-sm text-gray-500 mt-1">{notes.length}/500 characters</p>
-            </div>
-
-            {/* Submit Buttons */}
-            <div className="flex gap-4">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Report'}
-              </button>
-              <Link
-                href={`/trails/${trailId}`}
-                className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition text-center"
-              >
-                Cancel
-              </Link>
-            </div>
-          </form>
+          {/* Notes */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="mb-8"
+          >
+            <p className="text-sm font-medium text-slate-400 mb-4 uppercase tracking-wider">
+              Notes (Optional)
+            </p>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="e.g., Deep mud at the creek crossing, or downed tree at mile 4."
+              maxLength={500}
+              rows={4}
+              className="w-full p-5 bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl text-slate-100 placeholder:text-slate-600 resize-none focus:outline-none focus:border-slate-600 transition-colors"
+            />
+            <p className="text-xs text-slate-600 mt-2 text-right">
+              {notes.length}/500
+            </p>
+          </motion.div>
         </div>
 
-        {/* Info Box */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Note:</strong> Your report helps other off-roaders make informed decisions. 
-            Please be accurate and honest about trail conditions.
-          </p>
-        </div>
+        {/* Sticky Submit Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="fixed bottom-0 left-0 right-0 p-4 bg-slate-950/90 backdrop-blur-xl border-t border-white/5"
+        >
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !status || !isAuthenticated}
+            className={`w-full py-5 rounded-2xl font-bold text-lg transition-all active:scale-[0.98] flex items-center justify-center gap-3 ${
+              status && !isSubmitting
+                ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-[0_0_40px_-10px_rgba(16,185,129,0.5)]'
+                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+            }`}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Submitting...</span>
+              </>
+            ) : (
+              <span>{isAuthenticated ? 'Submit Report' : 'Sign in to Submit Report'}</span>
+            )}
+          </button>
+          <div className="h-safe-bottom" />
+        </motion.div>
+
+        {/* Vehicle Selection Modal */}
+        <VehicleSelectionModal
+          open={vehicleModalOpen}
+          onOpenChange={setVehicleModalOpen}
+          currentVehicle={selectedVehicle}
+          onSelectVehicle={setSelectedVehicle}
+        />
       </div>
-    </div>
+    </>
   );
 }
