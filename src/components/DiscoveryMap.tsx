@@ -463,6 +463,27 @@ function TrailPath({
   );
 }
 
+// Barnwell Mountain Recreation Area — demo default
+// TODO(production): replace with user region preference from profile
+const DEMO_CENTER: [number, number] = [32.80, -94.87];
+const DEMO_ZOOM = 13;
+
+// Flies to the user's GPS location on mount if `locate` is true.
+// Silently stays on the demo default if permission is denied or unavailable.
+function FlyToUserLocation({ locate }: { locate: boolean }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!locate || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        map.flyTo([pos.coords.latitude, pos.coords.longitude], 13, { duration: 1.5 });
+      },
+      () => {} // denied or unavailable — stay on default, no error shown
+    );
+  }, [locate, map]);
+  return null;
+}
+
 // FlyTo component - auto-centers on a specific trail
 function FlyToTrail({ trailId, trails }: { trailId: string | null; trails: TrailWithData[] }) {
   const map = useMap();
@@ -487,10 +508,12 @@ export function DiscoveryMap({
   focusTrailId,
   searchQuery,
   onFilteredTrailsChange,
+  locate = false,
 }: {
   focusTrailId?: string | null;
   searchQuery?: string | null;
   onFilteredTrailsChange?: (trails: Trail[]) => void;
+  locate?: boolean;
 }) {
   const { selectedVehicle } = useVehicle();
   const [trails, setTrails] = useState<TrailWithData[]>([]);
@@ -593,15 +616,10 @@ export function DiscoveryMap({
     setCoords({ lat, lng });
   }, []);
 
-  // Auto-center on the first geo trail with real segments, otherwise US center
-  const defaultCenter: [number, number] = (() => {
-    if (geoSegmentPaths.size > 0) {
-      const firstPath = geoSegmentPaths.values().next().value;
-      if (firstPath && firstPath.length > 0) return firstPath[0] as [number, number];
-    }
-    return [39.8283, -98.5795]; // geographic center of US
-  })();
-  const defaultZoom = geoSegmentPaths.size > 0 ? 13 : 5;
+  // Default to Barnwell for the demo.
+  // FlyToUserLocation will override this if locate=true and permission granted.
+  const defaultCenter = DEMO_CENTER;
+  const defaultZoom = DEMO_ZOOM;
 
   // Loading state
   if (isLoading) {
@@ -647,6 +665,7 @@ export function DiscoveryMap({
         />
 
         <MapEventHandler onCoordsChange={handleCoordsChange} />
+        <FlyToUserLocation locate={locate} />
         <FlyToTrail trailId={focusTrailId || null} trails={trails} />
 
         {/* Trail Paths with Red-Zoning */}

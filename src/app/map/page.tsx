@@ -31,10 +31,12 @@ function MapContent({
   focusTrailId,
   searchQuery,
   onFilteredTrailsChange,
+  locate,
 }: {
   focusTrailId?: string | null;
   searchQuery?: string | null;
   onFilteredTrailsChange?: (trails: Trail[]) => void;
+  locate?: boolean;
 }) {
   return (
     <div className="flex-1 min-h-0 relative">
@@ -42,6 +44,7 @@ function MapContent({
         focusTrailId={focusTrailId}
         searchQuery={searchQuery}
         onFilteredTrailsChange={onFilteredTrailsChange}
+        locate={locate}
       />
     </div>
   );
@@ -52,6 +55,7 @@ export default function MapPage() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('q');
   const idParam = searchParams.get('id');
+  const locate = searchParams.get('locate') === 'true';
   const { open: searchOpen, setOpen: setSearchOpen } = useCommandBar();
 
   const [listOpen, setListOpen] = useState(false);
@@ -157,6 +161,7 @@ export default function MapPage() {
             focusTrailId={focusTrailId}
             searchQuery={searchQuery}
             onFilteredTrailsChange={setFilteredTrails}
+            locate={locate}
           />
         </Suspense>
 
