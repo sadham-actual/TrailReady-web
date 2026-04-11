@@ -17,9 +17,11 @@ import {
   CheckCircle2,
   XCircle,
   HelpCircle,
+  Car,
 } from 'lucide-react';
-import { Trail } from '@/types';
+import { Trail, VEHICLE_CATEGORIES } from '@/types';
 import { trailService } from '@/services/trailService';
+import { useVehicle } from '@/contexts/VehicleContext';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 
@@ -54,6 +56,37 @@ function getDifficultyConfig(level?: number) {
   return DIFFICULTY[key] ?? { label: 'Unknown', color: 'text-stone-500', bg: 'bg-stone-50 border-stone-200' };
 }
 
+type MatchBadge = {
+  label: string;
+  bg: string;
+  text: string;
+  border: string;
+  icon: React.ReactNode;
+} | null;
+
+function calculateMatchBadge(
+  baseDifficulty: number | undefined,
+  vehicleCapability: number | null
+): MatchBadge {
+  if (vehicleCapability === null || baseDifficulty === undefined) return null;
+  const diff = vehicleCapability - baseDifficulty;
+  if (diff >= 0) return {
+    label: 'Good Match',
+    bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200',
+    icon: <CheckCircle2 className="h-3 w-3" />,
+  };
+  if (diff === -1) return {
+    label: 'Caution',
+    bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200',
+    icon: <AlertTriangle className="h-3 w-3" />,
+  };
+  return {
+    label: 'High Risk',
+    bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200',
+    icon: <AlertTriangle className="h-3 w-3" />,
+  };
+}
+
 function formatRelativeTime(iso?: string): string {
   if (!iso) return '';
   const diff = Date.now() - new Date(iso).getTime();
@@ -66,7 +99,7 @@ function formatRelativeTime(iso?: string): string {
 }
 
 // TrailCard component
-function TrailCard({ trail, index }: { trail: Trail; index: number }) {
+function TrailCard({ trail, index, matchBadge }: { trail: Trail; index: number; matchBadge: MatchBadge }) {
   const statusCfg = getStatusConfig(trail.latestStatus);
   const diffCfg = getDifficultyConfig((trail as { baseDifficulty?: number }).baseDifficulty);
   const StatusIcon = statusCfg.Icon;
@@ -106,7 +139,7 @@ function TrailCard({ trail, index }: { trail: Trail; index: number }) {
             <ChevronRight className="h-4 w-4 text-stone-300 group-hover:text-action-orange flex-shrink-0 mt-0.5 transition-colors" />
           </div>
 
-          {/* Status + Difficulty badges */}
+          {/* Status + Difficulty + Match badges */}
           <div className="flex items-center gap-2 flex-wrap">
             <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-sm border text-[10px] font-mono font-bold uppercase tracking-wider ${statusCfg.bg} ${statusCfg.color} border-current/20`}>
               <StatusIcon className="h-3 w-3" />
@@ -120,10 +153,10 @@ function TrailCard({ trail, index }: { trail: Trail; index: number }) {
               </div>
             )}
 
-            {isGeoTrail(trail) && (
-              <div className="inline-flex items-center gap-1 px-2 py-1 rounded-sm border text-[10px] font-mono font-bold uppercase tracking-wider bg-sky-50 text-sky-700 border-sky-200">
-                <Map className="h-3 w-3" />
-                Geo Import
+            {matchBadge && (
+              <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-sm border text-[10px] font-mono font-bold uppercase tracking-wider ${matchBadge.bg} ${matchBadge.text} ${matchBadge.border}`}>
+                {matchBadge.icon}
+                {matchBadge.label}
               </div>
             )}
 
@@ -165,11 +198,17 @@ function RegionPill({
 }
 
 export default function TrailBrowsePage() {
+  const { selectedVehicle } = useVehicle();
   const [trails, setTrails] = useState<Trail[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeRegion, setActiveRegion] = useState<string | null>(null);
   const [activeStatus, setActiveStatus] = useState<string | null>(null);
+
+  const vehicleCapability = useMemo(() => {
+    const cat = VEHICLE_CATEGORIES.find((c) => c.mappedType === selectedVehicle);
+    return cat?.capabilityLevel ?? null;
+  }, [selectedVehicle]);
 
   useEffect(() => {
     trailService.getTrails().then((data) => {
@@ -295,6 +334,20 @@ export default function TrailBrowsePage() {
           </div>
         </div>
 
+        {/* Vehicle match prompt */}
+        {!selectedVehicle && !isLoading && (
+          <Link
+            href="/"
+            className="flex items-center gap-3 mb-4 px-4 py-3 rounded-sm bg-action-orange/5 border border-action-orange/20 hover:bg-action-orange/10 transition-colors group"
+          >
+            <Car className="h-4 w-4 text-action-orange flex-shrink-0" />
+            <p className="font-mono text-xs uppercase tracking-wider text-deep-stone">
+              Set your vehicle to see which trails match your rig
+            </p>
+            <ChevronRight className="h-4 w-4 text-action-orange ml-auto group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+        )}
+
         {/* Stats bar */}
         <div className="flex items-center justify-between mb-4">
           <p className="font-mono text-xs uppercase tracking-wider text-stone-500">
@@ -327,7 +380,15 @@ export default function TrailBrowsePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {filtered.map((trail, i) => (
-              <TrailCard key={trail.id} trail={trail} index={i} />
+              <TrailCard
+                key={trail.id}
+                trail={trail}
+                index={i}
+                matchBadge={calculateMatchBadge(
+                  (trail as { baseDifficulty?: number }).baseDifficulty,
+                  vehicleCapability
+                )}
+              />
             ))}
           </div>
         )}
