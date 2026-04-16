@@ -59,12 +59,6 @@ function getRecencyWeight(timestamp: string | Date): number {
 
   const ageHours = (Date.now() - createdMs) / (1000 * 60 * 60);
 
-  // Reject future-dated reports (clock skew, malicious data)
-  if (ageHours < 0) {
-    console.warn(`Future-dated report detected: ${timestamp}`);
-    return 0.1; // Minimal weight, not rejected entirely
-  }
-
   if (ageHours < 24) return 2;
   if (ageHours < 168) return 1; // 7 days
   return 0.5;
@@ -147,6 +141,12 @@ export function calculateGlobalStatus(reports: IntelReport[]): GlobalStatusResul
     const timestamp = new Date(report.timestamp).getTime();
     if (Number.isNaN(timestamp)) {
       console.warn(`Invalid timestamp: ${report.timestamp} - skipping report`);
+      return false;
+    }
+
+    // Reject future-dated reports — they skew reliability scores and status weights
+    if (timestamp > Date.now()) {
+      console.warn(`Future-dated report rejected: ${report.timestamp}`);
       return false;
     }
 

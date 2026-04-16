@@ -94,9 +94,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     const baseTrails: GeoMappedTrail[] =
-      dbTrails !== null && dbTrails.length > 0
-        ? dbTrails
-        : (searchMockTrails(search, region) as GeoMappedTrail[]);
+      dbTrails ?? (process.env.USE_MOCK_DATA === 'true' ? (searchMockTrails(search, region) as GeoMappedTrail[]) : []);
 
     const merged = new Map<string, GeoMappedTrail>();
 

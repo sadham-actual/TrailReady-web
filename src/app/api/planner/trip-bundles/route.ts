@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 import { errors, successResponse } from '@/lib/api/response';
+
+const TRIP_BUNDLE_MAX_TRAILS = 3;
 import { createSupabaseServiceClient, getSupabaseUserIdFromRequestAuthHeader } from '@/lib/supabase/server';
 
 async function requireAuthUserId(request: NextRequest): Promise<string | null> {
@@ -54,8 +56,8 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const { user_id, trail_ids, scheduled_date, notes, is_offline_cached } = body ?? {};
 
-  if (!user_id || !Array.isArray(trail_ids) || trail_ids.length !== 3) {
-    return errors.badRequest('user_id and exactly 3 trail_ids are required');
+  if (!user_id || !Array.isArray(trail_ids) || trail_ids.length !== TRIP_BUNDLE_MAX_TRAILS) {
+    return errors.badRequest(`user_id and exactly ${TRIP_BUNDLE_MAX_TRAILS} trail_ids are required`);
   }
 
   if (authUserId !== user_id) {

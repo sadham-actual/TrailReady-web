@@ -1,7 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { VehicleType } from '@/types';
+import { VehicleType, VEHICLE_TYPE_LABELS } from '@/types';
+
+const VALID_VEHICLE_TYPES = new Set<string>(Object.keys(VEHICLE_TYPE_LABELS));
 
 /**
  * Vehicle selection context for managing user's vehicle preference
@@ -28,8 +30,10 @@ export function VehicleProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
+      if (stored && VALID_VEHICLE_TYPES.has(stored)) {
         setSelectedVehicleState(stored as VehicleType);
+      } else if (stored) {
+        localStorage.removeItem(STORAGE_KEY);
       }
     } catch (error) {
       console.error('Failed to load vehicle selection from localStorage:', error);
