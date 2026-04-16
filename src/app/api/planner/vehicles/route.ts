@@ -57,14 +57,20 @@ export async function POST(request: NextRequest) {
 
   await supabase.from('users').upsert({ id: userId, is_anonymous: false });
 
+  const clearanceNum = Number(clearance_inches ?? 0);
+  const tireSizeNum = Number(tire_size ?? 0);
+  if (Number.isNaN(clearanceNum) || Number.isNaN(tireSizeNum)) {
+    return errors.badRequest('clearance_inches and tire_size must be numeric');
+  }
+
   const payload = {
     id: crypto.randomUUID(),
     user_id: userId,
     rig_tier,
     make: make ?? '',
     model: model ?? '',
-    clearance_inches: Number(clearance_inches ?? 0),
-    tire_size: Number(tire_size ?? 0),
+    clearance_inches: clearanceNum,
+    tire_size: tireSizeNum,
     has_low_range: Boolean(has_low_range),
     has_winch: Boolean(has_winch),
     experience_level,

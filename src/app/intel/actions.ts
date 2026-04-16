@@ -3,6 +3,7 @@
 import { Status, Confidence, VehicleType } from '@/types';
 import { createSupabaseServiceClient } from '@/lib/supabase/server';
 import { getMockTrail } from '@/data/sampleTrails';
+import { vehicleTypeSchema } from '@/lib/validations/report';
 
 export type ReportState = {
   status: 'idle' | 'success' | 'error';
@@ -57,6 +58,9 @@ export async function submitFieldReport(input: FieldReportInput): Promise<Report
   }
   if (!['low', 'medium', 'high'].includes(confidence)) {
     return { status: 'error', message: 'INVALID CONFIDENCE VALUE' };
+  }
+  if (!vehicleTypeSchema.safeParse(vehicleType).success) {
+    return { status: 'error', message: 'INVALID VEHICLE TYPE' };
   }
   if (photos && photos.length > 5) {
     return { status: 'error', message: 'MAX 5 PHOTOS PER SUBMISSION' };
