@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Send, X, AlertCircle, CheckCircle2, AlertTriangle, XCircle, FileText, Camera, Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { ImageUpload, ImageFile } from '@/components/intel/ImageUpload';
 import { submitFieldReport, type ReportState } from '@/app/intel/actions';
+import { queueReport, isNetworkError } from '@/lib/offlineQueue';
 import { trailService } from '@/services/trailService';
 import { Trail, Status, Confidence, VEHICLE_CATEGORIES, VehicleCategoryInfo } from '@/types';
 import { useVehicle } from '@/contexts/VehicleContext';
@@ -229,8 +230,28 @@ export default function FieldReportPage() {
       }
     } catch (err) {
       console.error('Submit failed:', err);
-      setError('TRANSMISSION FAILED - TRY AGAIN');
-      setImages(prev => prev.map(img => ({ ...img, status: 'error' as const })));
+
+      // If the device is offline or network request failed, queue the report
+      // so it can be retried automatically when connectivity returns
+      if (isNetworkError(err)) {
+        queueReport({
+          trailId,
+          trailName: trail?.name ?? trailId,
+          status: status!,
+          vehicleType: vehicleCategory!.mappedType,
+          confidence: confidence!,
+          notes: notes.trim() || undefined,
+          photos: photoData.length > 0 ? photoData : undefined,
+        });
+        toast.warning('NO CONNECTION — REPORT SAVED', {
+          description: 'Your report will be submitted automatically when signal returns.',
+          duration: 6000,
+        });
+        router.push(`/trails/${trailId}`);
+      } else {
+        setError('TRANSMISSION FAILED — TRY AGAIN');
+        setImages(prev => prev.map(img => ({ ...img, status: 'error' as const })));
+      }
     } finally {
       setIsSubmitting(false);
     }

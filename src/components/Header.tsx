@@ -3,12 +3,15 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Menu, X, Car, ChevronDown, Compass } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
 import { CommandBar, useCommandBar } from '@/components/CommandBar';
 import { VEHICLE_TYPE_LABELS } from '@/types';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { getPendingReports, removeFromQueue } from '@/lib/offlineQueue';
+import { submitFieldReport } from '@/app/intel/actions';
+import { toast } from 'sonner';
 
 export function Header() {
   const pathname = usePathname();
@@ -42,6 +45,46 @@ export function Header() {
 
     return () => sub.subscription.unsubscribe();
   }, [supabase]);
+
+  // Process any queued offline reports when connectivity is restored
+  const processOfflineQueue = useCallback(async () => {
+    const pending = getPendingReports();
+    if (pending.length === 0) return;
+
+    let submitted = 0;
+    for (const report of pending) {
+      try {
+        const result = await submitFieldReport({
+          trailId: report.trailId,
+          status: report.status,
+          vehicleType: report.vehicleType,
+          confidence: report.confidence,
+          notes: report.notes,
+          photos: report.photos,
+        });
+        if (result.status === 'success') {
+          removeFromQueue(report.id);
+          submitted++;
+        }
+      } catch {
+        // Still offline — leave in queue, will retry on next online event
+        break;
+      }
+    }
+
+    if (submitted > 0) {
+      toast.success(`${submitted} QUEUED REPORT${submitted > 1 ? 'S' : ''} SUBMITTED`, {
+        description: 'Your offline reports have been logged successfully.',
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    // Try to flush the queue on mount (covers page refresh after regaining signal)
+    if (navigator.onLine) void processOfflineQueue();
+    window.addEventListener('online', processOfflineQueue);
+    return () => window.removeEventListener('online', processOfflineQueue);
+  }, [processOfflineQueue]);
 
   if (pathname === '/') return null;
 
