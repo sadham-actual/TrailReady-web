@@ -183,10 +183,10 @@ export default function FieldReportPage() {
     setIsSubmitting(true);
     setError(null);
 
-    try {
-      // Upload images via UploadThing if any are attached
-      let photoData: { url: string; caption: string | null }[] = [];
+    // Declared outside try so catch block can reference it for offline queuing
+    let photoData: { url: string; caption: string | null }[] = [];
 
+    try {
       if (images.length > 0) {
         setImages(prev => prev.map(img => ({ ...img, status: 'uploading' as const, progress: 0 })));
 
