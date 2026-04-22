@@ -1,7 +1,7 @@
 'use server';
 
 import { Status, Confidence, VehicleType } from '@/types';
-import { createSupabaseServiceClient } from '@/lib/supabase/server';
+import { createSupabaseServiceClient, createSupabaseServerActionClient } from '@/lib/supabase/server';
 import { getMockTrail } from '@/data/sampleTrails';
 import { vehicleTypeSchema } from '@/lib/validations/report';
 
@@ -69,13 +69,20 @@ export async function submitFieldReport(input: FieldReportInput): Promise<Report
     return { status: 'error', message: 'NOTES EXCEED 500 CHARACTER LIMIT' };
   }
 
+  // Require authentication — reports must be tied to a real user
+  const authClient = await createSupabaseServerActionClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user) {
+    return { status: 'error', message: 'AUTHENTICATION REQUIRED — SIGN IN TO SUBMIT REPORTS' };
+  }
+
   try {
     const trailOk = await ensureTrailExists(trailId);
     if (!trailOk) return { status: 'error', message: 'TRAIL NOT FOUND IN DATABASE' };
 
     const supabase = createSupabaseServiceClient();
-    const userId = crypto.randomUUID();
-    await supabase.from('users').upsert({ id: userId, is_anonymous: true });
+    const userId = user.id;
+    await supabase.from('users').upsert({ id: userId, is_anonymous: false });
 
     const reportId = crypto.randomUUID();
     const nowIso = new Date().toISOString();

@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -14,6 +16,33 @@ export function createSupabaseServiceClient() {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
+    },
+  });
+}
+
+/**
+ * Cookie-aware Supabase client for use in Server Actions and Server Components.
+ * Reads the user's session from cookies — use this when you need the authenticated user.
+ */
+export async function createSupabaseServerActionClient() {
+  const cookieStore = await cookies();
+  const url = requireEnv('NEXT_PUBLIC_SUPABASE_URL');
+  const anonKey = requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY');
+
+  return createServerClient(url, anonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          );
+        } catch {
+          // Server Actions can set cookies; ignore failures in read-only contexts
+        }
+      },
     },
   });
 }

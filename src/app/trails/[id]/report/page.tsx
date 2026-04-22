@@ -96,6 +96,18 @@ export default function FieldReportPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Auth guard — reports require a signed-in user
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        router.replace(`/auth/login?next=/trails/${trailId}/report`);
+      } else {
+        setAuthChecked(true);
+      }
+    });
+  }, [supabase, router, trailId]);
 
   // Load trail data and set default vehicle from context
   useEffect(() => {
@@ -224,7 +236,7 @@ export default function FieldReportPage() {
     }
   };
 
-  if (isLoading) {
+  if (!authChecked || isLoading) {
     return <LoadingSkeleton />;
   }
 
