@@ -128,7 +128,7 @@ export function Header() {
         <div className="md:hidden flex items-center gap-2">
           <button
             onClick={() => setVehicleModalOpen(true)}
-            className={`p-2 rounded-sm border transition-all ${
+            className={`p-2.5 rounded-sm border transition-all ${
               selectedVehicle ? 'bg-status-clear text-white border-green-700' : 'bg-action-orange text-white border-action-orange-dark'
             }`}
             aria-label="Select vehicle"
@@ -138,7 +138,7 @@ export function Header() {
 
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-sm border border-stone-border bg-white hover:bg-stone-light shadow-[2px_2px_0_0_var(--color-stone-border)] active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-px active:translate-y-px transition-all"
+            className="p-2.5 rounded-sm border border-stone-border bg-white hover:bg-stone-light shadow-[2px_2px_0_0_var(--color-stone-border)] active:shadow-[1px_1px_0_0_var(--color-stone-border)] active:translate-x-px active:translate-y-px transition-all"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? <X className="h-5 w-5 text-deep-stone" /> : <Menu className="h-5 w-5 text-deep-stone" />}

@@ -257,7 +257,7 @@ export default function FieldReportPage() {
           <div className="flex items-center justify-between">
             <Link
               href={`/trails/${trailId}`}
-              className="flex items-center gap-2 text-stone-700 hover:text-stone-900 transition-colors"
+              className="flex items-center gap-2 text-stone-700 hover:text-stone-900 transition-colors -ml-2 p-2"
             >
               <ArrowLeft className="h-5 w-5" />
               <span className="font-mono text-xs uppercase tracking-wider">Cancel</span>
@@ -363,7 +363,7 @@ export default function FieldReportPage() {
               Your Vehicle <span className="text-action-orange">*</span>
             </h2>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {VEHICLE_CATEGORIES.map((category) => {
                 const isSelected = vehicleCategory?.id === category.id;
                 return (
@@ -418,7 +418,7 @@ export default function FieldReportPage() {
               Report Confidence <span className="text-action-orange">*</span>
             </h2>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {CONFIDENCE_OPTIONS.map((option) => {
                 const Icon = option.icon;
                 const isSelected = confidence === option.value;
@@ -427,7 +427,7 @@ export default function FieldReportPage() {
                     key={option.value}
                     type="button"
                     onClick={() => setConfidence(option.value)}
-                    className={`relative flex flex-col items-center gap-2 p-4 border-2 transition-all ${
+                    className={`relative flex flex-col items-center gap-2 p-4 min-h-[72px] border-2 transition-all ${
                       isSelected
                         ? 'border-action-orange bg-action-orange/5'
                         : 'border-stone-300 bg-stone-50 hover:border-stone-400'
@@ -435,7 +435,7 @@ export default function FieldReportPage() {
                   >
                     <Icon className={`h-6 w-6 ${isSelected ? 'text-action-orange' : 'text-stone-400'}`} />
                     <div className="text-center">
-                      <p className={`font-mono text-xs uppercase tracking-wider font-semibold ${isSelected ? 'text-action-orange' : 'text-stone-700'}`}>
+                      <p className={`font-mono text-xs sm:text-[11px] uppercase tracking-wider font-semibold ${isSelected ? 'text-action-orange' : 'text-stone-700'}`}>
                         {option.label}
                       </p>
                     </div>

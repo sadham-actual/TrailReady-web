@@ -21,6 +21,12 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "TrailReady - Know Before You Go",
   description: "Real-time trail condition reports from the off-road community. Plan smarter, explore further.",
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'TrailReady',
+  },
   icons: {
     icon: '/icon.svg',
     shortcut: '/icon.svg',

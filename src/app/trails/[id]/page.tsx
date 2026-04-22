@@ -237,7 +237,7 @@ export default function TrailDetailPage() {
   const currentCategory = VEHICLE_CATEGORIES.find(cat => cat.mappedType === selectedVehicle);
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-24">
+    <div className="min-h-screen bg-stone-50 pb-32">
       {/* Back navigation */}
       <motion.div
         initial={{ opacity: 0, x: -20 }}
@@ -1104,7 +1104,7 @@ function NavigationFooter({
 // Loading Skeleton
 function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-stone-50 pb-24">
+    <div className="min-h-screen bg-stone-50 pb-32">
       <div className="sticky top-0 z-50 backdrop-blur-xl bg-stone-50/90 border-b border-stone-800">
         <div className="container mx-auto px-4 py-3 max-w-3xl">
           <div className="h-8 w-16 bg-stone-100 border border-stone-800 rounded-none animate-pulse" />

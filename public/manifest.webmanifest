@@ -1,0 +1,18 @@
+{
+  "name": "TrailReady",
+  "short_name": "TrailReady",
+  "description": "Real-time trail conditions from the off-road community. Know before you go.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F9F8F6",
+  "theme_color": "#FF6B00",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

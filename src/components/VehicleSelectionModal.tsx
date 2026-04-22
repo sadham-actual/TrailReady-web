@@ -87,8 +87,8 @@ export function VehicleSelectionModal({
                 </Drawer.Description>
               </div>
 
-              {/* Vehicle Cards Grid */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
+              {/* Vehicle Cards Grid — single col on mobile, 2 col on sm+ */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                 {VEHICLE_CATEGORIES.map((category, index) => {
                   const isSelected = currentCategory?.id === category.id;
 
@@ -99,7 +99,7 @@ export function VehicleSelectionModal({
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.05 }}
                       onClick={() => handleSelect(category)}
-                      className={`relative p-5 rounded-sm border text-left transition-all duration-150 ${
+                      className={`relative flex items-center gap-4 p-4 sm:flex-col sm:items-start sm:p-5 rounded-sm border text-left transition-all duration-150 min-h-[72px] ${
                         isSelected
                           ? 'bg-white border-action-orange shadow-[3px_3px_0_0_var(--color-action-orange)]'
                           : 'bg-white border-stone-border shadow-[2px_2px_0_0_var(--color-stone-border)] hover:shadow-[3px_3px_0_0_var(--color-stone-border)] hover:-translate-x-px hover:-translate-y-px'
@@ -118,7 +118,7 @@ export function VehicleSelectionModal({
 
                       {/* Icon */}
                       <div
-                        className={`w-12 h-12 rounded-sm flex items-center justify-center mb-4 transition-colors ${
+                        className={`w-12 h-12 flex-shrink-0 rounded-sm flex items-center justify-center sm:mb-4 transition-colors ${
                           isSelected
                             ? 'bg-action-orange/10 text-action-orange'
                             : 'bg-stone-light text-muted-stone'
@@ -128,19 +128,21 @@ export function VehicleSelectionModal({
                       </div>
 
                       {/* Text */}
-                      <h3
-                        className={`font-bold text-base mb-1 transition-colors ${
-                          isSelected ? 'text-action-orange' : 'text-deep-stone'
-                        }`}
-                      >
-                        {category.name}
-                      </h3>
-                      <p className="font-mono text-xs text-muted-stone leading-relaxed mb-3 uppercase tracking-wide">
-                        {category.description}
-                      </p>
+                      <div className="flex-1 min-w-0">
+                        <h3
+                          className={`font-bold text-base mb-1 transition-colors ${
+                            isSelected ? 'text-action-orange' : 'text-deep-stone'
+                          }`}
+                        >
+                          {category.name}
+                        </h3>
+                        <p className="font-mono text-xs text-muted-stone leading-relaxed mb-2 sm:mb-3 uppercase tracking-wide">
+                          {category.description}
+                        </p>
 
-                      {/* Capability Bar */}
-                      <CapabilityBar level={category.capabilityLevel} />
+                        {/* Capability Bar */}
+                        <CapabilityBar level={category.capabilityLevel} />
+                      </div>
                     </motion.button>
                   );
                 })}
