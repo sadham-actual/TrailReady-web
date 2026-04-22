@@ -114,6 +114,7 @@ export async function submitFieldReport(input: FieldReportInput): Promise<Report
       const rows = validPhotos.map((p) => ({
         id: crypto.randomUUID(),
         trail_id: trailId,
+        condition_report_id: reportId,
         url: p.url,
         created_at: nowIso,
         vehicle_type: vehicleType,
