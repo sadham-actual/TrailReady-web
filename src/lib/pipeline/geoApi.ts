@@ -7,6 +7,18 @@ export interface ParsedBbox {
   maxLat: number;
 }
 
+type RpcSegmentRow = {
+  segment_id: string;
+  source_slug?: string | null;
+  source_name?: string | null;
+  segment_name?: string | null;
+  geometry?: {
+    coordinates?: number[][];
+  } | null;
+  reversed?: boolean | null;
+  properties?: Record<string, unknown> | null;
+};
+
 export function parseBbox(raw?: string | null): ParsedBbox | null {
   if (!raw) return null;
   const p = raw.split(',').map((n) => Number(n.trim()));
@@ -16,7 +28,7 @@ export function parseBbox(raw?: string | null): ParsedBbox | null {
   return { minLng, minLat, maxLng, maxLat };
 }
 
-export function mapRpcRowsToPipelineSegments(rows: any[]): PipelineSegment[] {
+export function mapRpcRowsToPipelineSegments(rows: RpcSegmentRow[]): PipelineSegment[] {
   return rows.map((r) => {
     const coords = ((r.geometry?.coordinates ?? []) as number[][]).map((c) => {
       if (c.length >= 3) return [c[0], c[1], c[2]] as Coordinate;
@@ -34,7 +46,7 @@ export function mapRpcRowsToPipelineSegments(rows: any[]): PipelineSegment[] {
   });
 }
 
-export function collectAttributions(rows: any[]): SourceAttribution[] {
+export function collectAttributions(rows: RpcSegmentRow[]): SourceAttribution[] {
   const map = new Map<string, SourceAttribution>();
   for (const r of rows) {
     const slug = String(r.source_slug ?? 'unknown');

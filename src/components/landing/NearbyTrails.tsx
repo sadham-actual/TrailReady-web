@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, ChevronRight, AlertTriangle, CheckCircle2, HelpCircle, Loader2 } from 'lucide-react';
+import { MapPin, ChevronRight, AlertTriangle, CheckCircle2, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VEHICLE_CATEGORIES, Trail, Status } from '@/types';

@@ -1,7 +1,20 @@
 import { ImportSegmentCandidate } from './types';
 import { deriveAllowedUses, normalizeCoordinates, normalizeStatus } from './normalize';
 
-export function parseGeoJsonSegments(input: any, sourceSlug: string): ImportSegmentCandidate[] {
+type GeoJsonFeature = {
+  id?: string | number;
+  geometry?: {
+    type?: string;
+    coordinates?: unknown;
+  } | null;
+  properties?: Record<string, unknown> | null;
+};
+
+type GeoJsonFeatureCollection = {
+  features?: GeoJsonFeature[];
+};
+
+export function parseGeoJsonSegments(input: GeoJsonFeatureCollection, sourceSlug: string): ImportSegmentCandidate[] {
   const features = Array.isArray(input?.features) ? input.features : [];
   const results: ImportSegmentCandidate[] = [];
 

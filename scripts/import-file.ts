@@ -16,7 +16,10 @@ async function main() {
     process.exit(1);
   }
 
-  const source = (sourceOverride as any) || sourceFromExt(filePath);
+  const source =
+    sourceOverride === 'geojson' || sourceOverride === 'shapefile'
+      ? sourceOverride
+      : sourceFromExt(filePath);
   const result = await import_source(source, filePath);
   console.log(JSON.stringify(result, null, 2));
 }

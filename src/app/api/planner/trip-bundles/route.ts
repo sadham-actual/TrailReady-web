@@ -4,6 +4,11 @@ import { errors, successResponse } from '@/lib/api/response';
 const TRIP_BUNDLE_MAX_TRAILS = 3;
 import { createSupabaseServiceClient, getSupabaseUserIdFromRequestAuthHeader } from '@/lib/supabase/server';
 
+type TripBundleTrailRow = {
+  trip_bundle_id: string;
+  trail_id: string;
+};
+
 async function requireAuthUserId(request: NextRequest): Promise<string | null> {
   return getSupabaseUserIdFromRequestAuthHeader(request.headers.get('authorization'));
 }
@@ -28,7 +33,7 @@ export async function GET(request: NextRequest) {
   if (bundlesErr) return errors.internalError(bundlesErr.message);
 
   const bundleIds = (bundles ?? []).map((b) => b.id);
-  let trails: any[] = [];
+  let trails: TripBundleTrailRow[] = [];
   if (bundleIds.length > 0) {
     const { data: t, error: trailsErr } = await supabase
       .from('trip_bundle_trails')
@@ -41,7 +46,7 @@ export async function GET(request: NextRequest) {
 
   const merged = (bundles ?? []).map((b) => ({
     ...b,
-    trails: trails.filter((t) => t.trip_bundle_id === b.id),
+    trails: trails.filter((trail) => trail.trip_bundle_id === b.id),
   }));
 
   return successResponse(merged);

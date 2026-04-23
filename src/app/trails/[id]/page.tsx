@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -23,8 +23,7 @@ import {
   VehicleOutcome,
   getReportFreshness,
   getCapabilityLabel,
-  calculateWeightedStatus,
-  WeightedStatusResult
+  calculateWeightedStatus
 } from '@/lib/trailOutcome';
 import { GpxPoint, parseGpxToPoints } from '@/lib/gpx';
 import { ElevationProfile } from '@/components/ElevationProfile';
@@ -88,17 +87,12 @@ export default function TrailDetailPage() {
   const [gpxSource, setGpxSource] = useState<string>('No GPX loaded');
   const [gpxError, setGpxError] = useState<string>('');
 
-  // Re-fetch data when trailId changes or when returning from report submission
-  useEffect(() => {
-    loadTrailData();
-  }, [trailId, refreshKey]);
-
-  const handleTrailUnavailable = () => {
+  const handleTrailUnavailable = useCallback(() => {
     toast.error('Trail Intel Unavailable');
     router.replace('/map');
-  };
+  }, [router]);
 
-  async function loadTrailData() {
+  const loadTrailData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [trailData, reportsData, photosData] = await Promise.all([
@@ -120,7 +114,12 @@ export default function TrailDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [trailId, handleTrailUnavailable]);
+
+  // Re-fetch data when trailId changes or when returning from report submission
+  useEffect(() => {
+    void loadTrailData();
+  }, [loadTrailData, refreshKey]);
 
   async function handleGpxImport(file: File) {
     try {
@@ -369,7 +368,6 @@ export default function TrailDetailPage() {
           className="mb-6"
         >
           <OverallStatusCard
-            weightedStatus={weightedStatus}
             globalStatus={globalStatus}
             reportCount={reports.length}
           />
@@ -522,7 +520,7 @@ function VerdictHeroCard({
     );
   }
 
-  const { riskLevel, bgGradient, borderColor, textColor, Icon } = getVerdictStyles(outcome.status);
+  const { riskLevel, Icon } = getVerdictStyles(outcome.status);
 
   return (
     <div className="relative overflow-hidden rounded-none bg-stone-100 border border-stone-800 p-6 md:p-8">
@@ -658,11 +656,9 @@ function FreshnessBadge({ freshness }: { freshness: { isFresh: boolean; isStale:
 
 // Overall Trail Status Component - Global Intel Algorithm
 function OverallStatusCard({
-  weightedStatus,
   globalStatus,
   reportCount
 }: {
-  weightedStatus: WeightedStatusResult;
   globalStatus: GlobalStatusResult;
   reportCount: number;
 }) {

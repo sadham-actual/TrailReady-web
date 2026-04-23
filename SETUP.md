@@ -1,280 +1,158 @@
-# TrailReady Backend Setup Guide
+# TrailReady Setup
 
-This guide will help you set up the PostgreSQL database and complete the backend implementation.
+This document describes the current application setup for the live TrailReady web app.
 
-## What's Been Implemented
+For the optional local PostGIS geometry pipeline, use [POSTGIS.md](./POSTGIS.md).
 
-✅ All infrastructure files and API routes have been created:
-- Database schema ([prisma/schema.prisma](prisma/schema.prisma))
-- 5 API routes (trails, trail detail, reports, auth)
-- Real API client service
-- Zod validation schemas
-- Database seed script
-- Environment configuration
+## What this repo uses today
 
-✅ Frontend has been updated to use real API instead of mock data
+TrailReady is currently built around:
 
-## Setup Steps
+- Next.js App Router
+- Supabase auth and database tables defined in `supabase/migrations/`
+- UploadThing for photo uploads
+- Local client-side vehicle preference storage plus authenticated planner/profile persistence
+- Optional geo trail import and GPX generation pipeline
 
-### 1. Install Dependencies
+This repo is not currently using Prisma.
 
-Run this in your IDE's terminal (PowerShell, CMD, or Git Bash with npm in PATH):
+## 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-This will install:
-- `prisma` and `@prisma/client` (database ORM)
-- `zod` (validation)
-- `tsx` (for running TypeScript seed script)
+## 2. Configure environment variables
 
-### 2. Set Up Database
+Create `.env.local` in the project root.
 
-You have two options:
+Minimum app configuration:
 
-#### Option A: Local PostgreSQL (Recommended for Development)
-
-1. Install PostgreSQL locally if you haven't already
-2. Create a new database:
-   ```sql
-   CREATE DATABASE trailready_dev;
-   ```
-
-3. Create `.env.local` file in project root:
-   ```env
-   DATABASE_URL="postgresql://username:password@localhost:5432/trailready_dev"
-   ```
-   Replace `username` and `password` with your PostgreSQL credentials
-
-#### Option B: Vercel Postgres (Production)
-
-1. Go to your Vercel project dashboard
-2. Navigate to Storage tab
-3. Create a new Postgres database
-4. Copy the connection string
-5. Add it to `.env.local`:
-   ```env
-   DATABASE_URL="your-vercel-postgres-connection-string"
-   ```
-
-### 3. Run Database Migrations
-
-This creates the database tables:
-
-```bash
-npm run db:migrate
+```env
+NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="your-anon-key"
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-When prompted, give your migration a name (e.g., "init")
+Optional local PostGIS pipeline configuration:
 
-### 4. Seed the Database
-
-This populates the database with 3 example trails and 4 reports:
-
-```bash
-npm run db:seed
+```env
+DATABASE_URL="postgresql://trailready:trailready@localhost:5432/trailready"
 ```
 
-You should see output confirming:
-- 4 anonymous users created
-- 3 trails created (Alpine Loop, Moab Slickrock, Rubicon Trail)
+## 3. Apply Supabase migrations
 
-### 5. Verify Setup
+Run the SQL files in `supabase/migrations/` against your Supabase project in order.
 
-Start the development server:
+Important files include:
+
+- `001_trailready_init.sql`
+- `002_geometry_pipeline.sql`
+- `003_geo_api_rpc.sql`
+- `004_geo_segments_bbox.sql`
+- `005_barnwell_named_trails.sql`
+- `006_security_fixes.sql`
+- `007_photos_report_fk.sql`
+
+If you use the local PostGIS pipeline, `POSTGIS.md` covers that workflow separately.
+
+## 4. Configure auth providers
+
+In Supabase Auth:
+
+- Enable email/password if you want direct signup/login
+- Enable Google if you want OAuth login
+- Add your local and deployed callback URLs
+
+Expected callback route in this app:
+
+```text
+/auth/callback
+```
+
+Reset-password flow expects:
+
+```text
+/auth/update-password
+```
+
+## 5. Configure UploadThing
+
+The app uses UploadThing route handlers under:
+
+- `/api/uploadthing`
+
+Make sure your UploadThing environment variables are configured in the deployment environment according to your UploadThing setup. Trail photo uploads require an authenticated user.
+
+## 6. Start the app
 
 ```bash
 npm run dev
 ```
 
-Open http://localhost:3000 and:
-1. Navigate to Browse Trails
-2. You should see the 3 seeded trails
-3. Click on a trail to see existing reports
-4. Submit a new report
-5. **Refresh the page** - the report should still be there! 🎉
+Open `http://localhost:3000`.
 
-### 6. Explore Your Database (Optional)
+## 7. Smoke test flows
 
-Prisma Studio provides a GUI for viewing and editing database data:
+Recommended manual checks:
+
+1. Browse trails anonymously on `/`, `/map`, and `/trails`
+2. Open an existing trail detail page
+3. Sign up or log in
+4. Save a vehicle profile from `/profile`
+5. Submit a report from `/trails/[id]/report`
+6. Upload at least one photo during report submission
+7. Confirm the report and photos appear on the trail detail page
+8. Save a trip bundle from `/planner`
+
+## Live-data behavior
+
+The detail/report/photo APIs are now expected to use live data by default.
+
+If `USE_MOCK_DATA=true` is set explicitly, mock content can still be used for development. Otherwise, missing trail detail data should return a real not-found response instead of silently falling back to sample content.
+
+## Main scripts
 
 ```bash
-npm run db:studio
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm run test
+npm run import:dfw
+npm run import:texas
+npm run import:barnwell
+npm run import:source -- <source_name> <input_path_or_url>
+npm run import:file -- <path>
 ```
 
-This opens a web interface at http://localhost:5555
+## Common issues
 
-## New npm Scripts
+### Auth redirects fail
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production (includes Prisma generation)
-- `npm run db:migrate` - Create/run database migrations
-- `npm run db:seed` - Seed database with sample data
-- `npm run db:studio` - Open Prisma Studio GUI
+Check:
 
-## API Endpoints
+- `NEXT_PUBLIC_APP_URL`
+- Supabase Auth redirect URLs
+- Google OAuth redirect configuration if Google sign-in is enabled
 
-Your app now has these REST API endpoints:
+### Trail detail returns not found
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/trails` | List all trails (supports `?search=` and `?region=`) |
-| GET | `/api/trails/:id` | Get single trail by ID |
-| GET | `/api/trails/:id/reports` | Get all reports for a trail |
-| POST | `/api/auth/anonymous` | Create/get anonymous user |
-| POST | `/api/reports` | Submit new condition report |
+Check:
 
-## Testing the Complete Flow
+- Migrations have been applied
+- Trail data exists in `trails` or `geo_trails`
+- `USE_MOCK_DATA` is not masking a data problem during development
 
-### End-to-End Test
+### Report submission fails
 
-1. **Fresh browser**: Open in incognito/private mode
-2. **Browse trails**: Navigate to http://localhost:3000
-3. **Search**: Type "Alpine" in search → should filter to Alpine Loop
-4. **View trail**: Click on "Moab Slickrock"
-5. **View reports**: Should see existing reports
-6. **Submit report**: Click "Submit Report"
-7. **Fill form**:
-   - Status: Clear
-   - Confidence: High
-   - Vehicle: Lifted 4x4 - Solid Axle
-   - Notes: "Trail was great!"
-8. **Submit**: Click submit button
-9. **Verify**: Should redirect back and see your new report at the top
-10. **Persistence test**: Refresh the page → report should still be there
-11. **Multi-user test**: Open another incognito window → navigate to same trail → should see your report
+Check:
 
-## Troubleshooting
+- You are signed in
+- `SUPABASE_SERVICE_ROLE_KEY` is set for server-side writes
+- UploadThing is configured if photos are attached
 
-### "Prisma Client not generated"
+### Planner/profile data looks duplicated
 
-Run:
-```bash
-npx prisma generate
-```
-
-### Database connection errors
-
-1. Verify PostgreSQL is running
-2. Check DATABASE_URL in `.env.local`
-3. Ensure database exists: `CREATE DATABASE trailready_dev;`
-
-### "No such file or directory" errors
-
-Make sure you're running commands from the project root directory (`TrailReady-web`)
-
-### TypeScript errors in IDE
-
-Your IDE might show errors for Prisma imports until you run:
-```bash
-npx prisma generate
-```
-
-This generates the TypeScript types for your Prisma models.
-
-## Deployment to Vercel
-
-### 1. Add Environment Variables
-
-In your Vercel project:
-1. Go to Settings → Environment Variables
-2. Add `DATABASE_URL` (from Vercel Postgres or your hosted PostgreSQL)
-
-### 2. Deploy
-
-Vercel will automatically:
-- Run `prisma generate` (via `postinstall` script)
-- Build your Next.js app
-- Run migrations (you may need to run this manually first time)
-
-### 3. Seed Production Database
-
-After first deployment, run migrations and seed:
-```bash
-# Set up Vercel CLI if you haven't
-npm i -g vercel
-
-# Run migration on production
-vercel env pull .env.production.local
-npx prisma migrate deploy
-
-# Seed production database
-npm run db:seed
-```
-
-## What Changed from Mock Data
-
-### Before (Mock Service)
-- Data stored in memory
-- Lost on page refresh
-- Single user only
-- No persistence
-
-### After (Real Backend)
-- Data stored in PostgreSQL
-- Persists across refreshes
-- Multi-user capable
-- Production ready
-
-### Code Changes
-Only import statements changed in your pages:
-```diff
-- import { trailService } from '@/services/mockTrailService';
-+ import { trailService } from '@/services/trailService';
-```
-
-Everything else remained the same! The service interface is identical.
-
-## Next Steps
-
-Once the backend is working:
-
-1. **Real Authentication** - Replace anonymous users with real accounts (NextAuth.js)
-2. **Advanced Features** - Report voting, photo uploads, flagging
-3. **Shared Components** - Extract reusable UI components
-4. **State Management** - Add React Query for caching
-5. **Testing** - Add unit and integration tests
-
-## File Structure
-
-```
-TrailReady-web/
-├── prisma/
-│   ├── schema.prisma          # Database schema
-│   ├── migrations/            # Auto-generated SQL migrations
-│   └── seed.ts                # Seed script
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── trails/
-│   │   │   │   ├── route.ts
-│   │   │   │   └── [id]/
-│   │   │   │       ├── route.ts
-│   │   │   │       └── reports/route.ts
-│   │   │   ├── reports/route.ts
-│   │   │   └── auth/anonymous/route.ts
-│   │   └── trails/            # Frontend pages (updated imports)
-│   ├── lib/
-│   │   ├── prisma.ts          # Database client
-│   │   ├── api/response.ts    # API utilities
-│   │   └── validations/       # Zod schemas
-│   ├── services/
-│   │   ├── trailService.ts    # Real API client (NEW)
-│   │   └── mockTrailService.ts # Old mock (kept for reference)
-│   └── types/
-│       └── index.ts           # TypeScript types
-├── .env.local                 # Your local database URL (create this)
-├── .env.example               # Template
-└── package.json               # Updated with Prisma scripts
-```
-
-## Questions?
-
-If you encounter any issues:
-1. Check this setup guide
-2. Review the Troubleshooting section
-3. Check [prisma/schema.prisma](prisma/schema.prisma) for database structure
-4. Review [src/app/api/](src/app/api/) for API implementation
-
-Happy trail tracking! 🏔️🚙
+Vehicle profile saves now update the latest existing profile for a user instead of creating a new one on every save. If you already have historical duplicate rows, clean them up in Supabase manually.

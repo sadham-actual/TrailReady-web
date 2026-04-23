@@ -2,6 +2,12 @@ import { NextRequest } from 'next/server';
 import { createSupabaseServiceClient } from '@/lib/supabase/server';
 import { errors, successResponse } from '@/lib/api/response';
 
+type GeoTrailSegmentAttributionRow = {
+  source_slug: string | null;
+  source_name: string | null;
+  attribution_text: string | null;
+};
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -19,7 +25,7 @@ export async function GET(
   if (!trail) return errors.notFound('Trail');
 
   const attributions = Array.from(
-    new Map((rows ?? []).map((r: any) => [r.source_slug, {
+    new Map(((rows ?? []) as GeoTrailSegmentAttributionRow[]).map((r) => [r.source_slug, {
       source_slug: r.source_slug,
       source_name: r.source_name,
       attribution_text: r.attribution_text,

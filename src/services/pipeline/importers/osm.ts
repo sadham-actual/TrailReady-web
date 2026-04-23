@@ -1,6 +1,22 @@
 import { ImportSegmentCandidate } from './types';
 import { deriveAllowedUses, normalizeCoordinates, normalizeStatus } from './normalize';
 
+type OverpassGeometryPoint = {
+  lon: number;
+  lat: number;
+};
+
+type OverpassElement = {
+  type: string;
+  id: number | string;
+  tags?: Record<string, string> | null;
+  geometry?: OverpassGeometryPoint[] | null;
+};
+
+type OverpassResponse = {
+  elements?: OverpassElement[];
+};
+
 function isOhvRelevant(tags: Record<string, string>): boolean {
   const highway = tags.highway;
   const allowedHighways = new Set(['track', 'path', 'service', 'unclassified']);
@@ -16,7 +32,7 @@ function isOhvRelevant(tags: Record<string, string>): boolean {
   return allowedHighways.has(highway) && (likelyMotorized || highway === 'track' || highway === 'service');
 }
 
-export function parseOverpassSegments(input: any): ImportSegmentCandidate[] {
+export function parseOverpassSegments(input: OverpassResponse): ImportSegmentCandidate[] {
   const elements = Array.isArray(input?.elements) ? input.elements : [];
   const results: ImportSegmentCandidate[] = [];
 
@@ -26,7 +42,7 @@ export function parseOverpassSegments(input: any): ImportSegmentCandidate[] {
     if (!isOhvRelevant(tags)) continue;
 
     const coords = normalizeCoordinates(
-      el.geometry.map((g: any) => [g.lon, g.lat])
+      el.geometry.map((g) => [g.lon, g.lat])
     );
     if (coords.length < 2) continue;
 

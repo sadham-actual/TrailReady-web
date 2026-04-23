@@ -106,7 +106,7 @@ class TrailService {
           }
         );
         return result.id;
-      } catch (error) {
+      } catch {
         // If verification fails, clear the stored ID and create a new one
         localStorage.removeItem('userId');
       }

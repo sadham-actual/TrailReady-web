@@ -22,7 +22,6 @@ import {
 
 interface TrailVerdictProps {
   reports: ConditionReport[];
-  trailName: string;
 }
 
 interface VerdictData {
@@ -39,7 +38,7 @@ interface VerdictData {
   needsVehicleSelection: boolean;
 }
 
-export function TrailVerdict({ reports, trailName }: TrailVerdictProps) {
+export function TrailVerdict({ reports }: TrailVerdictProps) {
   const { selectedVehicle, setSelectedVehicle } = useVehicle();
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
 

@@ -15,9 +15,13 @@ interface TrailWithMeta extends Trail {
   };
 }
 
+function shouldUseMockData() {
+  return process.env.USE_MOCK_DATA === 'true';
+}
+
 async function trySupabaseTrail(id: string): Promise<TrailWithMeta | null | 'not_found'> {
   try {
-    if (process.env.USE_MOCK_DATA === 'true') return null;
+    if (shouldUseMockData()) return null;
     const supabase = createSupabaseServiceClient();
 
     const { data: trail, error } = await supabase.from('trails').select('*').eq('id', id).maybeSingle();
@@ -87,6 +91,10 @@ export async function GET(
 
     const geoTrail = await trySupabaseGeoTrail(id);
     if (geoTrail !== null && geoTrail !== 'not_found') return successResponse(geoTrail);
+
+    if (!shouldUseMockData()) {
+      return errors.notFound('Trail');
+    }
 
     const mockTrail = getMockTrail(id);
     if (!mockTrail) return errors.notFound('Trail');

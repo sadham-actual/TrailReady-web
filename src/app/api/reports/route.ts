@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server';
 import { successResponse, errors } from '@/lib/api/response';
 import { submitReportSchema } from '@/lib/validations/report';
 import { ZodError } from 'zod';
-import { getMockTrail } from '@/data/sampleTrails';
 import { createSupabaseServiceClient, getSupabaseUserIdFromRequestAuthHeader } from '@/lib/supabase/server';
+import { ensureWritableTrailExists } from '@/lib/writableTrail';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,29 +23,9 @@ export async function POST(request: NextRequest) {
 
     await supabase.from('users').upsert({ id: validatedData.userId, is_anonymous: false });
 
-    const { data: trail, error: trailErr } = await supabase
-      .from('trails')
-      .select('id')
-      .eq('id', validatedData.trailId)
-      .maybeSingle();
-
-    if (trailErr) return errors.internalError(trailErr.message);
-
-    if (!trail) {
-      const mockTrail = getMockTrail(validatedData.trailId);
-      if (!mockTrail) return errors.notFound('Trail');
-
-      // If trail doesn't exist in Supabase but exists in mock data, create it on-demand.
-      const { error: seedErr } = await supabase.from('trails').insert({
-        id: mockTrail.id,
-        name: mockTrail.name,
-        region: mockTrail.region,
-        latitude: mockTrail.latitude,
-        longitude: mockTrail.longitude,
-        description: mockTrail.description ?? null,
-        base_difficulty: mockTrail.baseDifficulty ?? null,
-      });
-      if (seedErr) return errors.internalError(seedErr.message);
+    const trailOk = await ensureWritableTrailExists(validatedData.trailId);
+    if (!trailOk) {
+      return errors.notFound('Trail');
     }
 
     const reportId = crypto.randomUUID();

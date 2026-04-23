@@ -15,39 +15,29 @@ import { useVehicle } from '@/contexts/VehicleContext';
 // ============================================================================
 
 function useIsMac() {
-  const [isMac, setIsMac] = useState(false);
-
-  useEffect(() => {
-    setIsMac(
-      typeof navigator !== 'undefined' &&
-        /Mac|iPod|iPhone|iPad/.test(navigator.platform)
-    );
-  }, []);
-
-  return isMac;
+  return useMemo(
+    () => typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform),
+    []
+  );
 }
 
 function useIsTouchDevice() {
-  const [isTouch, setIsTouch] = useState(false);
-
-  useEffect(() => {
-    setIsTouch(
-      typeof window !== 'undefined' &&
-        window.matchMedia('(pointer: coarse)').matches
-    );
-  }, []);
-
-  return isTouch;
+  return useMemo(
+    () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches,
+    []
+  );
 }
 
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < 768
+  );
 
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    checkMobile();
+
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
@@ -531,7 +521,7 @@ export function CommandBar({ open, onOpenChange }: CommandBarProps) {
               {/* Footer - System Status */}
               <Drawer.Description className="relative z-20 px-5 py-3 border-t border-stone-border bg-stone-light/50">
                 <span className="font-mono text-[8px] uppercase tracking-widest text-stone-medium select-none">
-                  {systemStatus} // TR-CMD v1.0
+                  {systemStatus} {'//'} TR-CMD v1.0
                 </span>
               </Drawer.Description>
             </div>

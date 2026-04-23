@@ -15,6 +15,18 @@ export interface GeoTrailListItem {
   };
 }
 
+type GeoTrailRpcRow = {
+  id: string;
+  name: string;
+  status: string | null;
+  center_lng: number | null;
+  center_lat: number | null;
+  length_m: number;
+  source_slug: string | null;
+  source_name: string | null;
+  attribution_text: string | null;
+};
+
 export async function fetchGeoTrailRpcRows(options?: { bbox?: ParsedBbox | null; limit?: number }) {
   const supabase = createSupabaseServiceClient();
   const bbox = options?.bbox;
@@ -32,8 +44,8 @@ export async function fetchGeoTrailRpcRows(options?: { bbox?: ParsedBbox | null;
   return data ?? [];
 }
 
-export function mapGeoTrailRpcRowsToApiList(rows: any[]): GeoTrailListItem[] {
-  return rows.map((r: any) => ({
+export function mapGeoTrailRpcRowsToApiList(rows: GeoTrailRpcRow[]): GeoTrailListItem[] {
+  return rows.map((r) => ({
     id: String(r.id),
     name: r.name,
     status: r.status ?? null,
@@ -47,8 +59,8 @@ export function mapGeoTrailRpcRowsToApiList(rows: any[]): GeoTrailListItem[] {
   }));
 }
 
-export function mapGeoTrailRpcRowsToTrails(rows: any[]): GeoMappedTrail[] {
-  return rows.map((r: any) =>
+export function mapGeoTrailRpcRowsToTrails(rows: GeoTrailRpcRow[]): GeoMappedTrail[] {
+  return rows.map((r) =>
     mapGeoTrailListRowToTrail({
       id: r.id,
       name: r.name,

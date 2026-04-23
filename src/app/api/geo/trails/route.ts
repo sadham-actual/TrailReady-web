@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
     const rows = await fetchGeoTrailRpcRows({ bbox, limit });
     return successResponse(mapGeoTrailRpcRowsToApiList(rows));
-  } catch (error: any) {
-    return errors.internalError(error?.message || 'Failed to fetch geo trails');
+  } catch (error: unknown) {
+    return errors.internalError(error instanceof Error ? error.message : 'Failed to fetch geo trails');
   }
 }

@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { getMockTrail } from '@/data/sampleTrails';
 import { createSupabaseServiceClient } from '@/lib/supabase/server';
 
+function shouldUseMockData() {
+  return process.env.USE_MOCK_DATA === 'true';
+}
+
 async function trySupabasePhotos(trailId: string) {
   try {
     const supabase = createSupabaseServiceClient();
@@ -25,6 +29,7 @@ async function trySupabasePhotos(trailId: string) {
               vehicleType: p.vehicle_type,
               notes: p.notes,
               confidence: p.confidence,
+              createdAt: p.created_at,
             }
           : null,
       }));
@@ -52,6 +57,10 @@ export async function GET(
     const dbPhotos = await trySupabasePhotos(trailId);
     if (dbPhotos !== null && dbPhotos !== 'not_found') {
       return NextResponse.json({ success: true, data: dbPhotos });
+    }
+
+    if (!shouldUseMockData()) {
+      return NextResponse.json({ success: false, error: { message: 'Trail not found' } }, { status: 404 });
     }
 
     const mockTrail = getMockTrail(trailId);

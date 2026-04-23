@@ -2,6 +2,36 @@ import { Trail, Status, LatLng } from '@/types';
 
 export type GeoMappedTrail = Trail;
 
+type GeoSegmentRow = {
+  geometry?: {
+    coordinates?: unknown[];
+  } | null;
+};
+
+type GeoTrailListRow = {
+  id: string;
+  name: string;
+  region?: string | null;
+  source_name?: string | null;
+  center_lat?: number | null;
+  center_lng?: number | null;
+  description?: string | null;
+  difficulty?: string | null;
+  status?: string | null;
+};
+
+type GeoTrailDetailRow = {
+  id: string;
+  name: string;
+  region?: string | null;
+  properties?: {
+    source_slug?: string | null;
+  } | null;
+  description?: string | null;
+  difficulty?: string | null;
+  status?: string | null;
+};
+
 function mapGeoStatus(status?: string | null): Status | undefined {
   const normalized = String(status ?? 'unknown').toLowerCase();
   if (normalized === 'open') return 'clear';
@@ -20,7 +50,7 @@ function mapDifficultyToBase(difficulty?: string | null): number | undefined {
   return undefined;
 }
 
-function coordsFromSegments(rows: any[]): LatLng[] {
+function coordsFromSegments(rows: GeoSegmentRow[]): LatLng[] {
   const out: LatLng[] = [];
 
   for (const row of rows ?? []) {
@@ -37,7 +67,7 @@ function coordsFromSegments(rows: any[]): LatLng[] {
   return out;
 }
 
-export function mapGeoTrailListRowToTrail(row: any): Trail {
+export function mapGeoTrailListRowToTrail(row: GeoTrailListRow): Trail {
   return {
     id: String(row.id),
     name: row.name,
@@ -57,7 +87,7 @@ export function mapGeoTrailListRowToTrail(row: any): Trail {
   };
 }
 
-export function mapGeoTrailDetailToTrail(trail: any, segmentRows: any[]): Trail {
+export function mapGeoTrailDetailToTrail(trail: GeoTrailDetailRow, segmentRows: GeoSegmentRow[]): Trail {
   const coords = coordsFromSegments(segmentRows);
   const first = coords[0];
 

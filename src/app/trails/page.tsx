@@ -22,7 +22,6 @@ import {
 import { Trail, VEHICLE_CATEGORIES } from '@/types';
 import { trailService } from '@/services/trailService';
 import { useVehicle } from '@/contexts/VehicleContext';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 
 // Difficulty config
@@ -41,10 +40,6 @@ const STATUS_CONFIG = {
 } as const;
 
 type StatusKey = keyof typeof STATUS_CONFIG;
-
-function isGeoTrail(trail: Trail): boolean {
-  return typeof trail.gpxUrl === 'string' && trail.gpxUrl.startsWith('/api/geo/trails/');
-}
 
 function getStatusConfig(status?: string) {
   const key = (status ?? 'unknown') as StatusKey;

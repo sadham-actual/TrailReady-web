@@ -2,8 +2,8 @@
 
 import { Status, Confidence, VehicleType } from '@/types';
 import { createSupabaseServiceClient, createSupabaseServerActionClient } from '@/lib/supabase/server';
-import { getMockTrail } from '@/data/sampleTrails';
 import { vehicleTypeSchema } from '@/lib/validations/report';
+import { ensureWritableTrailExists } from '@/lib/writableTrail';
 
 export type ReportState = {
   status: 'idle' | 'success' | 'error';
@@ -24,27 +24,6 @@ export interface FieldReportInput {
   confidence: Confidence;
   notes?: string;
   photos?: PhotoInput[];
-}
-
-async function ensureTrailExists(trailId: string) {
-  const supabase = createSupabaseServiceClient();
-  const { data: existing } = await supabase.from('trails').select('id').eq('id', trailId).maybeSingle();
-  if (existing) return true;
-
-  const mockTrail = getMockTrail(trailId);
-  if (!mockTrail) return false;
-
-  const { error } = await supabase.from('trails').insert({
-    id: mockTrail.id,
-    name: mockTrail.name,
-    region: mockTrail.region,
-    latitude: mockTrail.latitude,
-    longitude: mockTrail.longitude,
-    description: mockTrail.description ?? null,
-    base_difficulty: mockTrail.baseDifficulty ?? null,
-  });
-
-  return !error;
 }
 
 export async function submitFieldReport(input: FieldReportInput): Promise<ReportState> {
@@ -77,7 +56,7 @@ export async function submitFieldReport(input: FieldReportInput): Promise<Report
   }
 
   try {
-    const trailOk = await ensureTrailExists(trailId);
+    const trailOk = await ensureWritableTrailExists(trailId);
     if (!trailOk) return { status: 'error', message: 'TRAIL NOT FOUND IN DATABASE' };
 
     const supabase = createSupabaseServiceClient();
@@ -163,7 +142,7 @@ export async function submitPhotoIntel(
   }
 
   try {
-    const trailOk = await ensureTrailExists(trailId);
+    const trailOk = await ensureWritableTrailExists(trailId);
     if (!trailOk) return { status: 'error', message: 'TRAIL NOT FOUND IN DATABASE' };
 
     const nowIso = new Date().toISOString();

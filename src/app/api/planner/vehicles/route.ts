@@ -63,8 +63,17 @@ export async function POST(request: NextRequest) {
     return errors.badRequest('clearance_inches and tire_size must be numeric');
   }
 
+  const { data: existingVehicle, error: existingVehicleErr } = await supabase
+    .from('user_vehicles')
+    .select('id')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingVehicleErr) return errors.internalError(existingVehicleErr.message);
+
   const payload = {
-    id: crypto.randomUUID(),
     user_id: userId,
     rig_tier,
     make: make ?? '',
@@ -76,12 +85,22 @@ export async function POST(request: NextRequest) {
     experience_level,
   };
 
-  const { data, error } = await supabase
-    .from('user_vehicles')
-    .insert(payload)
-    .select('*')
-    .single();
+  const response = existingVehicle
+    ? await supabase
+        .from('user_vehicles')
+        .update(payload)
+        .eq('id', existingVehicle.id)
+        .select('*')
+        .single()
+    : await supabase
+        .from('user_vehicles')
+        .insert({
+          id: crypto.randomUUID(),
+          ...payload,
+        })
+        .select('*')
+        .single();
 
-  if (error) return errors.internalError(error.message);
-  return successResponse(data, 201);
+  if (response.error) return errors.internalError(response.error.message);
+  return successResponse(response.data, existingVehicle ? 200 : 201);
 }

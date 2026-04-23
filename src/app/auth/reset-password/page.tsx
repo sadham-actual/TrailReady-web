@@ -42,7 +42,7 @@ export default function ResetPasswordPage() {
               <p className="text-sm text-muted-stone">
                 If an account exists for{' '}
                 <span className="font-semibold text-deep-stone">{email}</span>,
-                you'll receive a reset link shortly.
+                you&apos;ll receive a reset link shortly.
               </p>
               <Button asChild variant="outline" className="w-full" size="lg">
                 <Link href="/auth/login">Back to login</Link>
@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
 
           <form onSubmit={onSubmit} className="px-6 py-5 space-y-4">
             <p className="text-sm text-muted-stone">
-              Enter your email and we'll send you a link to reset your password.
+              Enter your email and we&apos;ll send you a link to reset your password.
             </p>
 
             <div className="space-y-1">

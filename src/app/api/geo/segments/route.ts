@@ -11,6 +11,15 @@ export interface GeoSegmentRow {
   coords: LatLng[]; // [lat, lng] pairs, Leaflet order
 }
 
+type GeoSegmentRpcRow = {
+  trail_id: string;
+  trail_name: string;
+  trail_status: string | null;
+  geometry?: {
+    coordinates?: [number, number][];
+  } | null;
+};
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
@@ -32,7 +41,7 @@ export async function GET(request: NextRequest) {
     // Group segments by trail, converting GeoJSON [lng,lat] → Leaflet [lat,lng]
     const byTrail = new Map<string, GeoSegmentRow>();
 
-    for (const row of data ?? []) {
+    for (const row of (data ?? []) as GeoSegmentRpcRow[]) {
       const coords = (row.geometry?.coordinates ?? []) as [number, number][];
       const latLngs: LatLng[] = coords
         .filter(([lng, lat]) => Number.isFinite(lng) && Number.isFinite(lat))
@@ -54,7 +63,7 @@ export async function GET(request: NextRequest) {
     }
 
     return successResponse([...byTrail.values()]);
-  } catch (error: any) {
-    return errors.internalError(error?.message || 'Failed to fetch segments');
+  } catch (error: unknown) {
+    return errors.internalError(error instanceof Error ? error.message : 'Failed to fetch segments');
   }
 }

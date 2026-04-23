@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useCallback, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, X, Image as ImageIcon, AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -257,10 +258,12 @@ export function ImageUpload({
               >
                 {/* Image Preview */}
                 <div className="relative aspect-square overflow-hidden">
-                  <img
+                  <Image
                     src={image.preview}
                     alt={image.caption || `Photo ${index + 1}`}
-                    className="h-full w-full object-cover"
+                    fill
+                    unoptimized
+                    className="object-cover"
                   />
 
                   {/* Status Overlay */}

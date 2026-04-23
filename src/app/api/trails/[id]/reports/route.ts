@@ -4,6 +4,10 @@ import { ConditionReport } from '@/types';
 import { getMockReports, getMockTrail } from '@/data/sampleTrails';
 import { createSupabaseServiceClient } from '@/lib/supabase/server';
 
+function shouldUseMockData() {
+  return process.env.USE_MOCK_DATA === 'true';
+}
+
 async function trySupabaseReports(trailId: string): Promise<ConditionReport[] | null | 'not_found'> {
   try {
     const supabase = createSupabaseServiceClient();
@@ -61,6 +65,10 @@ export async function GET(
     const dbReports = await trySupabaseReports(trailId);
     if (dbReports !== null && dbReports !== 'not_found') {
       return successResponse(dbReports);
+    }
+
+    if (!shouldUseMockData()) {
+      return errors.notFound('Trail');
     }
 
     const mockTrail = getMockTrail(trailId);

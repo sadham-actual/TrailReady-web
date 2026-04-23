@@ -9,6 +9,32 @@ import { IndexedDbCacheAdapter } from '@/services/offline/indexedDbCache';
 import { PlannerSyncService } from '@/services/offline/plannerSyncService';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
+type PlannerVehicleResponse = {
+  success?: boolean;
+  data?: Array<{
+    rig_tier?: UserVehicle['rig_tier'];
+    make: string;
+    model: string;
+    clearance_inches: number | string;
+    tire_size: number | string;
+    has_low_range: boolean;
+    has_winch: boolean;
+    experience_level: UserVehicle['experience_level'];
+  }>;
+};
+
+type PlannerBundlesResponse = {
+  success?: boolean;
+  data?: Array<{
+    id: string;
+    user_id: string;
+    scheduled_date: string;
+    notes?: string;
+    is_offline_cached?: boolean;
+    trails?: Array<{ trail_id: string }>;
+  }>;
+};
+
 const cache = new PlannerSyncService(new IndexedDbCacheAdapter());
 
 const defaultVehicle: UserVehicle = {
@@ -105,8 +131,8 @@ export default function PlannerPage() {
           }),
         ]);
 
-        const vehiclesJson = await vehiclesRes.json();
-        const bundlesJson = await bundlesRes.json();
+        const vehiclesJson = (await vehiclesRes.json()) as PlannerVehicleResponse;
+        const bundlesJson = (await bundlesRes.json()) as PlannerBundlesResponse;
 
         if (vehiclesJson?.success && vehiclesJson.data?.length > 0) {
           const v = vehiclesJson.data[0];
@@ -123,13 +149,13 @@ export default function PlannerPage() {
         }
 
         if (bundlesJson?.success && Array.isArray(bundlesJson.data)) {
-          const mapped: TripBundle[] = bundlesJson.data.map((b: any) => ({
-            id: b.id,
-            user_id: b.user_id,
-            trail_ids: (b.trails ?? []).map((t: any) => t.trail_id),
-            scheduled_date: b.scheduled_date,
-            notes: b.notes ?? '',
-            is_offline_cached: Boolean(b.is_offline_cached),
+          const mapped: TripBundle[] = bundlesJson.data.map((bundle) => ({
+            id: bundle.id,
+            user_id: bundle.user_id,
+            trail_ids: (bundle.trails ?? []).map((trail) => trail.trail_id),
+            scheduled_date: bundle.scheduled_date,
+            notes: bundle.notes ?? '',
+            is_offline_cached: Boolean(bundle.is_offline_cached),
           }));
           setSavedBundles(mapped);
           await cache.cacheTripBundles(mapped);
