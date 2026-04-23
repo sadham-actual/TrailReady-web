@@ -134,7 +134,7 @@ export default function PlannerPage() {
         const vehiclesJson = (await vehiclesRes.json()) as PlannerVehicleResponse;
         const bundlesJson = (await bundlesRes.json()) as PlannerBundlesResponse;
 
-        if (vehiclesJson?.success && (vehiclesJson.data?.length ?? 0) > 0) {
+        if (vehiclesJson?.success && vehiclesJson.data && vehiclesJson.data.length > 0) {
           const v = vehiclesJson.data[0];
           setVehicle({
             rig_tier: v.rig_tier ?? 'stockAWD',
