@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { generateGpx } from '@/services/pipeline/gpxGenerator';
-import type { GpxGeneratorInput, PipelineSegment, SourceAttribution } from '@/lib/pipeline/types';
+import type { Coordinate, GpxGeneratorInput, PipelineSegment, SourceAttribution } from '@/lib/pipeline/types';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -14,7 +14,7 @@ import type { GpxGeneratorInput, PipelineSegment, SourceAttribution } from '@/li
 
 function makeSeg(
   id: string,
-  coords: [number, number][],
+  coords: Coordinate[],
   opts: Partial<PipelineSegment> = {},
 ): PipelineSegment {
   return { id, source_slug: 'osm', coordinates: coords, ...opts };

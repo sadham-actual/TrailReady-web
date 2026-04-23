@@ -13,6 +13,7 @@ type GeoTrailListRow = {
   name: string;
   region?: string | null;
   source_name?: string | null;
+  source_slug?: string | null;
   center_lat?: number | null;
   center_lng?: number | null;
   description?: string | null;

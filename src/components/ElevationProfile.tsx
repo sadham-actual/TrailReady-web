@@ -41,8 +41,8 @@ export function ElevationProfile({ points }: { points: GpxPoint[] }) {
             label={{ value: 'Elevation (m)', angle: -90, position: 'insideLeft' }}
           />
           <Tooltip
-            formatter={(value: number | string, name: string) => {
-              const safeValue = typeof value === 'number' ? value : Number(value ?? 0);
+            formatter={(value, name) => {
+              const safeValue = typeof value === 'number' ? value : Number(Array.isArray(value) ? value[0] : (value ?? 0));
               const safeName = typeof name === 'string' ? name : 'value';
               return safeName === 'elevation' ? [`${safeValue} m`, 'Elevation'] : [safeValue, safeName];
             }}

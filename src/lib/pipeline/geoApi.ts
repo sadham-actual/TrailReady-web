@@ -46,7 +46,7 @@ export function mapRpcRowsToPipelineSegments(rows: RpcSegmentRow[]): PipelineSeg
   });
 }
 
-export function collectAttributions(rows: RpcSegmentRow[]): SourceAttribution[] {
+export function collectAttributions(rows: Pick<RpcSegmentRow, 'source_slug' | 'source_name'>[]): SourceAttribution[] {
   const map = new Map<string, SourceAttribution>();
   for (const r of rows) {
     const slug = String(r.source_slug ?? 'unknown');
