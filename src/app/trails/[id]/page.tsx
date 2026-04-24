@@ -406,32 +406,35 @@ export default function TrailDetailPage() {
             </div>
 
             {gpxPoints.length > 0 ? (
-              <TrailGpxMap points={gpxPoints} />
+              <>
+                <TrailGpxMap points={gpxPoints} />
+                <p className="mt-2 text-xs text-stone-700">{gpxSource}</p>
+              </>
             ) : (
-              <div className="h-48 border border-dashed border-stone-400 flex items-center justify-center text-sm text-stone-600">
-                No GPX track available. Import a GPX file to view the route.
-              </div>
+              <p className="text-xs text-stone-500 mt-1">
+                No GPX track attached.{' '}
+                {gpxError && <span className="text-rose-600">{gpxError}</span>}
+              </p>
             )}
-
-            <p className="mt-2 text-xs text-stone-700">{gpxSource}</p>
-            {gpxError && <p className="mt-1 text-xs text-rose-600">{gpxError}</p>}
           </div>
         </motion.div>
 
-        {/* Elevation Profile */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.14 }}
-          className="mb-6"
-        >
-          <div className="bg-stone-100 border border-stone-800 p-4">
-            <h2 className="text-lg font-semibold font-mono uppercase tracking-wider text-stone-900 mb-3">
-              Elevation Profile
-            </h2>
-            <ElevationProfile points={gpxPoints} />
-          </div>
-        </motion.div>
+        {/* Elevation Profile — only shown when GPX data is available */}
+        {gpxPoints.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.14 }}
+            className="mb-6"
+          >
+            <div className="bg-stone-100 border border-stone-800 p-4">
+              <h2 className="text-lg font-semibold font-mono uppercase tracking-wider text-stone-900 mb-3">
+                Elevation Profile
+              </h2>
+              <ElevationProfile points={gpxPoints} />
+            </div>
+          </motion.div>
+        )}
 
         {/* Overall Trail Status - Weighted Algorithm */}
         <motion.div
@@ -484,18 +487,20 @@ export default function TrailDetailPage() {
           />
         </motion.div>
 
-        {/* Photo Intel Gallery */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="mb-6"
-        >
-          <h2 className="text-lg font-semibold font-mono uppercase tracking-wider text-stone-900 mb-4">
-            Photo Intel
-          </h2>
-          <PhotoGallery photos={galleryPhotos} />
-        </motion.div>
+        {/* Photo Intel Gallery — only shown when photos exist */}
+        {galleryPhotos.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mb-6"
+          >
+            <h2 className="text-lg font-semibold font-mono uppercase tracking-wider text-stone-900 mb-4">
+              Photo Intel
+            </h2>
+            <PhotoGallery photos={galleryPhotos} />
+          </motion.div>
+        )}
 
         {/* Recent Reports Section */}
         {reports.length > 0 && (
