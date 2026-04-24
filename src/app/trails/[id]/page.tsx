@@ -419,8 +419,8 @@ export default function TrailDetailPage() {
           </div>
         </motion.div>
 
-        {/* Elevation Profile — only shown when GPX data is available */}
-        {gpxPoints.length > 0 && (
+        {/* Elevation Profile — only shown when GPX data with elevation exists */}
+        {gpxPoints.filter((p) => typeof p.ele === 'number').length >= 2 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

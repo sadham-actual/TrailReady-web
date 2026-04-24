@@ -103,7 +103,7 @@ export default function MapPage() {
             </span>
           </Link>
           <div className="h-5 w-px bg-stone-border" />
-          <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2">
             <Map className="w-4 h-4 text-action-orange" />
             <h1 className="font-mono text-sm font-bold uppercase tracking-wider text-deep-stone">
               Tactical Discovery Map
@@ -111,7 +111,7 @@ export default function MapPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={handleBrowse}

@@ -293,6 +293,7 @@ function FieldIntelPopup({
 
 // Legend Component with path styles
 function MapLegend() {
+  const [open, setOpen] = useState(false);
   const items = [
     { status: 'passable' as const, label: 'Clear', description: 'Passable' },
     { status: 'high-risk' as const, label: 'Caution', description: 'Challenging' },
@@ -309,7 +310,16 @@ function MapLegend() {
 
   return (
     <div className="absolute top-4 right-4 z-[1000]">
-      <div className="bg-stone-100/90 border border-stone-800 px-3 py-2.5 rounded-sm shadow-[2px_2px_0_0_var(--color-stone-800)]">
+      {/* Mobile toggle button */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="sm:hidden mb-1 ml-auto flex items-center gap-1.5 px-2.5 py-1.5 bg-stone-100/90 border border-stone-800 rounded-sm shadow-[2px_2px_0_0_var(--color-stone-800)] font-mono text-[9px] uppercase tracking-wider text-stone-800 font-bold"
+        aria-label="Toggle map legend"
+      >
+        Legend {open ? '▲' : '▼'}
+      </button>
+      <div className={`${open ? 'block' : 'hidden'} sm:block bg-stone-100/90 border border-stone-800 px-3 py-2.5 rounded-sm shadow-[2px_2px_0_0_var(--color-stone-800)]`}>
         {/* Trail Status Section */}
         <p className="text-[9px] font-mono uppercase tracking-wider text-stone-800 font-bold mb-2">
           Trail Status
