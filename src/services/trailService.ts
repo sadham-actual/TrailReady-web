@@ -36,10 +36,11 @@ class TrailService {
   }
 
   // GET /api/trails
-  async getTrails(query?: string, region?: string): Promise<Trail[]> {
+  async getTrails(query?: string, region?: string, featured?: boolean): Promise<Trail[]> {
     const params = new URLSearchParams();
     if (query) params.set('search', query);
     if (region) params.set('region', region);
+    if (featured) params.set('featured', 'true');
 
     const queryString = params.toString();
     const endpoint = queryString ? `/api/trails?${queryString}` : '/api/trails';

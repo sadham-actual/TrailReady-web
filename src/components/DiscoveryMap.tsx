@@ -516,6 +516,10 @@ function FlyToTrail({ trailId, trails }: { trailId: string | null; trails: Trail
   return null;
 }
 
+type FilterMode = 'featured' | 'all';
+const DIFFICULTY_LEVELS = [1, 2, 3, 4] as const;
+const DIFFICULTY_LABELS: Record<number, string> = { 1: 'Easy', 2: 'Moderate', 3: 'Difficult', 4: 'Extreme' };
+
 // Main DiscoveryMap Component
 export function DiscoveryMap({
   focusTrailId,
@@ -535,6 +539,8 @@ export function DiscoveryMap({
   const [isLoading, setIsLoading] = useState(true);
   const [coords, setCoords] = useState({ lat: 39.8283, lng: -98.5795 });
   const [hoveredTrailId, setHoveredTrailId] = useState<string | null>(null);
+  const [filterMode, setFilterMode] = useState<FilterMode>('featured');
+  const [activeDifficulties, setActiveDifficulties] = useState<Set<number>>(new Set([1, 2, 3, 4]));
 
   const currentCategory = VEHICLE_CATEGORIES.find(
     (cat) => cat.mappedType === selectedVehicle
@@ -545,19 +551,29 @@ export function DiscoveryMap({
   }, [searchQuery]);
 
   const filteredTrails = useMemo(() => {
-    if (!normalizedQuery) {
-      return trails;
+    let result = trails;
+
+    if (normalizedQuery) {
+      result = result.filter((trail) => {
+        const haystack = [trail.name, trail.region, trail.description]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(normalizedQuery);
+      });
     }
 
-    return trails.filter((trail) => {
-      const haystack = [trail.name, trail.region, trail.description]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
+    // Difficulty filter — only apply when not all levels are selected
+    if (activeDifficulties.size < 4) {
+      result = result.filter((trail) => {
+        const d = (trail as TrailWithData & { baseDifficulty?: number }).baseDifficulty;
+        if (!d) return true; // always show trails without difficulty set
+        return activeDifficulties.has(d);
+      });
+    }
 
-      return haystack.includes(normalizedQuery);
-    });
-  }, [trails, normalizedQuery]);
+    return result;
+  }, [trails, normalizedQuery, activeDifficulties]);
 
   useEffect(() => {
     onFilteredTrailsChange?.(filteredTrails as Trail[]);
@@ -566,9 +582,10 @@ export function DiscoveryMap({
   // Fetch trails, their reports, and real segment geometry
   useEffect(() => {
     async function fetchData() {
+      setIsLoading(true);
       try {
         const [trailData, segmentsRes] = await Promise.all([
-          trailService.getTrails(),
+          trailService.getTrails(undefined, undefined, filterMode === 'featured'),
           fetch('/api/geo/segments').then((r) => r.json()).catch(() => null),
         ]);
 
@@ -606,7 +623,7 @@ export function DiscoveryMap({
     }
 
     fetchData();
-  }, []);
+  }, [filterMode]);
 
   // Calculate outcome for a trail
   const getTrailOutcome = useCallback(
@@ -708,6 +725,61 @@ export function DiscoveryMap({
       <ViewfinderOverlay />
       <CoordinateReadout lat={coords.lat} lng={coords.lng} />
       <MapLegend />
+
+      {/* Filter Bar */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center">
+        {/* Layer toggle */}
+        <div className="flex bg-stone-100/95 border border-stone-800 shadow-[2px_2px_0_0_var(--color-stone-800)] rounded-sm overflow-hidden">
+          {(['featured', 'all'] as FilterMode[]).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setFilterMode(mode)}
+              className={`px-3 py-1.5 font-mono text-[9px] uppercase tracking-wider transition-colors ${
+                filterMode === mode
+                  ? 'bg-stone-900 text-white'
+                  : 'text-stone-700 hover:text-stone-900 hover:bg-stone-200'
+              }`}
+            >
+              {mode === 'featured' ? 'Featured' : 'All Trails'}
+            </button>
+          ))}
+        </div>
+
+        {/* Difficulty chips */}
+        <div className="flex gap-1">
+          {DIFFICULTY_LEVELS.map((d) => {
+            const active = activeDifficulties.has(d);
+            const colors: Record<number, string> = {
+              1: active ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-stone-100/95 text-stone-500 border-stone-400',
+              2: active ? 'bg-amber-500 text-white border-amber-600' : 'bg-stone-100/95 text-stone-500 border-stone-400',
+              3: active ? 'bg-orange-500 text-white border-orange-600' : 'bg-stone-100/95 text-stone-500 border-stone-400',
+              4: active ? 'bg-rose-600 text-white border-rose-700' : 'bg-stone-100/95 text-stone-500 border-stone-400',
+            };
+            return (
+              <button
+                key={d}
+                type="button"
+                title={DIFFICULTY_LABELS[d]}
+                onClick={() => {
+                  setActiveDifficulties((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(d)) {
+                      if (next.size > 1) next.delete(d); // keep at least one
+                    } else {
+                      next.add(d);
+                    }
+                    return next;
+                  });
+                }}
+                className={`w-8 h-7 border font-mono text-[9px] font-bold rounded-sm shadow-[1px_1px_0_0_rgba(0,0,0,0.3)] transition-colors ${colors[d]}`}
+              >
+                D{d}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Vehicle Indicator */}
       <div className="absolute top-4 left-4 z-[1000]">

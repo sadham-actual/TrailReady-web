@@ -87,10 +87,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') ?? undefined;
     const region = searchParams.get('region') ?? undefined;
+    const featured = searchParams.get('featured') === 'true';
 
     const [dbTrails, geoTrails] = await Promise.all([
       trySupabaseTrails(search, region),
-      trySupabaseGeoTrails(search, region),
+      featured ? Promise.resolve(null) : trySupabaseGeoTrails(search, region),
     ]);
 
     const baseTrails: GeoMappedTrail[] =
