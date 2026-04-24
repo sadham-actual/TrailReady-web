@@ -175,7 +175,7 @@ export default function SignupPage() {
             </Button>
           </form>
 
-          <div className="border-t border-stone-800 px-6 py-4">
+          <div className="border-t border-stone-800 px-6 py-4 space-y-2">
             <p className="font-mono text-xs uppercase tracking-wider text-muted-stone">
               Already have an account?{' '}
               <Link
@@ -183,6 +183,12 @@ export default function SignupPage() {
                 className="text-action-orange hover:text-action-orange-dark"
               >
                 Log in
+              </Link>
+            </p>
+            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-stone/70">
+              By creating an account you agree to our{' '}
+              <Link href="/privacy" className="text-action-orange hover:text-action-orange-dark">
+                Privacy Policy
               </Link>
             </p>
           </div>

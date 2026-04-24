@@ -134,7 +134,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="border-t border-stone-800 px-6 py-4">
+          <div className="border-t border-stone-800 px-6 py-4 space-y-2">
             <p className="font-mono text-xs uppercase tracking-wider text-muted-stone">
               No account?{' '}
               <Link
@@ -142,6 +142,11 @@ export default function LoginPage() {
                 className="text-action-orange hover:text-action-orange-dark"
               >
                 Sign up
+              </Link>
+            </p>
+            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-stone/70">
+              <Link href="/privacy" className="text-action-orange hover:text-action-orange-dark">
+                Privacy Policy
               </Link>
             </p>
           </div>
