@@ -70,8 +70,10 @@ export default function PlannerPage() {
   const [trails, setTrails] = useState<Trail[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [notes, setNotes] = useState('');
+  const [scheduledDate, setScheduledDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [savedBundles, setSavedBundles] = useState<TripBundle[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingBundleId, setDeletingBundleId] = useState<string | null>(null);
 
   useEffect(() => {
     const boot = async () => {
@@ -174,22 +176,6 @@ export default function PlannerPage() {
     [selected, trails]
   );
 
-  const shareJson = useMemo(() => {
-    if (selectedTrails.length !== 3) return null;
-    return JSON.stringify(
-      {
-        id: `bundle-${selectedTrails.map((t) => t.id).join('-')}`,
-        user_id: userId || 'anonymous',
-        trail_ids: selectedTrails.map((t) => t.id),
-        scheduled_date: new Date().toISOString(),
-        notes,
-        is_offline_cached: false,
-      },
-      null,
-      2
-    );
-  }, [selectedTrails, notes, userId]);
-
   const toggleTrail = (trailId: string) => {
     setSelected((prev) => {
       if (prev.includes(trailId)) return prev.filter((id) => id !== trailId);
@@ -230,7 +216,7 @@ export default function PlannerPage() {
         body: JSON.stringify({
           user_id: userId,
           trail_ids: selectedTrails.map((t) => t.id),
-          scheduled_date: new Date().toISOString(),
+          scheduled_date: new Date(scheduledDate).toISOString(),
           notes,
           is_offline_cached: false,
         }),
@@ -241,7 +227,7 @@ export default function PlannerPage() {
           id: json.data.id,
           user_id: userId,
           trail_ids: selectedTrails.map((t) => t.id),
-          scheduled_date: json.data.scheduled_date ?? new Date().toISOString(),
+          scheduled_date: json.data.scheduled_date ?? new Date(scheduledDate).toISOString(),
           notes,
           is_offline_cached: Boolean(json.data.is_offline_cached),
         };
@@ -254,10 +240,28 @@ export default function PlannerPage() {
     }
   };
 
+  const deleteBundle = async (bundleId: string) => {
+    if (!isAuthenticated || !authToken) return;
+    setDeletingBundleId(bundleId);
+    try {
+      await fetch(`/api/planner/trip-bundles?id=${encodeURIComponent(bundleId)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const next = savedBundles.filter((b) => b.id !== bundleId);
+      setSavedBundles(next);
+      await cache.cacheTripBundles(next);
+    } finally {
+      setDeletingBundleId(null);
+    }
+  };
+
+  const trailNameMap = useMemo(() => new Map(trails.map((t) => [t.id, t.name])), [trails]);
+
   return (
     <div className="min-h-screen p-6 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold mb-2">Trail Planner (MVP)</h1>
-      <p className="text-sm text-stone-600 mb-3">Select exactly 3 trails, compare fit side-by-side, and save reusable bundles.</p>
+      <h1 className="text-2xl font-bold mb-2">Trail Planner</h1>
+      <p className="text-sm text-stone-600 mb-3">Select up to 3 trails, compare vehicle fit side-by-side, and save trip bundles.</p>
       <div className="mb-6 flex items-center justify-between border rounded px-3 py-2 bg-stone-50">
         <p className="text-sm text-stone-700">
           {isAuthenticated ? `Signed in as ${userId}` : 'Read-only mode. Sign in required for save/report actions.'}
@@ -328,8 +332,18 @@ export default function PlannerPage() {
             })}
           </div>
 
+          <div className="mt-4 space-y-2">
+            <label className="block text-xs uppercase tracking-wide text-stone-600">Trip date</label>
+            <input
+              type="date"
+              className="w-full border rounded px-2 py-1 text-sm"
+              value={scheduledDate}
+              onChange={(e) => setScheduledDate(e.target.value)}
+            />
+          </div>
+
           <textarea
-            className="w-full border rounded p-2 mt-4"
+            className="w-full border rounded p-2 mt-3"
             rows={3}
             placeholder="Trip notes"
             value={notes}
@@ -339,33 +353,43 @@ export default function PlannerPage() {
           <button
             disabled={!isAuthenticated || selectedTrails.length !== 3 || isSaving}
             onClick={() => void saveBundle()}
-            className="w-full mt-3 bg-emerald-700 disabled:bg-stone-400 text-white rounded px-3 py-2"
+            className="w-full mt-3 bg-stone-900 disabled:bg-stone-400 text-white rounded px-3 py-2"
           >
             {isSaving ? 'Saving...' : isAuthenticated ? 'Save Trip Bundle' : 'Sign in to Save Bundle'}
           </button>
-
-          {shareJson && (
-            <div className="mt-4">
-              <h3 className="font-medium mb-2">Shareable Trip Bundle JSON</h3>
-              <pre className="text-xs bg-stone-100 p-3 rounded overflow-auto">{shareJson}</pre>
-            </div>
-          )}
         </section>
       </div>
 
       <section className="border rounded p-4 mt-6">
-        <h2 className="font-semibold mb-3">Recent Bundles</h2>
+        <h2 className="font-semibold mb-3">Saved Bundles</h2>
         {savedBundles.length === 0 ? (
-          <p className="text-sm text-stone-500">No bundles saved yet.</p>
+          <p className="text-sm text-stone-500">No bundles saved yet. Select 3 trails and save a trip.</p>
         ) : (
-          <div className="space-y-2">
-            {savedBundles.map((b) => (
-              <div key={b.id} className="border rounded p-3 text-sm">
-                <div className="font-medium">Bundle {b.id.slice(0, 8)}</div>
-                <div className="text-stone-600">Trails: {b.trail_ids.join(', ')}</div>
-                <div className="text-stone-600">Notes: {b.notes || '—'}</div>
-              </div>
-            ))}
+          <div className="space-y-3">
+            {savedBundles.map((b) => {
+              const date = b.scheduled_date
+                ? new Date(b.scheduled_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                : '—';
+              const trailNames = b.trail_ids.map((id) => trailNameMap.get(id) ?? id);
+              return (
+                <div key={b.id} className="border rounded p-3 text-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-medium text-stone-900">{date}</div>
+                      <div className="text-stone-600 mt-0.5">{trailNames.join(' · ')}</div>
+                      {b.notes && <div className="text-stone-500 mt-1 text-xs">{b.notes}</div>}
+                    </div>
+                    <button
+                      onClick={() => void deleteBundle(b.id)}
+                      disabled={deletingBundleId === b.id}
+                      className="shrink-0 text-xs text-stone-400 hover:text-red-600 disabled:opacity-40 transition-colors mt-0.5"
+                    >
+                      {deletingBundleId === b.id ? 'Deleting…' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

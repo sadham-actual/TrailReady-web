@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { UserVehicle } from '@/domain/planning';
 
@@ -26,6 +27,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [showDetails, setShowDetails] = useState(false);
+  const [savedTrails, setSavedTrails] = useState<Array<{ trail_id: string; trail_name?: string }>>([]);
+  const [unsavingId, setUnsavingId] = useState<string | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -38,12 +41,19 @@ export default function ProfilePage() {
       setUserId(session.user.id);
       setToken(session.access_token);
 
-      const res = await fetch(`/api/planner/vehicles?userId=${session.user.id}`, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      const json = await res.json();
-      if (json?.success && json.data?.length > 0) {
-        const v = json.data[0];
+      const [vehiclesRes, savedRes, trailsRes] = await Promise.all([
+        fetch(`/api/planner/vehicles?userId=${session.user.id}`, {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }),
+        fetch('/api/trails/saved', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }),
+        fetch('/api/trails'),
+      ]);
+
+      const vehiclesJson = await vehiclesRes.json();
+      if (vehiclesJson?.success && vehiclesJson.data?.length > 0) {
+        const v = vehiclesJson.data[0];
         setVehicle({
           rig_tier: v.rig_tier ?? 'stockAWD',
           make: v.make,
@@ -54,6 +64,23 @@ export default function ProfilePage() {
           has_winch: Boolean(v.has_winch),
           experience_level: v.experience_level,
         });
+      }
+
+      const savedJson = await savedRes.json();
+      const trailsJson = await trailsRes.json();
+      if (savedJson?.success && Array.isArray(savedJson.data)) {
+        const trailMap = new Map<string, string>();
+        if (trailsJson?.success && Array.isArray(trailsJson.data)) {
+          for (const t of trailsJson.data as Array<{ id: string; name: string }>) {
+            trailMap.set(t.id, t.name);
+          }
+        }
+        setSavedTrails(
+          savedJson.data.map((s: { trail_id: string }) => ({
+            trail_id: s.trail_id,
+            trail_name: trailMap.get(s.trail_id),
+          }))
+        );
       }
     };
     void init();
@@ -77,6 +104,19 @@ export default function ProfilePage() {
     setSaving(false);
     if (json?.success) setMessage('Profile saved.');
     else setMessage(json?.error?.message ?? 'Save failed.');
+  };
+
+  const unsaveTrail = async (trailId: string) => {
+    setUnsavingId(trailId);
+    try {
+      await fetch(`/api/trails/saved?trail_id=${encodeURIComponent(trailId)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSavedTrails((prev) => prev.filter((s) => s.trail_id !== trailId));
+    } finally {
+      setUnsavingId(null);
+    }
   };
 
   return (
@@ -184,6 +224,39 @@ export default function ProfilePage() {
         </button>
 
         {message && <p className="text-sm text-stone-700">{message}</p>}
+      </div>
+
+      <div className="border rounded p-4 bg-white mt-6 space-y-3">
+        <h2 className="font-semibold">Saved trails</h2>
+        {savedTrails.length === 0 ? (
+          <p className="text-sm text-stone-500">
+            No saved trails yet.{' '}
+            <Link href="/trails" className="underline text-stone-700 hover:text-stone-900">
+              Browse trails
+            </Link>{' '}
+            and bookmark ones you want to run.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {savedTrails.map((s) => (
+              <li key={s.trail_id} className="flex items-center justify-between gap-3 text-sm">
+                <Link
+                  href={`/trails/${s.trail_id}`}
+                  className="text-stone-800 hover:text-stone-900 underline-offset-2 hover:underline truncate"
+                >
+                  {s.trail_name ?? s.trail_id}
+                </Link>
+                <button
+                  onClick={() => void unsaveTrail(s.trail_id)}
+                  disabled={unsavingId === s.trail_id}
+                  className="shrink-0 text-xs text-stone-400 hover:text-red-600 disabled:opacity-40 transition-colors"
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

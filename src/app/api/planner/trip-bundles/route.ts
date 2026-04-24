@@ -106,3 +106,29 @@ export async function POST(request: NextRequest) {
 
   return successResponse({ ...insertedBundle, trails: insertedTrails ?? [] }, 201);
 }
+
+export async function DELETE(request: NextRequest) {
+  const authUserId = await requireAuthUserId(request);
+  if (!authUserId) {
+    return errors.unauthorized('Authentication required for this action. Sign in to continue.');
+  }
+
+  const bundleId = request.nextUrl.searchParams.get('id');
+  if (!bundleId) return errors.badRequest('id query param is required');
+
+  const supabase = createSupabaseServiceClient();
+
+  const { data: bundle, error: fetchErr } = await supabase
+    .from('trip_bundles')
+    .select('user_id')
+    .eq('id', bundleId)
+    .single();
+
+  if (fetchErr || !bundle) return errors.notFound('Trip bundle');
+  if (bundle.user_id !== authUserId) return errors.unauthorized('You do not own this bundle');
+
+  await supabase.from('trip_bundle_trails').delete().eq('trip_bundle_id', bundleId);
+  await supabase.from('trip_bundles').delete().eq('id', bundleId);
+
+  return successResponse({ id: bundleId });
+}

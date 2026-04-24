@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { trailService, TrailPhoto } from '@/services/trailService';
 import { PhotoGallery, GalleryPhoto } from '@/components/PhotoGallery';
 import { ReliabilityBadge } from '@/components/ReliabilityBadge';
@@ -50,7 +51,9 @@ import {
   ExternalLink,
   ChevronDown,
   Zap,
-  Upload
+  Upload,
+  Bookmark,
+  BookmarkCheck
 } from 'lucide-react';
 
 // Extended trail type with API response fields
@@ -86,6 +89,10 @@ export default function TrailDetailPage() {
   const [gpxPoints, setGpxPoints] = useState<GpxPoint[]>([]);
   const [gpxSource, setGpxSource] = useState<string>('No GPX loaded');
   const [gpxError, setGpxError] = useState<string>('');
+  const [isSaved, setIsSaved] = useState(false);
+  const [isTogglingBookmark, setIsTogglingBookmark] = useState(false);
+  const [authToken, setAuthToken] = useState<string>('');
+  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
   const handleTrailUnavailable = useCallback(() => {
     toast.error('Trail Intel Unavailable');
@@ -120,6 +127,59 @@ export default function TrailDetailPage() {
   useEffect(() => {
     void loadTrailData();
   }, [loadTrailData, refreshKey]);
+
+  // Load auth session and saved status
+  useEffect(() => {
+    const loadAuthAndSaved = async () => {
+      const { data } = await supabase.auth.getSession();
+      const session = data.session;
+      if (!session?.access_token) return;
+      setAuthToken(session.access_token);
+
+      try {
+        const res = await fetch('/api/trails/saved', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        const json = await res.json();
+        if (json?.success && Array.isArray(json.data)) {
+          setIsSaved(json.data.some((s: { trail_id: string }) => s.trail_id === trailId));
+        }
+      } catch {
+        // non-fatal
+      }
+    };
+    void loadAuthAndSaved();
+  }, [trailId, supabase]);
+
+  const toggleBookmark = async () => {
+    if (!authToken) {
+      router.push(`/auth/login?next=/trails/${trailId}`);
+      return;
+    }
+    setIsTogglingBookmark(true);
+    try {
+      if (isSaved) {
+        await fetch(`/api/trails/saved?trail_id=${encodeURIComponent(trailId)}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${authToken}` },
+        });
+        setIsSaved(false);
+        toast.success('Removed from saved trails');
+      } else {
+        await fetch('/api/trails/saved', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+          body: JSON.stringify({ trail_id: trailId }),
+        });
+        setIsSaved(true);
+        toast.success('Trail saved');
+      }
+    } catch {
+      toast.error('Could not update saved trails');
+    } finally {
+      setIsTogglingBookmark(false);
+    }
+  };
 
   async function handleGpxImport(file: File) {
     try {
@@ -244,7 +304,7 @@ export default function TrailDetailPage() {
         transition={{ duration: 0.4 }}
         className="sticky top-0 z-50 backdrop-blur-xl bg-stone-50/90 border-b border-stone-800"
       >
-        <div className="container mx-auto px-4 py-3 max-w-3xl">
+        <div className="container mx-auto px-4 py-3 max-w-3xl flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
@@ -255,6 +315,19 @@ export default function TrailDetailPage() {
               <ArrowLeft className="h-4 w-4 mr-1.5" />
               Back
             </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void toggleBookmark()}
+            disabled={isTogglingBookmark}
+            className={`-mr-2 transition-colors ${isSaved ? 'text-orange-500 hover:text-orange-600' : 'text-stone-500 hover:text-stone-900'}`}
+            title={isSaved ? 'Remove from saved trails' : 'Save trail'}
+          >
+            {isSaved
+              ? <BookmarkCheck className="h-5 w-5" />
+              : <Bookmark className="h-5 w-5" />
+            }
           </Button>
         </div>
       </motion.div>
