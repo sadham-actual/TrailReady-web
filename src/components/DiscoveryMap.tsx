@@ -11,7 +11,7 @@ import { useVehicle } from '@/contexts/VehicleContext';
 import { trailService } from '@/services/trailService';
 import { getVehicleOutcomeWithFallback, VehicleOutcome, OutcomeStatus } from '@/lib/trailOutcome';
 import { calculateGlobalStatus } from '@/lib/intel-utils';
-import { ensureTrailPath, getPathCenter, getPathLengthKm } from '@/lib/trailPaths';
+import { getPathLengthKm } from '@/lib/trailPaths';
 
 // Extended trail with baseDifficulty and reports
 interface TrailWithData extends Trail {
@@ -400,8 +400,9 @@ function TrailPath({
   onLeave: () => void;
 }) {
   const style = PATH_STYLES[outcome.status] || PATH_STYLES.unknown;
-  const pathCenter = getPathCenter(trail.pathCoordinates);
-  const pathLength = getPathLengthKm(trail.pathCoordinates);
+  const hasRealPath = trail.pathCoordinates.length >= 2;
+  const markerPosition: LatLng = [trail.latitude, trail.longitude];
+  const pathLength = hasRealPath ? getPathLengthKm(trail.pathCoordinates) : 0;
 
   // Enhanced styles when hovered
   const hoverWeight = isHovered ? style.weight + 2 : style.weight;
@@ -409,8 +410,8 @@ function TrailPath({
 
   return (
     <>
-      {/* Glow layer for impassable trails */}
-      {style.glowColor && (
+      {/* Glow layer for impassable trails — only with real GPS path */}
+      {hasRealPath && style.glowColor && (
         <Polyline
           positions={trail.pathCoordinates}
           pathOptions={{
@@ -423,36 +424,38 @@ function TrailPath({
         />
       )}
 
-      {/* Main path polyline */}
-      <Polyline
-        positions={trail.pathCoordinates}
-        pathOptions={{
-          color: style.color,
-          weight: hoverWeight,
-          opacity: hoverOpacity,
-          dashArray: style.dashArray,
-          lineCap: 'round',
-          lineJoin: 'round',
-        }}
-        eventHandlers={{
-          mouseover: onHover,
-          mouseout: onLeave,
-        }}
-      >
-        <Popup className="discovery-map-popup" maxWidth={280}>
-          <FieldIntelPopup
-            trail={trail}
-            outcome={outcome}
-            liveStatus={liveStatus}
-            vehicleName={vehicleName}
-            pathLength={pathLength}
-          />
-        </Popup>
-      </Polyline>
+      {/* Main path polyline — only with real GPS path */}
+      {hasRealPath && (
+        <Polyline
+          positions={trail.pathCoordinates}
+          pathOptions={{
+            color: style.color,
+            weight: hoverWeight,
+            opacity: hoverOpacity,
+            dashArray: style.dashArray,
+            lineCap: 'round',
+            lineJoin: 'round',
+          }}
+          eventHandlers={{
+            mouseover: onHover,
+            mouseout: onLeave,
+          }}
+        >
+          <Popup className="discovery-map-popup" maxWidth={280}>
+            <FieldIntelPopup
+              trail={trail}
+              outcome={outcome}
+              liveStatus={liveStatus}
+              vehicleName={vehicleName}
+              pathLength={pathLength}
+            />
+          </Popup>
+        </Polyline>
+      )}
 
-      {/* Label marker at path center */}
+      {/* Label marker at trail center */}
       <Marker
-        position={pathCenter}
+        position={markerPosition}
         icon={createLabelMarkerIcon(trail.name, outcome)}
         eventHandlers={{
           mouseover: onHover,
@@ -646,15 +649,16 @@ export function DiscoveryMap({
     );
   }
 
-  // Merge real segment geometry into trails, fall back to generated paths
+  // Merge real segment geometry into trails — no fake path generation
   const trailsWithPaths = filteredTrails
     .filter((trail) => trail.latitude && trail.longitude)
     .map((trail) => {
       const realPath = geoSegmentPaths.get(trail.id);
-      const trailWithRealPath = realPath
-        ? { ...trail, pathCoordinates: realPath }
-        : trail;
-      return ensureTrailPath(trailWithRealPath);
+      const pathCoordinates: LatLng[] =
+        realPath && realPath.length >= 2
+          ? realPath
+          : [[trail.latitude, trail.longitude] as LatLng];
+      return { ...trail, pathCoordinates };
     });
 
   return (
