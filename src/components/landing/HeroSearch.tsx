@@ -114,7 +114,7 @@ export function HeroSearch() {
           onFocus={() => setIsFocused(true)}
           onBlur={() => setTimeout(() => setIsFocused(false), 140)}
           onKeyDown={handleKeyDown}
-          placeholder="SEARCH TRAIL INTEL..."
+          placeholder="SEARCH TRAILS..."
           className="h-14 w-full bg-transparent pl-14 pr-24 text-sm text-deep-stone placeholder:text-muted-stone focus:outline-none font-mono uppercase tracking-wider"
         />
 
