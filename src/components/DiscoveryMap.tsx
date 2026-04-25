@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Link from 'next/link';
@@ -481,20 +481,89 @@ function TrailPath({
 const DEMO_CENTER: [number, number] = [32.80, -94.87];
 const DEMO_ZOOM = 13;
 
-// Flies to the user's GPS location on mount if `locate` is true.
-// Silently stays on the demo default if permission is denied or unavailable.
-function FlyToUserLocation({ locate }: { locate: boolean }) {
+type GpsMode = 'off' | 'active' | 'following' | 'error';
+
+// Watches the user's GPS position continuously when active.
+// Preserves the one-shot locate=true fly-to for the existing URL param flow.
+function UserLocationTracker({
+  locate,
+  gpsMode,
+  onLocationUpdate,
+  onError,
+}: {
+  locate: boolean;
+  gpsMode: GpsMode;
+  onLocationUpdate: (coords: GeolocationCoordinates) => void;
+  onError: () => void;
+}) {
   const map = useMap();
+  const isActive = gpsMode === 'active' || gpsMode === 'following';
+  const isFollowing = gpsMode === 'following';
+
+  // One-shot fly-to on mount when locate=true (existing ?locate=true URL param behavior)
   useEffect(() => {
     if (!locate || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         map.flyTo([pos.coords.latitude, pos.coords.longitude], 13, { duration: 1.5 });
       },
-      () => {} // denied or unavailable — stay on default, no error shown
+      () => {}
     );
   }, [locate, map]);
+
+  // Continuous watch when GPS button is active
+  useEffect(() => {
+    if (!isActive || !navigator.geolocation) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        onLocationUpdate(pos.coords);
+        if (isFollowing) {
+          map.panTo([pos.coords.latitude, pos.coords.longitude]);
+        }
+      },
+      onError,
+      { enableHighAccuracy: true, maximumAge: 10_000, timeout: 30_000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [isActive, isFollowing, map, onLocationUpdate, onError]);
+
   return null;
+}
+
+// Pulsing blue dot + accuracy radius shown at the user's current position.
+function UserLocationMarker({ coords }: { coords: GeolocationCoordinates }) {
+  const userIcon = useMemo(
+    () =>
+      L.divIcon({
+        html: '<div class="user-dot"><div class="user-dot-inner"></div></div>',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+        className: 'user-location-marker',
+      }),
+    []
+  );
+
+  return (
+    <>
+      <Circle
+        center={[coords.latitude, coords.longitude]}
+        radius={coords.accuracy}
+        pathOptions={{
+          color: '#3B82F6',
+          fillColor: '#3B82F6',
+          fillOpacity: 0.08,
+          weight: 1,
+          opacity: 0.35,
+        }}
+      />
+      <Marker
+        position={[coords.latitude, coords.longitude]}
+        icon={userIcon}
+        interactive={false}
+        zIndexOffset={1000}
+      />
+    </>
+  );
 }
 
 // FlyTo component - auto-centers on a specific trail
@@ -541,6 +610,8 @@ export function DiscoveryMap({
   const [hoveredTrailId, setHoveredTrailId] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<FilterMode>('featured');
   const [activeDifficulties, setActiveDifficulties] = useState<Set<number>>(new Set([1, 2, 3, 4]));
+  const [userLocation, setUserLocation] = useState<GeolocationCoordinates | null>(null);
+  const [gpsMode, setGpsMode] = useState<GpsMode>('off');
 
   const currentCategory = VEHICLE_CATEGORIES.find(
     (cat) => cat.mappedType === selectedVehicle
@@ -646,6 +717,27 @@ export function DiscoveryMap({
     setCoords({ lat, lng });
   }, []);
 
+  const handleGpsToggle = useCallback(() => {
+    setGpsMode((prev) => {
+      if (prev === 'off' || prev === 'error') return 'active';
+      if (prev === 'active') return 'following';
+      return 'off';
+    });
+  }, []);
+
+  const handleLocationUpdate = useCallback((coords: GeolocationCoordinates) => {
+    setUserLocation(coords);
+  }, []);
+
+  const handleGpsError = useCallback(() => {
+    setGpsMode('error');
+    setUserLocation(null);
+  }, []);
+
+  useEffect(() => {
+    if (gpsMode === 'off') setUserLocation(null);
+  }, [gpsMode]);
+
   // Default to Barnwell for the demo.
   // FlyToUserLocation will override this if locate=true and permission granted.
   const defaultCenter = DEMO_CENTER;
@@ -696,8 +788,14 @@ export function DiscoveryMap({
         />
 
         <MapEventHandler onCoordsChange={handleCoordsChange} />
-        <FlyToUserLocation locate={locate} />
+        <UserLocationTracker
+          locate={locate}
+          gpsMode={gpsMode}
+          onLocationUpdate={handleLocationUpdate}
+          onError={handleGpsError}
+        />
         <FlyToTrail trailId={focusTrailId || null} trails={trails} />
+        {userLocation && <UserLocationMarker coords={userLocation} />}
 
         {/* Trail Paths with Red-Zoning */}
         {trailsWithPaths.map((trail) => {
@@ -791,6 +889,36 @@ export function DiscoveryMap({
             {currentCategory?.shortName || 'Not Selected'}
           </p>
         </div>
+      </div>
+
+      {/* GPS Tracking Control */}
+      <div className="absolute bottom-20 right-4 z-[1000] flex flex-col items-end gap-1">
+        {gpsMode !== 'off' && userLocation && (
+          <div className="plate-floating px-2 py-1 font-mono text-[9px] uppercase tracking-wider text-muted-stone">
+            ±{Math.round(userLocation.accuracy)}m
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={handleGpsToggle}
+          title={
+            gpsMode === 'off' ? 'Enable GPS tracking' :
+            gpsMode === 'active' ? 'GPS active — click to follow' :
+            gpsMode === 'following' ? 'Following your position — click to stop' :
+            'GPS unavailable — click to retry'
+          }
+          className={`w-10 h-10 border flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,0.3)] transition-all ${
+            gpsMode === 'off'
+              ? 'bg-stone-100/95 border-stone-800 text-stone-700 hover:text-blue-600 hover:border-blue-500'
+              : gpsMode === 'active'
+              ? 'bg-blue-500 border-blue-600 text-white'
+              : gpsMode === 'following'
+              ? 'bg-blue-700 border-blue-800 text-white'
+              : 'bg-red-50 border-red-400 text-red-600'
+          }`}
+        >
+          <Navigation className={`w-4 h-4 ${gpsMode === 'following' ? 'fill-current' : ''}`} />
+        </button>
       </div>
 
       {/* Custom styles for paths and popups */}
@@ -899,6 +1027,47 @@ export function DiscoveryMap({
 
         .path-impassable {
           filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.4));
+        }
+
+        /* User GPS location marker */
+        .user-location-marker {
+          background: transparent !important;
+          border: none !important;
+        }
+
+        .user-dot {
+          width: 20px;
+          height: 20px;
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .user-dot::before {
+          content: '';
+          position: absolute;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: rgba(59, 130, 246, 0.4);
+          animation: user-pulse 2s ease-out infinite;
+        }
+
+        .user-dot-inner {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #3B82F6;
+          border: 2.5px solid white;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+          position: relative;
+          z-index: 1;
+        }
+
+        @keyframes user-pulse {
+          0% { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(3); opacity: 0; }
         }
       `}</style>
     </div>
