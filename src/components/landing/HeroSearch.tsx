@@ -115,14 +115,14 @@ export function HeroSearch() {
           onBlur={() => setTimeout(() => setIsFocused(false), 140)}
           onKeyDown={handleKeyDown}
           placeholder="SEARCH TRAILS..."
-          className="h-14 w-full bg-transparent pl-14 pr-24 text-sm text-deep-stone placeholder:text-muted-stone focus:outline-none font-mono uppercase tracking-wider"
+          className="h-14 w-full bg-transparent pl-14 pr-14 sm:pr-24 text-sm text-deep-stone placeholder:text-muted-stone focus:outline-none font-mono uppercase tracking-wider"
         />
 
         <button
           type="submit"
-          className="mr-2 inline-flex h-10 self-center items-center gap-2 border border-action-orange-dark bg-action-orange px-4 font-mono text-xs font-bold uppercase tracking-wider text-stone-100 transition-colors hover:bg-action-orange-light"
+          className="mr-2 inline-flex h-10 self-center items-center gap-2 border border-action-orange-dark bg-action-orange px-3 sm:px-4 font-mono text-xs font-bold uppercase tracking-wider text-stone-100 transition-colors hover:bg-action-orange-light"
         >
-          Search
+          <span className="hidden sm:inline">Search</span>
           <ArrowRight className="h-3.5 w-3.5" />
         </button>
       </div>
