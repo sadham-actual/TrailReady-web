@@ -256,6 +256,14 @@ export default function PlannerPage() {
     }
   };
 
+  const [trailSearch, setTrailSearch] = useState('');
+
+  const filteredTrails = useMemo(() => {
+    const q = trailSearch.trim().toLowerCase();
+    if (!q) return trails;
+    return trails.filter((t) => t.name.toLowerCase().includes(q) || (t.region ?? '').toLowerCase().includes(q));
+  }, [trails, trailSearch]);
+
   const trailNameMap = useMemo(() => new Map(trails.map((t) => [t.id, t.name])), [trails]);
 
   return (
@@ -276,25 +284,48 @@ export default function PlannerPage() {
       <div className="grid lg:grid-cols-3 gap-6">
         <section className="border rounded p-4 lg:col-span-1">
           <h2 className="font-semibold mb-3">My Vehicle</h2>
-          <div className="space-y-2 text-sm">
-            <label className="block text-xs uppercase tracking-wide text-stone-600">Rig tier</label>
-            <select className="w-full border rounded px-2 py-1" value={vehicle.rig_tier} onChange={(e) => setVehicle({ ...vehicle, rig_tier: e.target.value as UserVehicle['rig_tier'] })}>
-              <option value="stockAWD">Stock AWD</option>
-              <option value="highClearance4x4">High Clearance 4x4</option>
-              <option value="modified4x4">Modified 4x4</option>
-              <option value="extremeBuild">Extreme Build</option>
-            </select>
-            <input className="w-full border rounded px-2 py-1" value={vehicle.make} onChange={(e) => setVehicle({ ...vehicle, make: e.target.value })} placeholder="Make (optional)" />
-            <input className="w-full border rounded px-2 py-1" value={vehicle.model} onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })} placeholder="Model" />
-            <input className="w-full border rounded px-2 py-1" type="number" value={vehicle.clearance_inches} onChange={(e) => setVehicle({ ...vehicle, clearance_inches: Number(e.target.value) })} placeholder="Clearance (in)" />
-            <input className="w-full border rounded px-2 py-1" type="number" value={vehicle.tire_size} onChange={(e) => setVehicle({ ...vehicle, tire_size: Number(e.target.value) })} placeholder="Tire size" />
-            <select className="w-full border rounded px-2 py-1" value={vehicle.experience_level} onChange={(e) => setVehicle({ ...vehicle, experience_level: e.target.value as UserVehicle['experience_level'] })}>
-              <option>Beginner</option>
-              <option>Intermediate</option>
-              <option>Advanced</option>
-            </select>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={vehicle.has_low_range} onChange={(e) => setVehicle({ ...vehicle, has_low_range: e.target.checked })} /> Low range</label>
-            <label className="flex items-center gap-2"><input type="checkbox" checked={vehicle.has_winch} onChange={(e) => setVehicle({ ...vehicle, has_winch: e.target.checked })} /> Winch</label>
+          <div className="space-y-3 text-sm">
+            <div>
+              <label className="block text-xs uppercase tracking-wide text-stone-600 mb-1">Rig Tier</label>
+              <select className="w-full border rounded px-2 py-1" value={vehicle.rig_tier} onChange={(e) => setVehicle({ ...vehicle, rig_tier: e.target.value as UserVehicle['rig_tier'] })}>
+                <option value="stockAWD">Stock AWD</option>
+                <option value="highClearance4x4">High Clearance 4x4</option>
+                <option value="modified4x4">Modified 4x4</option>
+                <option value="extremeBuild">Extreme Build</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs uppercase tracking-wide text-stone-600 mb-1">Make</label>
+                <input className="w-full border rounded px-2 py-1" value={vehicle.make} onChange={(e) => setVehicle({ ...vehicle, make: e.target.value })} placeholder="e.g. Jeep" />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wide text-stone-600 mb-1">Model</label>
+                <input className="w-full border rounded px-2 py-1" value={vehicle.model} onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })} placeholder="e.g. Wrangler" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-xs uppercase tracking-wide text-stone-600 mb-1">Clearance (in)</label>
+                <input className="w-full border rounded px-2 py-1" type="number" value={vehicle.clearance_inches} onChange={(e) => setVehicle({ ...vehicle, clearance_inches: Number(e.target.value) })} />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wide text-stone-600 mb-1">Tire Size (in)</label>
+                <input className="w-full border rounded px-2 py-1" type="number" value={vehicle.tire_size} onChange={(e) => setVehicle({ ...vehicle, tire_size: Number(e.target.value) })} />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-wide text-stone-600 mb-1">Experience Level</label>
+              <select className="w-full border rounded px-2 py-1" value={vehicle.experience_level} onChange={(e) => setVehicle({ ...vehicle, experience_level: e.target.value as UserVehicle['experience_level'] })}>
+                <option>Beginner</option>
+                <option>Intermediate</option>
+                <option>Advanced</option>
+              </select>
+            </div>
+            <div className="flex gap-4 pt-1">
+              <label className="flex items-center gap-2"><input type="checkbox" checked={vehicle.has_low_range} onChange={(e) => setVehicle({ ...vehicle, has_low_range: e.target.checked })} /> Low range</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={vehicle.has_winch} onChange={(e) => setVehicle({ ...vehicle, has_winch: e.target.checked })} /> Winch</label>
+            </div>
             <button disabled={!isAuthenticated} onClick={() => void saveVehicleProfile()} className="w-full bg-stone-900 disabled:bg-stone-400 text-white rounded px-3 py-2">
               {isAuthenticated ? 'Save Vehicle' : 'Sign in to Save Vehicle'}
             </button>
@@ -303,8 +334,18 @@ export default function PlannerPage() {
 
         <section className="border rounded p-4 lg:col-span-1">
           <h2 className="font-semibold mb-3">Available Trails</h2>
-          <div className="space-y-2 max-h-[420px] overflow-auto">
-            {trails.map((trail) => (
+          <input
+            type="text"
+            value={trailSearch}
+            onChange={(e) => setTrailSearch(e.target.value)}
+            placeholder="Filter trails..."
+            className="w-full border rounded px-2 py-1 text-sm mb-3"
+          />
+          <div className="space-y-2 max-h-[380px] overflow-auto">
+            {filteredTrails.length === 0 && (
+              <p className="text-sm text-stone-500 py-2">No trails match &ldquo;{trailSearch}&rdquo;.</p>
+            )}
+            {filteredTrails.map((trail) => (
               <button
                 key={trail.id}
                 onClick={() => toggleTrail(trail.id)}
@@ -313,6 +354,7 @@ export default function PlannerPage() {
                 {trail.name} <span className="text-xs opacity-80">({trail.region})</span>
               </button>
             ))}
+
           </div>
         </section>
 
