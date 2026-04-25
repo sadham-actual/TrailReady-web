@@ -309,7 +309,7 @@ function MapLegend() {
   ];
 
   return (
-    <div className="absolute top-4 right-4 z-[1000]">
+    <div className="absolute top-4 right-4 z-[1002]">
       {/* Mobile toggle button */}
       <button
         type="button"
@@ -863,7 +863,7 @@ export function DiscoveryMap({
                   setActiveDifficulties((prev) => {
                     const next = new Set(prev);
                     if (next.has(d)) {
-                      if (next.size > 1) next.delete(d); // keep at least one
+                      if (next.size > 1) next.delete(d);
                     } else {
                       next.add(d);
                     }
@@ -877,6 +877,33 @@ export function DiscoveryMap({
             );
           })}
         </div>
+
+        {/* GPS button — lives in the filter bar so it's always visible above iOS Safari chrome */}
+        <button
+          type="button"
+          onClick={handleGpsToggle}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 border font-mono text-[9px] uppercase tracking-wider rounded-sm shadow-[1px_1px_0_0_rgba(0,0,0,0.3)] transition-all ${
+            gpsMode === 'off'
+              ? 'bg-stone-100/95 border-stone-800 text-stone-700 hover:text-blue-600 hover:border-blue-500'
+              : gpsMode === 'active'
+              ? 'bg-blue-500 border-blue-600 text-white'
+              : gpsMode === 'following'
+              ? 'bg-blue-700 border-blue-800 text-white'
+              : 'bg-red-50 border-red-400 text-red-600'
+          }`}
+        >
+          {gpsMode === 'error' ? (
+            <LocateOff className="w-3 h-3" />
+          ) : (
+            <LocateFixed className={`w-3 h-3 ${gpsMode === 'active' || gpsMode === 'following' ? 'animate-pulse' : ''}`} />
+          )}
+          <span>
+            {gpsMode === 'off' && 'My Location'}
+            {gpsMode === 'active' && `GPS On${userLocation ? ` ±${Math.round(userLocation.accuracy)}m` : ''}`}
+            {gpsMode === 'following' && 'Following'}
+            {gpsMode === 'error' && 'No GPS'}
+          </span>
+        </button>
       </div>
 
       {/* Vehicle Indicator */}
@@ -889,41 +916,6 @@ export function DiscoveryMap({
             {currentCategory?.shortName || 'Not Selected'}
           </p>
         </div>
-      </div>
-
-      {/* GPS Tracking Control */}
-      {/* GPS Tracking Control */}
-      <div className="absolute bottom-8 right-4 z-[1000] flex flex-col items-end gap-1">
-        {gpsMode !== 'off' && userLocation && (
-          <div className="plate-floating px-2 py-1 font-mono text-[9px] uppercase tracking-wider text-muted-stone">
-            ±{Math.round(userLocation.accuracy)}m
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={handleGpsToggle}
-          className={`flex items-center gap-2 px-3 py-2 border font-mono text-[10px] uppercase tracking-wider shadow-[2px_2px_0_0_rgba(0,0,0,0.3)] transition-all ${
-            gpsMode === 'off'
-              ? 'bg-stone-100/95 border-stone-800 text-stone-700 hover:text-blue-600 hover:border-blue-500'
-              : gpsMode === 'active'
-              ? 'bg-blue-500 border-blue-600 text-white'
-              : gpsMode === 'following'
-              ? 'bg-blue-700 border-blue-800 text-white'
-              : 'bg-red-50 border-red-400 text-red-600'
-          }`}
-        >
-          {gpsMode === 'error' ? (
-            <LocateOff className="w-4 h-4" />
-          ) : (
-            <LocateFixed className={`w-4 h-4 ${gpsMode === 'active' || gpsMode === 'following' ? 'animate-pulse' : ''}`} />
-          )}
-          <span>
-            {gpsMode === 'off' && 'My Location'}
-            {gpsMode === 'active' && 'GPS On'}
-            {gpsMode === 'following' && 'Following'}
-            {gpsMode === 'error' && 'GPS Error'}
-          </span>
-        </button>
       </div>
 
       {/* Custom styles for paths and popups */}
