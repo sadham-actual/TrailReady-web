@@ -51,7 +51,7 @@ export function evaluateTrailFit(
     warnings.push('High-difficulty trail with non-advanced experience level.');
   }
 
-  if (trail.difficulty_score >= 6 && vehicle.clearance_inches < 10) {
+  if (trail.difficulty_score >= 6 && vehicle.clearance_inches != null && vehicle.clearance_inches < 10) {
     warnings.push('Clearance may be marginal for this difficulty.');
   }
 

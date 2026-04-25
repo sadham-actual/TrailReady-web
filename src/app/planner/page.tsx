@@ -41,7 +41,7 @@ const defaultVehicle: UserVehicle = {
   rig_tier: 'highClearance4x4',
   make: 'Jeep',
   model: 'Wrangler',
-  clearance_inches: 10.8,
+  clearance_inches: null,
   tire_size: 33,
   has_low_range: true,
   has_winch: false,
@@ -142,7 +142,7 @@ export default function PlannerPage() {
             rig_tier: v.rig_tier ?? 'stockAWD',
             make: v.make,
             model: v.model,
-            clearance_inches: Number(v.clearance_inches),
+            clearance_inches: v.clearance_inches != null && v.clearance_inches !== '' ? Number(v.clearance_inches) : null,
             tire_size: Number(v.tire_size),
             has_low_range: Boolean(v.has_low_range),
             has_winch: Boolean(v.has_winch),
@@ -306,8 +306,14 @@ export default function PlannerPage() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs uppercase tracking-wide text-stone-600 mb-1">Clearance (in)</label>
-                <input className="w-full border rounded px-2 py-1" type="number" value={vehicle.clearance_inches} onChange={(e) => setVehicle({ ...vehicle, clearance_inches: Number(e.target.value) })} />
+                <label className="block text-xs uppercase tracking-wide text-stone-600 mb-1">Clearance (in) <span className="normal-case text-stone-400">optional</span></label>
+                <input
+                  className="w-full border rounded px-2 py-1"
+                  type="number"
+                  value={vehicle.clearance_inches ?? ''}
+                  placeholder="e.g. 10"
+                  onChange={(e) => setVehicle({ ...vehicle, clearance_inches: e.target.value === '' ? null : Number(e.target.value) })}
+                />
               </div>
               <div>
                 <label className="block text-xs uppercase tracking-wide text-stone-600 mb-1">Tire Size (in)</label>

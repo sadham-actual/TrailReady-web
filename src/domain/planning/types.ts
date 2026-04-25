@@ -7,7 +7,7 @@ export interface UserVehicle {
   rig_tier: 'stockAWD' | 'highClearance4x4' | 'modified4x4' | 'extremeBuild';
   make: string;
   model: string;
-  clearance_inches: number;
+  clearance_inches: number | null;
   tire_size: number;
   has_low_range: boolean;
   has_winch: boolean;
