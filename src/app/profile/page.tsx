@@ -10,7 +10,7 @@ const defaultVehicle: UserVehicle = {
   rig_tier: 'stockAWD',
   make: '',
   model: '',
-  clearance_inches: 0,
+  clearance_inches: null,
   tire_size: 0,
   has_low_range: false,
   has_winch: false,
@@ -58,7 +58,7 @@ export default function ProfilePage() {
           rig_tier: v.rig_tier ?? 'stockAWD',
           make: v.make,
           model: v.model,
-          clearance_inches: Number(v.clearance_inches),
+          clearance_inches: v.clearance_inches != null && v.clearance_inches !== '' ? Number(v.clearance_inches) : null,
           tire_size: Number(v.tire_size),
           has_low_range: Boolean(v.has_low_range),
           has_winch: Boolean(v.has_winch),
@@ -176,8 +176,8 @@ export default function ProfilePage() {
                   className="w-full border rounded px-3 py-2"
                   type="number"
                   placeholder="10.0"
-                  value={vehicle.clearance_inches}
-                  onChange={(e) => setVehicle({ ...vehicle, clearance_inches: Number(e.target.value) })}
+                  value={vehicle.clearance_inches ?? ''}
+                  onChange={(e) => setVehicle({ ...vehicle, clearance_inches: e.target.value === '' ? null : Number(e.target.value) })}
                 />
               </div>
 
