@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { createSupabaseServiceClient } from '@/lib/supabase/server';
 
-const SITE_URL = 'https://trailready.sadham.org';
+const SITE_URL = 'https://trail-ready.com';
 
 const DIFFICULTY_LABELS: Record<number, string> = {
   1: 'Easy',

@@ -21,7 +21,7 @@ const OVERPASS_ENDPOINTS = [
 
 const OSM_IMPORT_HEADERS = {
   'Content-Type': 'application/x-www-form-urlencoded',
-  'User-Agent': 'TrailReady/0.1 (+https://trailready.sadham.org)',
+  'User-Agent': 'TrailReady/0.1 (+https://trail-ready.com)',
   Accept: 'application/json,text/plain,*/*',
 };
 

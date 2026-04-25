@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 const LAST_UPDATED = 'April 24, 2026';
-const CONTACT_EMAIL = 'privacy@trailready.app';
+const CONTACT_EMAIL = 'privacy@trail-ready.com';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
