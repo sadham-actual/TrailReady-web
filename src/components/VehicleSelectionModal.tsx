@@ -64,8 +64,8 @@ export function VehicleSelectionModal({
   return (
     <Drawer.Root open={open} onOpenChange={onOpenChange}>
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-deep-stone/40 backdrop-blur-sm z-[1100]" />
-        <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[1100] outline-none">
+        <Drawer.Overlay className="fixed inset-0 bg-deep-stone/40 backdrop-blur-sm" style={{ zIndex: 9999 }} />
+        <Drawer.Content className="fixed bottom-0 left-0 right-0 outline-none" style={{ zIndex: 9999 }}>
           <div className="bg-bone border-t border-stone-border max-h-[90vh] overflow-hidden">
             {/* Drag Handle */}
             <div className="flex justify-center pt-4 pb-2">

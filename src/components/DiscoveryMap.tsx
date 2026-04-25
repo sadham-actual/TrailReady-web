@@ -877,12 +877,22 @@ export function DiscoveryMap({
             );
           })}
         </div>
+      </div>
 
-        {/* GPS button — lives in the filter bar so it's always visible above iOS Safari chrome */}
+      {/* Vehicle Indicator + GPS button stacked top-left */}
+      <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2">
+        <div className="plate-floating px-3 py-2">
+          <p className="text-[9px] font-mono uppercase tracking-wider text-muted-stone mb-1">
+            Active Vehicle
+          </p>
+          <p className="text-sm font-bold text-deep-stone">
+            {currentCategory?.shortName || 'Not Selected'}
+          </p>
+        </div>
         <button
           type="button"
           onClick={handleGpsToggle}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 border font-mono text-[9px] uppercase tracking-wider rounded-sm shadow-[1px_1px_0_0_rgba(0,0,0,0.3)] transition-all ${
+          className={`flex items-center gap-2 px-3 py-2 border font-mono text-[10px] uppercase tracking-wider shadow-[2px_2px_0_0_rgba(0,0,0,0.3)] transition-all self-start ${
             gpsMode === 'off'
               ? 'bg-stone-100/95 border-stone-800 text-stone-700 hover:text-blue-600 hover:border-blue-500'
               : gpsMode === 'active'
@@ -893,9 +903,9 @@ export function DiscoveryMap({
           }`}
         >
           {gpsMode === 'error' ? (
-            <LocateOff className="w-3 h-3" />
+            <LocateOff className="w-3.5 h-3.5" />
           ) : (
-            <LocateFixed className={`w-3 h-3 ${gpsMode === 'active' || gpsMode === 'following' ? 'animate-pulse' : ''}`} />
+            <LocateFixed className={`w-3.5 h-3.5 ${gpsMode === 'active' || gpsMode === 'following' ? 'animate-pulse' : ''}`} />
           )}
           <span>
             {gpsMode === 'off' && 'My Location'}
@@ -904,18 +914,6 @@ export function DiscoveryMap({
             {gpsMode === 'error' && 'No GPS'}
           </span>
         </button>
-      </div>
-
-      {/* Vehicle Indicator */}
-      <div className="absolute top-4 left-4 z-[1000]">
-        <div className="plate-floating px-3 py-2">
-          <p className="text-[9px] font-mono uppercase tracking-wider text-muted-stone mb-1">
-            Active Vehicle
-          </p>
-          <p className="text-sm font-bold text-deep-stone">
-            {currentCategory?.shortName || 'Not Selected'}
-          </p>
-        </div>
       </div>
 
       {/* Custom styles for paths and popups */}
