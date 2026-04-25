@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap, useMa
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Link from 'next/link';
-import { Crosshair, Navigation, ExternalLink, Loader2 } from 'lucide-react';
+import { Crosshair, Navigation, ExternalLink, Loader2, LocateFixed, LocateOff } from 'lucide-react';
 import { Trail, LatLng, VEHICLE_CATEGORIES, ConditionReport } from '@/types';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { trailService } from '@/services/trailService';
@@ -892,7 +892,8 @@ export function DiscoveryMap({
       </div>
 
       {/* GPS Tracking Control */}
-      <div className="absolute bottom-20 right-4 z-[1000] flex flex-col items-end gap-1">
+      {/* GPS Tracking Control */}
+      <div className="absolute bottom-8 right-4 z-[1000] flex flex-col items-end gap-1">
         {gpsMode !== 'off' && userLocation && (
           <div className="plate-floating px-2 py-1 font-mono text-[9px] uppercase tracking-wider text-muted-stone">
             ±{Math.round(userLocation.accuracy)}m
@@ -901,13 +902,7 @@ export function DiscoveryMap({
         <button
           type="button"
           onClick={handleGpsToggle}
-          title={
-            gpsMode === 'off' ? 'Enable GPS tracking' :
-            gpsMode === 'active' ? 'GPS active — click to follow' :
-            gpsMode === 'following' ? 'Following your position — click to stop' :
-            'GPS unavailable — click to retry'
-          }
-          className={`w-10 h-10 border flex items-center justify-center shadow-[2px_2px_0_0_rgba(0,0,0,0.3)] transition-all ${
+          className={`flex items-center gap-2 px-3 py-2 border font-mono text-[10px] uppercase tracking-wider shadow-[2px_2px_0_0_rgba(0,0,0,0.3)] transition-all ${
             gpsMode === 'off'
               ? 'bg-stone-100/95 border-stone-800 text-stone-700 hover:text-blue-600 hover:border-blue-500'
               : gpsMode === 'active'
@@ -917,7 +912,17 @@ export function DiscoveryMap({
               : 'bg-red-50 border-red-400 text-red-600'
           }`}
         >
-          <Navigation className={`w-4 h-4 ${gpsMode === 'following' ? 'fill-current' : ''}`} />
+          {gpsMode === 'error' ? (
+            <LocateOff className="w-4 h-4" />
+          ) : (
+            <LocateFixed className={`w-4 h-4 ${gpsMode === 'active' || gpsMode === 'following' ? 'animate-pulse' : ''}`} />
+          )}
+          <span>
+            {gpsMode === 'off' && 'My Location'}
+            {gpsMode === 'active' && 'GPS On'}
+            {gpsMode === 'following' && 'Following'}
+            {gpsMode === 'error' && 'GPS Error'}
+          </span>
         </button>
       </div>
 
