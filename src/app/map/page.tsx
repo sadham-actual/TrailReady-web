@@ -87,7 +87,6 @@ export default function MapPage() {
 
   const handleTrailClick = (trailId: string) => {
     setFocusTrailId(trailId);
-    setListOpen(false);
   };
 
   const handleGpsToggle = useCallback(() => {
@@ -308,7 +307,7 @@ export default function MapPage() {
                 <button
                   key={trail.id}
                   type="button"
-                  onClick={() => handleTrailClick(trail.id)}
+                  onClick={() => { handleTrailClick(trail.id); setListOpen(false); }}
                   className={`w-full text-left px-4 py-3 border-b border-stone-800 font-mono uppercase tracking-wider text-xs transition-colors ${
                     focusTrailId === trail.id
                       ? 'bg-stone-50 text-action-orange'
