@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ChevronLeft, ChevronRight, List, Map, Search, X, LocateFixed, LocateOff } from 'lucide-react';
-import { toast } from 'sonner';
 import { Trail } from '@/types';
 import { CommandBar, useCommandBar } from '@/components/CommandBar';
 
@@ -42,7 +41,7 @@ function MapContent({
   onFilteredTrailsChange?: (trails: Trail[]) => void;
   locate?: boolean;
   gpsMode?: GpsMode;
-  onGpsError?: (err?: GeolocationPositionError) => void;
+  onGpsError?: () => void;
 }) {
   return (
     <div className="flex-1 min-h-0 relative">
@@ -98,21 +97,8 @@ export default function MapPage() {
     });
   }, []);
 
-  const handleGpsError = useCallback((err?: GeolocationPositionError) => {
+  const handleGpsError = useCallback(() => {
     setGpsMode('error');
-    if (!err || err.code === 1) {
-      toast.error('Location access denied', {
-        description: 'To enable: Settings → Safari → Location → Allow',
-      });
-    } else if (err.code === 2) {
-      toast.error('Location unavailable', {
-        description: 'Check that GPS is enabled on your device.',
-      });
-    } else {
-      toast.error('GPS timed out', {
-        description: 'Tap the GPS button to try again.',
-      });
-    }
   }, []);
 
   return (
