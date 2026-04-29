@@ -309,7 +309,7 @@ function MapLegend() {
   ];
 
   return (
-    <div className="absolute top-4 right-4 z-[1002]">
+    <div className="absolute top-4 right-4 z-[1000]">
       {/* Mobile toggle button */}
       <button
         type="button"
@@ -595,11 +595,15 @@ export function DiscoveryMap({
   searchQuery,
   onFilteredTrailsChange,
   locate = false,
+  gpsMode = 'off',
+  onGpsError,
 }: {
   focusTrailId?: string | null;
   searchQuery?: string | null;
   onFilteredTrailsChange?: (trails: Trail[]) => void;
   locate?: boolean;
+  gpsMode?: GpsMode;
+  onGpsError?: () => void;
 }) {
   const { selectedVehicle } = useVehicle();
   const [trails, setTrails] = useState<TrailWithData[]>([]);
@@ -611,7 +615,6 @@ export function DiscoveryMap({
   const [filterMode, setFilterMode] = useState<FilterMode>('featured');
   const [activeDifficulties, setActiveDifficulties] = useState<Set<number>>(new Set([1, 2, 3, 4]));
   const [userLocation, setUserLocation] = useState<GeolocationCoordinates | null>(null);
-  const [gpsMode, setGpsMode] = useState<GpsMode>('off');
 
   const currentCategory = VEHICLE_CATEGORIES.find(
     (cat) => cat.mappedType === selectedVehicle
@@ -717,22 +720,14 @@ export function DiscoveryMap({
     setCoords({ lat, lng });
   }, []);
 
-  const handleGpsToggle = useCallback(() => {
-    setGpsMode((prev) => {
-      if (prev === 'off' || prev === 'error') return 'active';
-      if (prev === 'active') return 'following';
-      return 'off';
-    });
-  }, []);
-
   const handleLocationUpdate = useCallback((coords: GeolocationCoordinates) => {
     setUserLocation(coords);
   }, []);
 
   const handleGpsError = useCallback(() => {
-    setGpsMode('error');
+    onGpsError?.();
     setUserLocation(null);
-  }, []);
+  }, [onGpsError]);
 
   useEffect(() => {
     if (gpsMode === 'off') setUserLocation(null);
@@ -822,8 +817,8 @@ export function DiscoveryMap({
       {/* Hardware UI Overlays */}
       <ViewfinderOverlay />
       <CoordinateReadout lat={coords.lat} lng={coords.lng} />
-      <MapLegend />
 
+      {/* Filter Bar — rendered before legend so legend z-index wins on overlap */}
       {/* Filter Bar */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] flex items-center gap-2 flex-wrap justify-center">
         {/* Layer toggle */}
@@ -879,8 +874,11 @@ export function DiscoveryMap({
         </div>
       </div>
 
-      {/* Vehicle Indicator + GPS button stacked top-left */}
-      <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2">
+      {/* Legend — rendered after filter bar so it stacks on top of chips */}
+      <MapLegend />
+
+      {/* Vehicle Indicator */}
+      <div className="absolute top-4 left-4 z-[1000]">
         <div className="plate-floating px-3 py-2">
           <p className="text-[9px] font-mono uppercase tracking-wider text-muted-stone mb-1">
             Active Vehicle
@@ -889,31 +887,6 @@ export function DiscoveryMap({
             {currentCategory?.shortName || 'Not Selected'}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleGpsToggle}
-          className={`flex items-center gap-2 px-3 py-2 border font-mono text-[10px] uppercase tracking-wider shadow-[2px_2px_0_0_rgba(0,0,0,0.3)] transition-all self-start ${
-            gpsMode === 'off'
-              ? 'bg-stone-100/95 border-stone-800 text-stone-700 hover:text-blue-600 hover:border-blue-500'
-              : gpsMode === 'active'
-              ? 'bg-blue-500 border-blue-600 text-white'
-              : gpsMode === 'following'
-              ? 'bg-blue-700 border-blue-800 text-white'
-              : 'bg-red-50 border-red-400 text-red-600'
-          }`}
-        >
-          {gpsMode === 'error' ? (
-            <LocateOff className="w-3.5 h-3.5" />
-          ) : (
-            <LocateFixed className={`w-3.5 h-3.5 ${gpsMode === 'active' || gpsMode === 'following' ? 'animate-pulse' : ''}`} />
-          )}
-          <span>
-            {gpsMode === 'off' && 'My Location'}
-            {gpsMode === 'active' && `GPS On${userLocation ? ` ±${Math.round(userLocation.accuracy)}m` : ''}`}
-            {gpsMode === 'following' && 'Following'}
-            {gpsMode === 'error' && 'No GPS'}
-          </span>
-        </button>
       </div>
 
       {/* Custom styles for paths and popups */}
