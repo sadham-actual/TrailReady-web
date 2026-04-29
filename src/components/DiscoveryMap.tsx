@@ -494,7 +494,7 @@ function UserLocationTracker({
   locate: boolean;
   gpsMode: GpsMode;
   onLocationUpdate: (coords: GeolocationCoordinates) => void;
-  onError: () => void;
+  onError: (err: GeolocationPositionError) => void;
 }) {
   const map = useMap();
   const isActive = gpsMode === 'active' || gpsMode === 'following';
@@ -603,7 +603,7 @@ export function DiscoveryMap({
   onFilteredTrailsChange?: (trails: Trail[]) => void;
   locate?: boolean;
   gpsMode?: GpsMode;
-  onGpsError?: () => void;
+  onGpsError?: (err: GeolocationPositionError) => void;
 }) {
   const { selectedVehicle } = useVehicle();
   const [trails, setTrails] = useState<TrailWithData[]>([]);
@@ -724,8 +724,8 @@ export function DiscoveryMap({
     setUserLocation(coords);
   }, []);
 
-  const handleGpsError = useCallback(() => {
-    onGpsError?.();
+  const handleGpsError = useCallback((err: GeolocationPositionError) => {
+    onGpsError?.(err);
     setUserLocation(null);
   }, [onGpsError]);
 
