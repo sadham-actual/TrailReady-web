@@ -308,13 +308,11 @@ export default function TrailDetailPage() {
           <Button
             variant="ghost"
             size="sm"
-            asChild
+            onClick={() => router.back()}
             className="text-stone-700 hover:text-stone-900 hover:bg-stone-100 -ml-2"
           >
-            <Link href="/trails">
-              <ArrowLeft className="h-4 w-4 mr-1.5" />
-              Back
-            </Link>
+            <ArrowLeft className="h-4 w-4 mr-1.5" />
+            Back
           </Button>
           <Button
             variant="ghost"
