@@ -1,13 +1,14 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, ChevronLeft, ChevronRight, List, Map, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowLeft, ChevronLeft, ChevronRight, List, Map, Search, X, LocateFixed, LocateOff } from 'lucide-react';
 import { Trail } from '@/types';
 import { CommandBar, useCommandBar } from '@/components/CommandBar';
+
+type GpsMode = 'off' | 'active' | 'following' | 'error';
 
 // Dynamic import for Leaflet (SSR incompatible)
 const DiscoveryMap = dynamic(
@@ -32,11 +33,15 @@ function MapContent({
   searchQuery,
   onFilteredTrailsChange,
   locate,
+  gpsMode,
+  onGpsError,
 }: {
   focusTrailId?: string | null;
   searchQuery?: string | null;
   onFilteredTrailsChange?: (trails: Trail[]) => void;
   locate?: boolean;
+  gpsMode?: GpsMode;
+  onGpsError?: () => void;
 }) {
   return (
     <div className="flex-1 min-h-0 relative">
@@ -45,6 +50,8 @@ function MapContent({
         searchQuery={searchQuery}
         onFilteredTrailsChange={onFilteredTrailsChange}
         locate={locate}
+        gpsMode={gpsMode}
+        onGpsError={onGpsError}
       />
     </div>
   );
@@ -61,15 +68,14 @@ export default function MapPage() {
   const [listOpen, setListOpen] = useState(false);
   const [focusTrailId, setFocusTrailId] = useState<string | null>(idParam);
   const [filteredTrails, setFilteredTrails] = useState<Trail[]>([]);
+  const [gpsMode, setGpsMode] = useState<GpsMode>('off');
 
   useEffect(() => {
     setFocusTrailId(idParam);
   }, [idParam]);
 
-  // BROWSE: clear all filters and reset to default map view
   const handleBrowse = () => {
     setFocusTrailId(null);
-    // If we have query params, navigate to clean /map URL
     if (searchQuery || idParam) {
       router.push('/map');
     }
@@ -83,15 +89,22 @@ export default function MapPage() {
     setFocusTrailId(trailId);
   };
 
+  const handleGpsToggle = useCallback(() => {
+    setGpsMode((prev) => {
+      if (prev === 'off' || prev === 'error') return 'active';
+      if (prev === 'active') return 'following';
+      return 'off';
+    });
+  }, []);
+
+  const handleGpsError = useCallback(() => {
+    setGpsMode('error');
+  }, []);
+
   return (
     <div className="h-screen flex flex-col bg-bone">
       {/* Header Bar */}
-      <motion.header
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex-shrink-0 h-14 px-4 flex items-center justify-between border-b border-stone-border bg-surface"
-      >
+      <header className="flex-shrink-0 h-14 px-4 flex items-center justify-between border-b border-stone-border bg-surface">
         <div className="flex items-center gap-4">
           <Link
             href="/"
@@ -125,7 +138,37 @@ export default function MapPage() {
             className="inline-flex items-center gap-2 px-3 py-2 border border-stone-800 bg-stone-100 font-mono text-[10px] uppercase tracking-wider text-stone-900 rounded-none transition-colors hover:text-orange-600 hover:border-orange-600"
           >
             <Search className="w-3.5 h-3.5" />
-            Search
+            <span className="hidden sm:inline">Search</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleGpsToggle}
+            title={
+              gpsMode === 'off' ? 'Enable GPS' :
+              gpsMode === 'active' ? 'GPS on — tap to follow' :
+              gpsMode === 'following' ? 'Following — tap to stop' :
+              'GPS unavailable'
+            }
+            className={`inline-flex items-center gap-1.5 px-3 py-2 border font-mono text-[10px] uppercase tracking-wider rounded-none transition-all ${
+              gpsMode === 'off'
+                ? 'border-stone-800 bg-stone-100 text-stone-900 hover:text-orange-600 hover:border-orange-600'
+                : gpsMode === 'active'
+                ? 'border-blue-500 bg-blue-500 text-white'
+                : gpsMode === 'following'
+                ? 'border-blue-700 bg-blue-700 text-white'
+                : 'border-red-400 bg-red-50 text-red-600'
+            }`}
+          >
+            {gpsMode === 'error'
+              ? <LocateOff className="w-3.5 h-3.5" />
+              : <LocateFixed className={`w-3.5 h-3.5 ${gpsMode !== 'off' ? 'animate-pulse' : ''}`} />
+            }
+            <span className="hidden sm:inline">
+              {gpsMode === 'off' && 'My Location'}
+              {gpsMode === 'active' && 'GPS On'}
+              {gpsMode === 'following' && 'Following'}
+              {gpsMode === 'error' && 'No GPS'}
+            </span>
           </button>
           <button
             type="button"
@@ -134,14 +177,11 @@ export default function MapPage() {
             aria-label="Toggle trail list"
           >
             <List className="w-4 h-4 text-action-orange" />
-            Trail List
+            <span className="hidden sm:inline">Trail List</span>
           </button>
-          <span className="hidden md:block font-mono text-[10px] uppercase tracking-wider text-muted-stone">
-            Topographic Intel Layer
-          </span>
           <div className="w-2 h-2 rounded-full bg-status-clear animate-pulse" />
         </div>
-      </motion.header>
+      </header>
 
       {/* Map Container - Full Height */}
       <div className="flex-1 min-h-0 flex">
@@ -162,6 +202,8 @@ export default function MapPage() {
             searchQuery={searchQuery}
             onFilteredTrailsChange={setFilteredTrails}
             locate={locate}
+            gpsMode={gpsMode}
+            onGpsError={handleGpsError}
           />
         </Suspense>
 
@@ -241,8 +283,18 @@ export default function MapPage() {
             <div className="font-mono text-xs uppercase tracking-wider text-stone-900">
               Trail List
             </div>
-            <div className="font-mono text-[10px] uppercase tracking-wider text-stone-700">
-              {trailCountLabel}
+            <div className="flex items-center gap-3">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-stone-700">
+                {trailCountLabel}
+              </div>
+              <button
+                type="button"
+                onClick={() => setListOpen(false)}
+                className="flex items-center justify-center w-6 h-6 border border-stone-800 bg-stone-50 hover:bg-stone-200 transition-colors"
+                aria-label="Close trail list"
+              >
+                <X className="w-3.5 h-3.5 text-stone-700" />
+              </button>
             </div>
           </div>
           <div className="max-h-[55vh] overflow-y-auto">
@@ -255,7 +307,7 @@ export default function MapPage() {
                 <button
                   key={trail.id}
                   type="button"
-                  onClick={() => handleTrailClick(trail.id)}
+                  onClick={() => { handleTrailClick(trail.id); setListOpen(false); }}
                   className={`w-full text-left px-4 py-3 border-b border-stone-800 font-mono uppercase tracking-wider text-xs transition-colors ${
                     focusTrailId === trail.id
                       ? 'bg-stone-50 text-action-orange'
