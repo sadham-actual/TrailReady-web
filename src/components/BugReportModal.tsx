@@ -47,7 +47,7 @@ export function BugReportModal() {
       <button
         onClick={() => setOpen(true)}
         aria-label="Report a bug"
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-1.5 px-3 py-2 bg-deep-stone text-bone border border-stone-700 font-mono text-xs font-semibold uppercase tracking-wider shadow-[3px_3px_0_0_rgba(0,0,0,0.4)] hover:bg-stone-800 active:shadow-[1px_1px_0_0_rgba(0,0,0,0.4)] active:translate-x-px active:translate-y-px transition-all"
+        className="fixed bottom-24 right-5 z-40 sm:bottom-10 flex items-center gap-1.5 px-3 py-2 bg-deep-stone text-bone border border-stone-700 font-mono text-xs font-semibold uppercase tracking-wider shadow-[3px_3px_0_0_rgba(0,0,0,0.4)] hover:bg-stone-800 active:shadow-[1px_1px_0_0_rgba(0,0,0,0.4)] active:translate-x-px active:translate-y-px transition-all"
       >
         <Bug className="h-3.5 w-3.5" />
         <span>Bug</span>
@@ -63,7 +63,7 @@ export function BugReportModal() {
 
       {/* Modal */}
       {open && (
-        <div className="fixed bottom-16 right-5 z-50 w-[min(360px,calc(100vw-2.5rem))] bg-bone border border-stone-border shadow-[4px_4px_0_0_var(--color-stone-border)]">
+        <div className="fixed bottom-36 right-5 z-50 sm:bottom-20 w-[min(360px,calc(100vw-2.5rem))] bg-bone border border-stone-border shadow-[4px_4px_0_0_var(--color-stone-border)]">
           <div className="flex items-center justify-between px-4 py-3 border-b border-stone-border">
             <div className="flex items-center gap-2">
               <Bug className="h-4 w-4 text-action-orange" />
