@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, X, Car, ChevronDown, Compass } from 'lucide-react';
+import { Menu, X, Car, ChevronDown, Compass, Bug } from 'lucide-react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useVehicle } from '@/contexts/VehicleContext';
 import { VehicleSelectionModal } from '@/components/VehicleSelectionModal';
 import { CommandBar, useCommandBar } from '@/components/CommandBar';
+import { BugReportModal } from '@/components/BugReportModal';
 import { VEHICLE_TYPE_LABELS } from '@/types';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { getPendingReports, removeFromQueue } from '@/lib/offlineQueue';
@@ -22,6 +23,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [bugReportOpen, setBugReportOpen] = useState(false);
 
   const { selectedVehicle, setSelectedVehicle } = useVehicle();
   const { open: searchOpen, setOpen: setSearchOpen } = useCommandBar();
@@ -134,6 +136,14 @@ export function Header() {
           >
             Search
           </button>
+          <button
+            type="button"
+            onClick={() => setBugReportOpen(true)}
+            aria-label="Report a bug"
+            className="text-muted-stone hover:text-orange-600 transition-colors"
+          >
+            <Bug className="h-4 w-4" />
+          </button>
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
@@ -211,6 +221,17 @@ export function Header() {
             >
               Search Trails
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setBugReportOpen(true);
+              }}
+              className="flex items-center gap-2 px-4 py-3 rounded-sm font-mono text-xs font-medium uppercase tracking-wider text-deep-stone hover:bg-stone-light border border-transparent transition-all"
+            >
+              <Bug className="h-3.5 w-3.5" />
+              Report a Bug
+            </button>
 
             {isAuthenticated && (
               <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className={`block px-4 py-3 rounded-sm font-mono text-xs font-medium uppercase tracking-wider transition-all ${isActivePath('/profile') ? 'bg-action-orange/10 text-action-orange border border-action-orange/20' : 'text-deep-stone hover:bg-stone-light border border-transparent'}`}>
@@ -259,6 +280,7 @@ export function Header() {
         onSelectVehicle={setSelectedVehicle}
       />
       <CommandBar open={searchOpen} onOpenChange={setSearchOpen} />
+      <BugReportModal open={bugReportOpen} onOpenChange={setBugReportOpen} />
     </header>
   );
 }
