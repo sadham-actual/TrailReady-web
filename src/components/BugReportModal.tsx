@@ -51,11 +51,11 @@ export function BugReportModal({ open, onOpenChange }: BugReportModalProps) {
   return (
     <>
       <div
-        className="fixed inset-0 bg-deep-stone/40 backdrop-blur-sm z-50"
+        className="fixed inset-0 bg-deep-stone/40 backdrop-blur-sm z-[1100]"
         onClick={() => onOpenChange(false)}
       />
 
-      <div className="fixed top-20 right-4 z-50 w-[min(360px,calc(100vw-2rem))] bg-bone border border-stone-border shadow-[4px_4px_0_0_var(--color-stone-border)]">
+      <div className="fixed top-20 right-4 z-[1100] w-[min(360px,calc(100vw-2rem))] bg-bone border border-stone-border shadow-[4px_4px_0_0_var(--color-stone-border)]">
         <div className="flex items-center justify-between px-4 py-3 border-b border-stone-border">
           <div className="flex items-center gap-2">
             <Bug className="h-4 w-4 text-action-orange" />
